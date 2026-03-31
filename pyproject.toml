@@ -47,8 +47,11 @@ include = [
   "db",
   "adapters",
   "infra",
+  "migrations",
   "cmd",
   "prompts",
+  "static",
+  "templates",
   "tests",
 ]
 

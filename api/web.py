@@ -311,7 +311,7 @@ def dashboard_page(request: Request) -> HTMLResponse:
             "recent_runs": run_rows[:5],
         }
     )
-    return templates.TemplateResponse("dashboard.html", context)
+    return templates.TemplateResponse(request=request, name="dashboard.html", context=context)
 
 
 @router.get("/app/ideas", response_class=HTMLResponse)
@@ -327,13 +327,13 @@ def ideas_page(
     paged, pagination = _paginate(idea_rows, page, 20)
     context = _base_context(request, "Ideas")
     context.update({"ideas": paged, "query": q, "pagination": pagination})
-    return templates.TemplateResponse("ideas_list.html", context)
+    return templates.TemplateResponse(request=request, name="ideas_list.html", context=context)
 
 
 @router.get("/app/ideas/new", response_class=HTMLResponse)
 def new_idea_page(request: Request) -> HTMLResponse:
     context = _base_context(request, "New Idea")
-    return templates.TemplateResponse("idea_new.html", context)
+    return templates.TemplateResponse(request=request, name="idea_new.html", context=context)
 
 
 @router.post("/app/ideas/new")
@@ -369,7 +369,7 @@ def idea_detail_page(request: Request, idea_id: UUID) -> HTMLResponse:
             "default_mode": str(_SETTINGS["default_mode"]),
         }
     )
-    return templates.TemplateResponse("idea_detail.html", context)
+    return templates.TemplateResponse(request=request, name="idea_detail.html", context=context)
 
 
 @router.post("/app/runs/create")
@@ -401,7 +401,7 @@ def runs_page(
     context.update(
         {"runs": paged, "filters": {"status": status, "mode": mode}, "pagination": pagination}
     )
-    return templates.TemplateResponse("runs_list.html", context)
+    return templates.TemplateResponse(request=request, name="runs_list.html", context=context)
 
 
 @router.get("/app/runs/{run_id}", response_class=HTMLResponse)
@@ -440,7 +440,7 @@ def run_detail_page(request: Request, run_id: UUID) -> HTMLResponse:
             "mode_disclosure": _mode_disclosure(run.mode),
         }
     )
-    return templates.TemplateResponse("run_detail.html", context)
+    return templates.TemplateResponse(request=request, name="run_detail.html", context=context)
 
 
 @router.get("/app/reports", response_class=HTMLResponse)
@@ -461,7 +461,7 @@ def reports_page(request: Request) -> HTMLResponse:
             "selected_doc_html": _render_markdown(selected_doc) if selected_doc else "",
         }
     )
-    return templates.TemplateResponse("reports_browser.html", context)
+    return templates.TemplateResponse(request=request, name="reports_browser.html", context=context)
 
 
 @router.get("/app/reports/{idea_id}", response_class=HTMLResponse)
@@ -478,14 +478,14 @@ def reports_for_idea_page(request: Request, idea_id: UUID) -> HTMLResponse:
             "selected_doc_html": _render_markdown(doc_payload["markdown"]),
         }
     )
-    return templates.TemplateResponse("reports_browser.html", context)
+    return templates.TemplateResponse(request=request, name="reports_browser.html", context=context)
 
 
 @router.get("/app/settings", response_class=HTMLResponse)
 def settings_page(request: Request) -> HTMLResponse:
     context = _base_context(request, "Settings")
     context.update({"settings": _SETTINGS})
-    return templates.TemplateResponse("settings.html", context)
+    return templates.TemplateResponse(request=request, name="settings.html", context=context)
 
 
 @router.post("/app/settings")
@@ -504,4 +504,4 @@ def update_settings_from_form(
 def diagnostics_page(request: Request) -> HTMLResponse:
     context = _base_context(request, "Diagnostics")
     context.update({"diagnostics": get_diagnostics()})
-    return templates.TemplateResponse("diagnostics.html", context)
+    return templates.TemplateResponse(request=request, name="diagnostics.html", context=context)

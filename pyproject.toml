@@ -4,18 +4,24 @@ build-backend = "hatchling.build"
 
 [project]
 name = "aideator"
-description = "AIdeator bootstrap scaffold (no business logic)"
+version = "0.9.0"
+description = "Local-first FastAPI service for idea validation and markdown reports"
 readme = "README.md"
 requires-python = ">=3.10"
-dynamic = ["version"]
 license = { text = "MIT" }
-authors = [{ name = "AIdeator Team" }]
+authors = [{ name = "Richard Abishai", email = "you@example.com" }]
 dependencies = [
   "fastapi>=0.116.0",
   "uvicorn[standard]>=0.35.0",
+  "pydantic>=2.11.0",
   "jinja2>=3.1.0",
   "python-multipart>=0.0.9",
 ]
+
+[project.urls]
+Homepage = "https://github.com/ARCHITECTURA-AI/AIdeator"
+Source = "https://github.com/ARCHITECTURA-AI/AIdeator"
+Issues = "https://github.com/ARCHITECTURA-AI/AIdeator/issues"
 
 [project.scripts]
 aideator = "aideator.cli:main"
@@ -45,9 +51,6 @@ include = [
   "prompts",
   "tests",
 ]
-
-[tool.hatch.version]
-path = "aideator/__init__.py"
 
 [tool.pytest.ini_options]
 minversion = "8.0"

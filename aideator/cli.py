@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import argparse
+import sys
+import webbrowser
 from cmd.rebuild_docs import rebuild_docs
 
 import uvicorn
@@ -10,45 +12,124 @@ import uvicorn
 from api.config import settings
 
 
-def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="aideator")
-    subparsers = parser.add_subparsers(dest="command", required=True)
-
-    serve_parser = subparsers.add_parser("serve", help="Run FastAPI server")
-    serve_parser.add_argument("--host", default=settings.app_host)
-    serve_parser.add_argument("--port", type=int, default=settings.app_port)
-    serve_parser.add_argument("--reload", action="store_true", help="Enable reload explicitly")
-
-    docs_parser = subparsers.add_parser("rebuild-docs", help="Rebuild markdown report artifacts")
-    docs_parser.add_argument("--output-dir", default=str(settings.app_docs_dir))
-    return parser
+def run_server(host: str = "127.0.0.1", port: int = 8000, reload: bool = False) -> None:
+    """Start the FastAPI server on the given host/port."""
+    uvicorn.run(
+        "api.app:app",
+        host=host,
+        port=port,
+        reload=reload,
+        factory=False,
+    )
 
 
-def run_serve(*, host: str, port: int, reload: bool) -> None:
-    uvicorn.run("api.app:app", host=host, port=port, reload=reload)
+def open_browser(url: str) -> None:
+    """Open a URL in the user's default browser."""
+    try:
+        webbrowser.open(url)
+    except Exception as exc:  # noqa: BLE001
+        # Browser-open failures should not prevent the server from starting.
+        print(f"Warning: could not open browser: {exc}", file=sys.stderr)
 
 
-def run_rebuild_docs(*, output_dir: str) -> None:
-    result = rebuild_docs(output_dir=output_dir)
+def command_serve(args: argparse.Namespace) -> None:
+    """Run `aideator serve` behavior."""
+    host = args.host
+    port = args.port
+    reload = args.reload
+
+    open_browser(f"http://{host}:{port}")
+    run_server(host=host, port=port, reload=reload)
+
+
+def command_rebuild_docs(args: argparse.Namespace) -> None:
+    """Run `aideator rebuild-docs` behavior."""
+    result = rebuild_docs(output_dir=args.output_dir)
     print(f"Rebuilt docs: written={result['written']} output_dir={result['output_dir']}")
 
 
+def command_main(args: argparse.Namespace) -> None:
+    """Default behavior for `aideator` with no subcommand."""
+    command_serve(args)
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="aideator",
+        description=(
+            "AIdeator - local-first FastAPI service for idea validation "
+            "and markdown reports"
+        ),
+    )
+
+    parser.add_argument(
+        "--host",
+        default="127.0.0.1",
+        help="Host interface to bind (default: 127.0.0.1)",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=8000,
+        help="Port to run the server on (default: 8000)",
+    )
+    parser.add_argument(
+        "--reload",
+        action="store_true",
+        help="Enable auto-reload (for local development)",
+    )
+
+    subparsers = parser.add_subparsers(dest="command", metavar="<command>")
+
+    serve_parser = subparsers.add_parser(
+        "serve",
+        help="Start the FastAPI server and open the browser",
+        description="Start the AIdeator FastAPI server and open the browser at http://host:port",
+    )
+    serve_parser.set_defaults(func=command_serve)
+
+    docs_parser = subparsers.add_parser(
+        "rebuild-docs",
+        help="Rebuild AIdeator documentation",
+        description="Rebuild AIdeator markdown docs from succeeded runs",
+    )
+    docs_parser.add_argument(
+        "--output-dir",
+        default=str(settings.app_docs_dir),
+        help=f"Output directory for rebuilt docs (default: {settings.app_docs_dir})",
+    )
+    docs_parser.set_defaults(func=command_rebuild_docs)
+
+    return parser
+
+
 def serve_entrypoint() -> None:
-    run_serve(host=settings.app_host, port=settings.app_port, reload=settings.reload_enabled)
+    """Zero-arg console entrypoint for aideator-serve."""
+    args = argparse.Namespace(
+        host="127.0.0.1",
+        port=8000,
+        reload=False,
+    )
+    command_serve(args)
 
 
 def rebuild_docs_entrypoint() -> None:
-    run_rebuild_docs(output_dir=str(settings.app_docs_dir))
+    """Zero-arg console entrypoint for aideator-rebuild-docs."""
+    args = argparse.Namespace(output_dir=str(settings.app_docs_dir))
+    command_rebuild_docs(args)
 
 
 def main() -> None:
-    parser = _build_parser()
+    """Primary console entrypoint for `aideator`."""
+    parser = build_parser()
     args = parser.parse_args()
 
-    if args.command == "serve":
-        run_serve(host=args.host, port=args.port, reload=args.reload or settings.reload_enabled)
+    if args.command is None:
+        command_main(args)
         return
-    if args.command == "rebuild-docs":
-        run_rebuild_docs(output_dir=args.output_dir)
-        return
-    parser.error(f"Unknown command: {args.command}")
+
+    func = getattr(args, "func", None)
+    if func is None:
+        parser.print_help()
+        sys.exit(1)
+    func(args)

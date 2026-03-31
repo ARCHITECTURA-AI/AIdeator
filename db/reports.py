@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import time
+from collections.abc import Iterable
 from typing import Final
 from uuid import UUID
 
@@ -12,7 +13,14 @@ from models.report import Report
 _REPORTS: Final[dict[UUID, Report]] = {}
 
 
-def _debug_log(*, run_id: str, hypothesis_id: str, location: str, message: str, data: dict[str, object]) -> None:
+def _debug_log(
+    *,
+    run_id: str,
+    hypothesis_id: str,
+    location: str,
+    message: str,
+    data: dict[str, object],
+) -> None:
     # region agent log
     with open("debug-8daad7.log", "a", encoding="utf-8") as debug_file:
         debug_file.write(
@@ -56,19 +64,22 @@ def export_reports_snapshot() -> list[dict[str, object]]:
     ]
 
 
-def import_reports_snapshot(rows: list[dict[str, object]]) -> None:
+def import_reports_snapshot(rows: Iterable[dict[str, object]]) -> None:
     _REPORTS.clear()
     for row in rows:
+        cards_obj = row.get("cards")
+        if not isinstance(cards_obj, list):
+            continue
         _debug_log(
             run_id="pre-fix",
             hypothesis_id="H1",
             location="db/reports.py:import_reports_snapshot",
             message="import row cards runtime type",
-            data={"has_cards": "cards" in row, "cards_type": type(row.get("cards")).__name__},
+            data={"has_cards": True, "cards_type": type(cards_obj).__name__},
         )
         report = Report(
             run_id=UUID(str(row["run_id"])),
-            cards=list(row["cards"]),  # type: ignore[arg-type]
+            cards=cards_obj,
             artifact_path=str(row["artifact_path"]),
         )
         _REPORTS[report.run_id] = report

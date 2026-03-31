@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from datetime import datetime
 import json
 import time
+from collections.abc import Iterable
+from datetime import datetime
 from typing import Final
 from uuid import UUID
 
@@ -15,7 +16,14 @@ _RUN_HISTORY: Final[dict[UUID, list[UUID]]] = {}
 _IDEMPOTENCY_INDEX: Final[dict[tuple[UUID, str], UUID]] = {}
 
 
-def _debug_log(*, run_id: str, hypothesis_id: str, location: str, message: str, data: dict[str, object]) -> None:
+def _debug_log(
+    *,
+    run_id: str,
+    hypothesis_id: str,
+    location: str,
+    message: str,
+    data: dict[str, object],
+) -> None:
     # region agent log
     with open("debug-8daad7.log", "a", encoding="utf-8") as debug_file:
         debug_file.write(
@@ -73,7 +81,11 @@ def get_or_create_idempotent_run(
         run = _RUNS[existing_run_id]
         return run, True
 
-    run = Run(idea_id=idea_id, tier=tier, mode=mode)
+    run = Run(
+        idea_id=idea_id,
+        tier=tier,  # type: ignore[arg-type]
+        mode=mode,  # type: ignore[arg-type]
+    )
     save_run(run)
     _IDEMPOTENCY_INDEX[(idea_id, idempotency_key)] = run.run_id
     return run, False
@@ -123,6 +135,8 @@ def import_runs_snapshot(snapshot: dict[str, object]) -> None:
         message="snapshot runs container type",
         data={"runs_type": type(runs_value).__name__},
     )
+    if not isinstance(runs_value, Iterable):
+        return
     for row in runs_value:
         run_data = row
         if not isinstance(run_data, dict):

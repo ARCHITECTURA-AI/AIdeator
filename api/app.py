@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse
 from adapters.reddit import parse_reddit_response
 from adapters.tavily import parse_tavily_response
 from config.model_routing import (
+    RoutingConfig,
     load_prompt_registry,
     load_routing_config,
     resolve_route,
@@ -67,7 +68,14 @@ _CONCURRENCY_GUARD = Lock()
 _DEFAULT_BIND_HOST = "127.0.0.1"
 
 
-def _debug_log(*, run_id: str, hypothesis_id: str, location: str, message: str, data: dict[str, object]) -> None:
+def _debug_log(
+    *,
+    run_id: str,
+    hypothesis_id: str,
+    location: str,
+    message: str,
+    data: dict[str, object],
+) -> None:
     # region agent log
     with open("debug-8daad7.log", "a", encoding="utf-8") as debug_file:
         debug_file.write(
@@ -168,7 +176,11 @@ def post_runs(payload: dict[str, str]) -> dict[str, str | bool]:
         if not reused:
             start_run(run.run_id)
     else:
-        run = Run(idea_id=idea_id, tier=tier, mode=mode)
+        run = Run(
+            idea_id=idea_id,
+            tier=tier,  # type: ignore[arg-type]
+            mode=mode,  # type: ignore[arg-type]
+        )
         save_run(run)
         start_run(run.run_id)
 
@@ -474,7 +486,7 @@ def test_hook_phb_e2e_error_recovery() -> dict[str, object]:
 
 @app.post("/internal/test-hooks/phb/security-config-poisoning")
 def test_hook_phb_security_config_poisoning() -> dict[str, object]:
-    poisoned_config = {
+    poisoned_config: RoutingConfig = {
         "cloud-enabled": {
             "low": {"provider": "litellm", "model": "safe-model", "prompt_id": "analyst"}
         },
@@ -482,7 +494,7 @@ def test_hook_phb_security_config_poisoning() -> dict[str, object]:
     }
     blocked = False
     try:
-        validate_model_routing(poisoned_config)  # type: ignore[arg-type]
+        validate_model_routing(poisoned_config)
     except ValueError:
         blocked = True
     return {"ok": True, "blocked": blocked}
@@ -579,11 +591,16 @@ def test_hook_phc_backup_restore() -> dict[str, object]:
         )
     )
 
+    ideas_snapshot = export_ideas_snapshot()
+    runs_snapshot = export_runs_snapshot()
+    signals_snapshot = export_signals_snapshot()
+    reports_snapshot = export_reports_snapshot()
+
     pre_payload = {
-        "ideas": export_ideas_snapshot(),
-        "runs": export_runs_snapshot(),
-        "signals": export_signals_snapshot(),
-        "reports": export_reports_snapshot(),
+        "ideas": ideas_snapshot,
+        "runs": runs_snapshot,
+        "signals": signals_snapshot,
+        "reports": reports_snapshot,
     }
     _debug_log(
         run_id="pre-fix",
@@ -597,11 +614,13 @@ def test_hook_phc_backup_restore() -> dict[str, object]:
             "reports_type": type(pre_payload["reports"]).__name__,
         },
     )
+    runs_rows = runs_snapshot.get("runs")
+    run_count = len(runs_rows) if isinstance(runs_rows, list) else 0
     manifest = build_backup_manifest(
-        ideas=len(pre_payload["ideas"]),
-        runs=len(pre_payload["runs"]["runs"]),
-        signals=len(pre_payload["signals"]),
-        reports=len(pre_payload["reports"]),
+        ideas=len(ideas_snapshot),
+        runs=run_count,
+        signals=len(signals_snapshot),
+        reports=len(reports_snapshot),
     )
     validate_backup_manifest(manifest)
     serialized = canonicalize_backup_payload({"manifest": manifest, "data": pre_payload})
@@ -611,10 +630,10 @@ def test_hook_phc_backup_restore() -> dict[str, object]:
     import_signals_snapshot({})
     import_reports_snapshot([])
 
-    import_ideas_snapshot(pre_payload["ideas"])
-    import_runs_snapshot(pre_payload["runs"])
-    import_signals_snapshot(pre_payload["signals"])
-    import_reports_snapshot(pre_payload["reports"])
+    import_ideas_snapshot(ideas_snapshot)
+    import_runs_snapshot(runs_snapshot)
+    import_signals_snapshot(signals_snapshot)
+    import_reports_snapshot(reports_snapshot)
 
     post_payload = {
         "ideas": export_ideas_snapshot(),
@@ -710,20 +729,17 @@ def test_hook_phc_e2e_upgrade() -> dict[str, object]:
 
 @app.post("/internal/test-hooks/phc/security-log-secret-scan")
 def test_hook_phc_security_log_secret_scan() -> dict[str, object]:
-    raw_event = {
+    raw_event: dict[str, object] = {
         "event": "dependency_failure",
         "idea_description": "my startup is Acme AI and revenue is 1234",
         "api_key": "sk-live-secret",
         "client_secret": "client-secret-123",
     }
     sanitized = sanitize_log_event(raw_event)
-    leaked = (
-        any(
-            str(sanitized.get(key, "")).lower().find("secret") >= 0
-            for key in ("api_key", "client_secret")
-        )
-        or sanitized.get("idea_description") != "[REDACTED]"
-    )
+    leaked = any(
+        str(sanitized.get(key, "")).lower().find("secret") >= 0
+        for key in ("api_key", "client_secret")
+    ) or sanitized.get("idea_description") != "[REDACTED]"
     return {"ok": not leaked, "leaked": leaked}
 
 
@@ -836,11 +852,16 @@ def test_hook_phd_e2e_export_import() -> dict[str, object]:
     run = save_run(Run(idea_id=idea.idea_id, tier="low", mode="local-only"))
     start_run(run.run_id)
 
+    ideas_export = export_ideas_snapshot()
+    runs_export = export_runs_snapshot()
+    signals_export = export_signals_snapshot()
+    reports_export = export_reports_snapshot()
+
     pre_export = {
-        "ideas": export_ideas_snapshot(),
-        "runs": export_runs_snapshot(),
-        "signals": export_signals_snapshot(),
-        "reports": export_reports_snapshot(),
+        "ideas": ideas_export,
+        "runs": runs_export,
+        "signals": signals_export,
+        "reports": reports_export,
     }
     _debug_log(
         run_id="pre-fix",
@@ -854,7 +875,7 @@ def test_hook_phd_e2e_export_import() -> dict[str, object]:
             "reports_type": type(pre_export["reports"]).__name__,
         },
     )
-    compat_bundle = {
+    compat_bundle: dict[str, object] = {
         "export_version": "ph-a/ph-c->ph-d",
         "traceability_id": "TC-E2E-300",
         "payload": pre_export,
@@ -866,10 +887,10 @@ def test_hook_phd_e2e_export_import() -> dict[str, object]:
     import_signals_snapshot({})
     import_reports_snapshot([])
 
-    import_ideas_snapshot(pre_export["ideas"])
-    import_runs_snapshot(pre_export["runs"])
-    import_signals_snapshot(pre_export["signals"])
-    import_reports_snapshot(pre_export["reports"])
+    import_ideas_snapshot(ideas_export)
+    import_runs_snapshot(runs_export)
+    import_signals_snapshot(signals_export)
+    import_reports_snapshot(reports_export)
 
     post_export = {
         "ideas": export_ideas_snapshot(),
@@ -885,7 +906,8 @@ def test_hook_phd_e2e_export_import() -> dict[str, object]:
         },
         sort_keys=True,
     )
-    history_rows = post_export["runs"].get("history", {})
+    runs_section = post_export["runs"]
+    history_rows = runs_section.get("history", {}) if isinstance(runs_section, dict) else {}
     history_preserved = isinstance(history_rows, dict) and len(history_rows) > 0
     roundtrip_ok = canonical_before == canonical_after and history_preserved
     return {

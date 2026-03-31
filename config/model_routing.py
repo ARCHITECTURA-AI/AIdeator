@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from copy import deepcopy
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 ALLOWED_MODES = {"local-only", "hybrid", "cloud-enabled"}
 ALLOWED_TIERS = {"low", "medium", "high"}
@@ -35,7 +35,7 @@ def _load_from_file(config_path: Path) -> RoutingConfig:
         payload = json.loads(config_path.read_text(encoding="utf-8"))
     elif suffix in {".yaml", ".yml"}:
         try:
-            import yaml  # type: ignore[import-not-found]
+            import yaml
         except Exception as exc:  # pragma: no cover - dependency optional
             raise ValueError("YAML routing config requires PyYAML to be installed.") from exc
         payload = yaml.safe_load(config_path.read_text(encoding="utf-8"))
@@ -44,7 +44,7 @@ def _load_from_file(config_path: Path) -> RoutingConfig:
 
     if not isinstance(payload, dict):
         raise ValueError("Routing config must be a mapping of mode -> tier -> route.")
-    return payload  # type: ignore[return-value]
+    return cast(RoutingConfig, payload)
 
 
 def validate_model_routing(routing_config: RoutingConfig) -> RoutingConfig:

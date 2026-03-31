@@ -5,10 +5,10 @@ from __future__ import annotations
 import argparse
 import sys
 import webbrowser
-from cmd.rebuild_docs import rebuild_docs
 
 import uvicorn
 
+from aideator.rebuild_docs import rebuild_docs
 from api.config import settings
 
 

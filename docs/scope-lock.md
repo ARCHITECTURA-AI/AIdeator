@@ -1,24 +1,21 @@
-# AIdeator Scope Lock (PH-C)
+# AIdeator Scope Lock (PH-D)
 
 ## Approval Status
 
 - Planning readiness: **GO**
-- Lock scope: **PH-C implementation window**
+- Lock scope: **PH-D implementation window**
 - Lock authority: this file + `docs/execution-plan.md`
 - Change policy: any deviation requires explicit `CR-*` entry before implementation
 
-## MVP Features (PH-C Locked In)
+## MVP Features (PH-D Locked In)
 
-PH-A and PH-B baselines are assumed complete; PH-C scope is now:
+PH-A, PH-B, and PH-C baselines are assumed complete; PH-D scope is now:
 
-- multi-user/run isolation (`TC-I-200`)
-- backup and restore operations in containerized workflows (`TC-I-201`)
-- migration-path reliability (`TC-I-202`)
-- compatibility across minor upgrades (`TC-C-200`, `TC-E2E-200`)
-- operational hardening:
-  - no secret leakage in crash/log output (`TC-S-200`)
-  - secure bind defaults (`TC-S-201`)
-  - long-run soak stability (`TC-P-200`)
+- plugin isolation and extension safety (`TC-I-300`, `TC-C-300`, `TC-S-300`)
+- source expansion with mode-safe boundaries (`TC-I-301`)
+- export/import compatibility (`TC-E2E-300`)
+- eval cost/budget controls (`TC-P-300`)
+- semantic quality evaluation gates (`TC-Q-300`, `TC-Q-301`, `TC-Q-302`)
 
 Carry-forward constraints still mandatory:
 
@@ -30,17 +27,16 @@ Carry-forward constraints still mandatory:
 
 No implementation work for:
 
-- PH-D (`TC-*-300`, `TC-Q-*`): plugin framework, LLM-as-judge quality stack, export/import extensions
-- any net-new API/UI surface that is not required by PH-C IDs and tests listed above
+- post-PH-D expansion not represented in approved artifacts
+- any net-new API/UI surface that is not required by PH-D IDs and tests listed above
 
 ## Approved Slice Order (Locked)
 
-1. Isolation foundations (`TC-I-200`)
-2. Backup/restore (`TC-I-201`)
-3. Migration reliability (`TC-I-202`)
-4. Compatibility/upgrade (`TC-C-200`, `TC-E2E-200`)
-5. Operational security (`TC-S-200`, `TC-S-201`)
-6. Soak/performance (`TC-P-200`)
+1. Plugin isolation foundations (`TC-I-300`, `TC-C-300`, `TC-S-300`)
+2. Source expansion boundaries (`TC-I-301`)
+3. Export/import compatibility (`TC-E2E-300`)
+4. Eval cost/runtime controls (`TC-P-300`)
+5. Semantic quality gates (`TC-Q-300`, `TC-Q-301`, `TC-Q-302`)
 
 Do not reorder without updating both lock files.
 
@@ -48,22 +44,23 @@ Do not reorder without updating both lock files.
 
 - Start work from `docs/test-plan.md` and `docs/traceability.md`, not from ad-hoc implementation ideas.
 - Every code change must point to affected `TC-*` IDs before merge.
-- A PH-C item is not complete until mapped tests are green and traceability still resolves to valid IDs.
+- A PH-D item is not complete until mapped tests are green and traceability still resolves to valid IDs.
 
-Minimum PH-C gates:
+Minimum PH-D gates:
 
-- isolation: `TC-I-200`
-- durability: `TC-I-201`, `TC-I-202`
-- upgrade safety: `TC-C-200`, `TC-E2E-200`
-- operational hardening: `TC-S-200`, `TC-S-201`, `TC-P-200`
+- plugin safety: `TC-I-300`, `TC-C-300`, `TC-S-300`
+- boundary compliance: `TC-I-301`
+- portability/compatibility: `TC-E2E-300`
+- runtime cost control: `TC-P-300`
+- semantic quality: `TC-Q-300`, `TC-Q-301`, `TC-Q-302`
 
 ## Enforcement Rules
 
-- No opportunistic expansion beyond PH-C lock.
+- No opportunistic expansion beyond PH-D lock.
 - No new ID families; keep `FR-*`, `NFR-*`, `INV-*`, `SAFE-*`, `TC-*`, `ADR-*`, `CR-*`.
 - If scope is disputed or unstable, stop implementation and resolve docs first.
 
 ## Approval Record
 
-- State: **ACTIVE PH-C LOCK**
+- State: **ACTIVE PH-D LOCK**
 - This file is the enforceable boundary for implementation decisions.

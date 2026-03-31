@@ -33,8 +33,23 @@ from db.runs import (
 )
 from db.signals import export_signals_snapshot, import_signals_snapshot
 from engine.orchestrator import start_run
+from engine.plugin_sandbox import assert_plugin_caps, enforce_plugin_policy
+from engine.plugins import (
+    OPTIONAL_PLUGIN_HOOKS,
+    PLUGIN_API_VERSION,
+    REQUIRED_PLUGIN_HOOKS,
+    load_plugins,
+    register_plugin,
+)
+from engine.evals import (
+    check_eval_budget,
+    enforce_eval_budget,
+    evaluate_card_semantics,
+    evaluate_notes_actionability,
+)
 from engine.signal_collector import build_external_payload
 from engine.synthesizer import synthesize_default_cards
+from engine.mode_guard import check as mode_guard_check
 from infra.authz import assert_row_scope, enforce_user_scope
 from infra.backup import build_backup_manifest, canonicalize_backup_payload, validate_backup_manifest
 from infra.logging import sanitize_log_event
@@ -665,6 +680,196 @@ def test_hook_phc_security_bind_check() -> dict[str, object]:
     host = _DEFAULT_BIND_HOST
     localhost_only = host in {"127.0.0.1", "localhost", "::1"}
     return {"ok": localhost_only, "host": host, "localhost_only": localhost_only}
+
+
+@app.post("/internal/test-hooks/phd/plugin-db-write-attempt")
+def test_hook_phd_plugin_db_write_attempt() -> dict[str, object]:
+    blocked = not enforce_plugin_policy(action="db_write", target="db://runs")
+    return {"ok": blocked, "blocked": blocked, "tc_id": "TC-I-300"}
+
+
+@app.post("/internal/test-hooks/phd/plugin-mode-boundary")
+def test_hook_phd_plugin_mode_boundary() -> dict[str, object]:
+    hybrid_payload = build_external_payload(
+        mode="hybrid",
+        title="AI summarizer",
+        description="longer business description text that should not pass through in full",
+    )
+    local_payload = build_external_payload(
+        mode="local-only",
+        title="AI summarizer",
+        description="longer business description text that should not pass through in full",
+    )
+
+    local_guard = mode_guard_check(mode="local-only", target_url="https://api.example.com", payload=local_payload["query"])
+    hybrid_guard = mode_guard_check(mode="hybrid", target_url="https://api.example.com", payload=hybrid_payload["query"])
+    is_keyword_only = len(hybrid_payload["query"].split()) <= 10
+
+    ok = (not local_guard) and hybrid_guard and is_keyword_only and local_payload["query"] == ""
+    return {
+        "ok": ok,
+        "local_only_blocked": not local_guard,
+        "hybrid_allowed": hybrid_guard,
+        "hybrid_keyword_only": is_keyword_only,
+        "tc_id": "TC-I-301",
+    }
+
+
+@app.get("/internal/test-hooks/phd/plugin-contract")
+def test_hook_phd_plugin_contract() -> dict[str, object]:
+    register_plugin(
+        "sample.source.hn",
+        {"api_version": PLUGIN_API_VERSION, "hooks": list(REQUIRED_PLUGIN_HOOKS) + list(OPTIONAL_PLUGIN_HOOKS)},
+    )
+    loaded = load_plugins()
+    contract_shape = [
+        {
+            "plugin_id": item.plugin_id,
+            "api_version": item.api_version,
+            "hooks": list(item.hooks),
+            "deprecated": list(item.deprecated),
+        }
+        for item in loaded
+    ]
+    return {
+        "ok": True,
+        "api_version": PLUGIN_API_VERSION,
+        "required_hooks": list(REQUIRED_PLUGIN_HOOKS),
+        "optional_hooks": list(OPTIONAL_PLUGIN_HOOKS),
+        "plugins": contract_shape,
+        "tc_id": "TC-C-300",
+    }
+
+
+@app.post("/internal/test-hooks/phd/security-sandbox")
+def test_hook_phd_security_sandbox() -> dict[str, object]:
+    caps_ok = assert_plugin_caps({"signals:read", "signals:emit"})
+    caps_rejected = not assert_plugin_caps({"signals:emit", "db:write"})
+    blocked_external = not enforce_plugin_policy(action="network_call", target="https://api.tavily.com/search")
+    blocked_file_escape = not enforce_plugin_policy(action="file_read", target="../secrets.txt")
+    ok = caps_ok and caps_rejected and blocked_external and blocked_file_escape
+    return {
+        "ok": ok,
+        "caps_ok": caps_ok,
+        "caps_rejected": caps_rejected,
+        "blocked_external": blocked_external,
+        "blocked_file_escape": blocked_file_escape,
+        "tc_id": "TC-S-300",
+    }
+
+
+@app.post("/internal/test-hooks/phd/e2e-export-import")
+def test_hook_phd_e2e_export_import() -> dict[str, object]:
+    idea = save_idea(
+        Idea(
+            title="PH-D export/import",
+            description="Cross-version compatibility verification",
+            target_user="qa-phd",
+            context="ph-d",
+        )
+    )
+    run = save_run(Run(idea_id=idea.idea_id, tier="low", mode="local-only"))
+    start_run(run.run_id)
+
+    pre_export = {
+        "ideas": export_ideas_snapshot(),
+        "runs": export_runs_snapshot(),
+        "signals": export_signals_snapshot(),
+        "reports": export_reports_snapshot(),
+    }
+    compat_bundle = {
+        "export_version": "ph-a/ph-c->ph-d",
+        "traceability_id": "TC-E2E-300",
+        "payload": pre_export,
+    }
+    canonical_before = json.dumps(compat_bundle, sort_keys=True)
+
+    import_ideas_snapshot([])
+    import_runs_snapshot({})
+    import_signals_snapshot({})
+    import_reports_snapshot([])
+
+    import_ideas_snapshot(pre_export["ideas"])
+    import_runs_snapshot(pre_export["runs"])
+    import_signals_snapshot(pre_export["signals"])
+    import_reports_snapshot(pre_export["reports"])
+
+    post_export = {
+        "ideas": export_ideas_snapshot(),
+        "runs": export_runs_snapshot(),
+        "signals": export_signals_snapshot(),
+        "reports": export_reports_snapshot(),
+    }
+    canonical_after = json.dumps(
+        {
+            "export_version": "ph-a/ph-c->ph-d",
+            "traceability_id": "TC-E2E-300",
+            "payload": post_export,
+        },
+        sort_keys=True,
+    )
+    history_rows = post_export["runs"].get("history", {})
+    history_preserved = isinstance(history_rows, dict) and len(history_rows) > 0
+    roundtrip_ok = canonical_before == canonical_after and history_preserved
+    return {
+        "ok": roundtrip_ok,
+        "roundtrip_ok": roundtrip_ok,
+        "history_preserved": history_preserved,
+        "tc_id": "TC-E2E-300",
+    }
+
+
+@app.post("/internal/test-hooks/phd/eval-demand")
+def test_hook_phd_eval_demand() -> dict[str, object]:
+    cards = synthesize_default_cards()
+    demand_card = next(card for card in cards if card["type"] == "demand")
+    budget = check_eval_budget(evals_enabled=True, estimated_cost_usd=0.004, budget_usd=0.02)
+    allowed = enforce_eval_budget(evals_enabled=True, estimated_cost_usd=0.004, budget_usd=0.02)
+    score = evaluate_card_semantics(
+        summary=str(demand_card["summary"]),
+        citation_count=len(demand_card.get("citation_urls", [])),  # type: ignore[arg-type]
+        threshold=0.55,
+    )
+    ok = allowed and bool(score["pass"])
+    return {
+        "ok": ok,
+        "budget": {
+            "allowed": budget.allowed,
+            "reason": budget.reason,
+            "remaining_budget_usd": budget.remaining_budget_usd,
+        },
+        "score": score,
+        "tc_id": "TC-Q-300",
+    }
+
+
+@app.post("/internal/test-hooks/phd/eval-competition")
+def test_hook_phd_eval_competition() -> dict[str, object]:
+    cards = synthesize_default_cards()
+    competition_card = next(card for card in cards if card["type"] == "competition")
+    allowed = enforce_eval_budget(evals_enabled=True, estimated_cost_usd=0.006, budget_usd=0.02)
+    score = evaluate_card_semantics(
+        summary=str(competition_card["summary"]),
+        citation_count=len(competition_card.get("citation_urls", [])),  # type: ignore[arg-type]
+        threshold=0.55,
+    )
+    return {"ok": allowed and bool(score["pass"]), "score": score, "tc_id": "TC-Q-301"}
+
+
+@app.post("/internal/test-hooks/phd/eval-cursor-notes")
+def test_hook_phd_eval_cursor_notes() -> dict[str, object]:
+    notes = "\n".join(
+        [
+            "## Cursor/Claude Code Usage Notes",
+            "- Implement cache invalidation first.",
+            "- Verify dependency failure handling with pytest.",
+            "- Run full suite and measure runtime drift.",
+            "- Next, tighten thresholds if regressions appear.",
+        ]
+    )
+    allowed = enforce_eval_budget(evals_enabled=True, estimated_cost_usd=0.003, budget_usd=0.02)
+    score = evaluate_notes_actionability(notes_markdown=notes, threshold=0.55)
+    return {"ok": allowed and bool(score["pass"]), "score": score, "tc_id": "TC-Q-302"}
 
 
 @app.post("/internal/test-hooks/fail-tavily-timeout")

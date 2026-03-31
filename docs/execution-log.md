@@ -838,3 +838,187 @@ If a future spec pass finds that implementation needs to intentionally diverge f
 
 - Replace in-hook security assertions with reusable security diagnostics module if soak harness introduces deeper runtime scanning.
 
+---
+
+## Spec Pass — PH-D Lock (Red Baseline Check)
+
+- Date: `2026-03-31`
+- Modes: `Spec Pass 1`, `Spec Pass 2`, `Spec Pass 3`
+- Context:
+  - PH-D lock files:
+    - `docs/execution-plan.md` (PH-D)
+    - `docs/scope-lock.md` (PH-D)
+  - PH-D target IDs:
+    - `TC-I-300`, `TC-I-301`
+    - `TC-C-300`, `TC-E2E-300`
+    - `TC-S-300`
+    - `TC-P-300`
+    - `TC-Q-300`, `TC-Q-301`, `TC-Q-302`
+
+### Spec Pass 1 — Spec vs Repo Structure (PH-D)
+
+- Verified that PH-D work remains inside the existing architecture map; no new top-level modules were added.
+- Found PH-D red-baseline test files in expected layers:
+  - integration: `tests/integration/test_phd_plugin_runtime_red.py` (`TC-I-300`, `TC-I-301`)
+  - contract: `tests/contract/test_phd_plugin_contracts_red.py` (`TC-C-300`)
+  - e2e: `tests/e2e/test_phd_export_import_red.py` (`TC-E2E-300`)
+  - security: `tests/security/test_phd_plugin_security_red.py` (`TC-S-300`)
+  - performance: `tests/performance/test_phd_perf_red.py` (`TC-P-300`)
+  - quality/evals: `tests/quality/test_phd_quality_evals_red.py` (`TC-Q-300`, `TC-Q-301`, `TC-Q-302`)
+
+**Result:** structure is consistent with PH-D plan; all PH-D `TC-*`/`TC-Q-*` IDs have homes.
+
+### Spec Pass 2 — Spec vs Tests and Traceability (PH-D)
+
+- `docs/test-plan.md` and `docs/traceability.md` define PH-D IDs, and each one has a corresponding test stub in `tests/`.
+- Some tests are intentionally locked red or skipped (e.g. `TC-P-300`), matching the red-baseline pattern used for earlier phases.
+
+**Result:** no PH-D coverage gap at the spec↔tests level; the red baseline is enumerated and present.
+
+### Spec Pass 3 — Spec vs Implementation / Runtime Signals (PH-D)
+
+- Implementation:
+  - No PH-D runtime features (plugin framework, eval cost management, new sources, cross-version export/import, quality evals) are yet implemented.
+  - Existing behavior remains PH-A/B/C-only.
+- Runtime:
+  - No PH-D-specific runtime signals exist, which is expected at the pre-implementation red-baseline stage.
+
+**Result:** no PH-D behavior drift; all divergence is “not implemented yet”, not “implemented differently.”
+
+### Drift Summary (PH-D)
+
+- **Requirement coverage:** PH-D requirements are present in docs and enforced via red-baseline tests.
+- **Interface/schema drift:** none observed; no PH-D contracts have shipped.
+- **Slice ordering drift:** none; PH-D work has not begun and order remains docs-only.
+- **Conventions drift:** PH-D tests follow naming and layering rules.
+- **Missing runtime signals:** expected for PH-D; implementations are still to come.
+- **Stale Notion imports:** unchanged, cannot be evaluated locally.
+
+### Affected IDs (PH-D)
+
+- `TC-I-300`, `TC-I-301`
+- `TC-C-300`, `TC-E2E-300`
+- `TC-S-300`
+- `TC-P-300`
+- `TC-Q-300`, `TC-Q-301`, `TC-Q-302`
+- and related invariants/decisions:
+  - `INV-001`, `INV-002`, `SAFE-005`
+  - `NO-005`, `NO-008`, `NO-011`
+  - `ADR-001`, `ADR-007`
+
+### Required CR-* Entries
+
+- None at this stage, as there is no PH-D implementation drift.
+
+### Go / No-Go Recommendation (PH-D)
+
+- **Go** to start PH-D slices, strictly following the PH-D order in `docs/execution-plan.md` / `docs/scope-lock.md` and test-first rules.
+
+---
+
+## PH-D Slice Execution — S1 + S2
+
+- Date: `2026-03-31`
+- Scope: `PH-D-S1` + `PH-D-S2` only
+- Slice goals:
+  - `PH-D-S1`: plugin isolation foundations
+  - `PH-D-S2`: source expansion boundaries through ModeGuard
+
+### Current Slice Summary
+
+- Implemented PH-D plugin boundary primitives and wired PH-D test hooks required by S1/S2.
+- Added runtime checks proving DB-write blocking, sandbox capability enforcement, and mode-boundary behavior for new plugin sources.
+
+### Linked IDs (`FR-*`, `TC-*`, `CR-*`)
+
+- `TC-U-300`, `TC-U-301`, `TC-I-300`, `TC-I-301`, `TC-C-300`, `TC-S-300`
+- `SAFE-005`, `INV-001`, `INV-002`, `NO-008`, `ADR-001`
+- `CR-*`: none
+
+### Implementation Notes
+
+- Added `engine/plugins.py`:
+  - stable plugin contract constants (`PLUGIN_API_VERSION`, required/optional hooks)
+  - `register_plugin(...)` and `load_plugins(...)` for deterministic plugin contract loading (`TC-U-300`, `TC-C-300`)
+- Added `engine/plugin_sandbox.py`:
+  - explicit capability allow-list
+  - policy gates for DB write/file read/network call actions (`TC-U-301`, `TC-I-300`, `TC-S-300`)
+- Updated `api/app.py` with PH-D test hooks:
+  - `POST /internal/test-hooks/phd/plugin-db-write-attempt`
+  - `POST /internal/test-hooks/phd/plugin-mode-boundary`
+  - `GET /internal/test-hooks/phd/plugin-contract`
+  - `POST /internal/test-hooks/phd/security-sandbox`
+- `plugin-mode-boundary` path explicitly routes new-source-style payloads through existing ModeGuard checks and hybrid keyword truncation semantics (`TC-I-301`).
+
+### Verification Results
+
+- Targeted red->green (slice-bounded):
+  - `pytest tests/unit/test_phd_plugin_and_eval_red.py -k "tc_u_300 or tc_u_301"` -> pass
+  - `pytest tests/integration/test_phd_plugin_runtime_red.py tests/contract/test_phd_plugin_contracts_red.py tests/security/test_phd_plugin_security_red.py` -> pass
+- Impacted PH-D suite:
+  - `pytest tests/unit/test_phd_plugin_and_eval_red.py tests/integration/test_phd_plugin_runtime_red.py tests/contract/test_phd_plugin_contracts_red.py tests/e2e/test_phd_export_import_red.py tests/security/test_phd_plugin_security_red.py tests/performance/test_phd_perf_red.py tests/quality/test_phd_quality_evals_red.py`
+  - result: fails only on out-of-slice IDs (`TC-U-302`, `TC-E2E-300`, `TC-Q-300..302`)
+- Full suite:
+  - `pytest -q`
+  - result: same five expected PH-D out-of-slice failures (`TC-U-302`, `TC-E2E-300`, `TC-Q-300..302`)
+
+### New Risks or Blockers
+
+- `BLOCKER-PHD-S3-S5-001`: full-suite green cannot be achieved while `PH-D-S3`/`PH-D-S4`/`PH-D-S5` remain unimplemented because locked tests for `TC-E2E-300`, `TC-U-302`, and `TC-Q-300..302` are still red.
+- No drift detected for S1/S2 scope; failures are aligned to future approved slices.
+
+### Deferred Refactors
+
+- Consolidate PH-D test hook logic into a dedicated module (`api/test_hooks_phd.py`) once S3-S5 hooks are implemented, to keep `api/app.py` slim without changing behavior.
+
+---
+
+## PH-D Slice Execution — S3 + S4 + S5
+
+- Date: `2026-03-31`
+- Scope: `PH-D-S3` + `PH-D-S4` + `PH-D-S5`
+
+### Current Slice Summary
+
+- Completed the remaining PH-D slices by implementing cross-version export/import hook coverage, eval budget controls, and quality eval endpoints.
+- PH-D is now fully implemented for locked tests in this phase.
+
+### Linked IDs (`FR-*`, `TC-*`, `CR-*`)
+
+- `TC-U-302`, `TC-E2E-300`, `TC-P-300`, `TC-Q-300`, `TC-Q-301`, `TC-Q-302`
+- `NO-005`, `COV-001`, `FR-005`, `FR-006`, `NO-011`
+- `CR-*`: none
+
+### Implementation Notes
+
+- Added `engine/evals.py`:
+  - `check_eval_budget(...)`
+  - `enforce_eval_budget(...)`
+  - `evaluate_card_semantics(...)`
+  - `evaluate_notes_actionability(...)`
+- Updated `api/app.py` with remaining PH-D hooks:
+  - `POST /internal/test-hooks/phd/e2e-export-import` (`TC-E2E-300`)
+  - `POST /internal/test-hooks/phd/eval-demand` (`TC-Q-300`)
+  - `POST /internal/test-hooks/phd/eval-competition` (`TC-Q-301`)
+  - `POST /internal/test-hooks/phd/eval-cursor-notes` (`TC-Q-302`)
+- `e2e-export-import` now executes a deterministic export->clear->import->re-export roundtrip and validates canonical parity and run-history preservation.
+- Eval hooks enforce explicit budget checks before scoring; this preserves PH-D budget guard intent while `TC-P-300` remains lock-skipped.
+
+### Verification Results
+
+- Targeted:
+  - `pytest tests/unit/test_phd_plugin_and_eval_red.py tests/e2e/test_phd_export_import_red.py tests/quality/test_phd_quality_evals_red.py` -> pass
+- Impacted PH-D suite:
+  - `pytest tests/unit/test_phd_plugin_and_eval_red.py tests/integration/test_phd_plugin_runtime_red.py tests/contract/test_phd_plugin_contracts_red.py tests/e2e/test_phd_export_import_red.py tests/security/test_phd_plugin_security_red.py tests/performance/test_phd_perf_red.py tests/quality/test_phd_quality_evals_red.py`
+  - result: `11 passed, 1 skipped` (`TC-P-300` lock-skip)
+- Full suite:
+  - `pytest -q` -> pass with expected locked skips
+
+### New Risks or Blockers
+
+- No active PH-D blockers remain in the current lock window.
+- Remaining risk is confined to the intentional `TC-P-300` skip until a dedicated perf harness is approved and implemented.
+
+### Deferred Refactors
+
+- Move all PH-D test-hook handlers from `api/app.py` into `api/test_hooks/phd.py` after lock closure to reduce route-file size.

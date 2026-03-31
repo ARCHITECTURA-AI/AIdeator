@@ -91,3 +91,31 @@
 - `BLOCKER-PHC-001`: PH-C test hooks under `/internal/test-hooks/phc/*` are not implemented.
 - `BLOCKER-PHC-002`: PH-C infra modules for authz/backup and migration invariant guard are missing (`infra.authz`, `infra.backup`, `migrations.guard`).
 - `BLOCKER-PHC-003`: PH-C API compatibility contract harness is not implemented (`TC-C-200`, `TC-E2E-200`).
+
+---
+## PH-D Change Set (2026-03-31)
+
+### Added PH-D Test Files
+- `tests/unit/test_phd_plugin_and_eval_red.py`
+- `tests/integration/test_phd_plugin_runtime_red.py`
+- `tests/contract/test_phd_plugin_contracts_red.py`
+- `tests/e2e/test_phd_export_import_red.py`
+- `tests/security/test_phd_plugin_security_red.py`
+- `tests/performance/test_phd_perf_red.py`
+- `tests/quality/test_phd_quality_evals_red.py`
+
+### PH-D Red Baseline Run Audit
+- Latest run command: `pytest`
+- Exit code: `1` (expected)
+- Result summary: `11 failed, 81 passed, 7 skipped`
+- Evidence file: `docs/test-red-baseline.md`
+
+### PH-D Lock Extensions
+- `TC-U-300..302`, `TC-I-300..301`, `TC-C-300`, `TC-E2E-300`, `TC-S-300`, `TC-P-300`, `TC-Q-300..302` are now locked as append-only IDs.
+- `TC-P-300` remains skipped until PH-D eval-cost harness exists; unskip requires baseline refresh and traceability confirmation.
+- Any PH-D plugin API, sandbox, or eval-threshold contract shift requires same-change updates to `docs/traceability.md` and this audit log.
+
+### PH-D Blockers (Not TODOs)
+- `BLOCKER-PHD-001`: PH-D test hooks under `/internal/test-hooks/phd/*` are not implemented.
+- `BLOCKER-PHD-002`: PH-D plugin/eval core modules are missing (`engine.plugins`, `engine.plugin_sandbox`, `engine.evals`).
+- `BLOCKER-PHD-003`: PH-D quality-eval harness endpoints for `TC-Q-300..302` are not implemented.

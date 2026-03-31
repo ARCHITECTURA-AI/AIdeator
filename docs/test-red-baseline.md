@@ -63,3 +63,23 @@
 2. Confirm non-zero exit code.
 3. Confirm PH-C failures are concentrated in `TC-*-200+`.
 4. Confirm skip list includes `TC-P-200`.
+
+---
+## PH-D Baseline Metadata
+- Date: 2026-03-31
+- Command: `pytest`
+- Scope: PH-D `300+` test authoring and lock audit
+- Result: **RED (expected)**, exit code `1`
+
+## PH-D Red Evidence Snapshot
+- Summary: `11 failed, 81 passed, 7 skipped in 2.22s`
+- Newly skipped performance test: `TC-P-300`
+- Failure class A (PH-D hooks/contracts not implemented): missing `/internal/test-hooks/phd/*` endpoints (`404`)
+- Failure class B (PH-D plugin/eval modules missing): `engine.plugins`, `engine.plugin_sandbox`, `engine.evals`
+- Failure class C (PH-D quality/eval harness missing): `TC-Q-300`, `TC-Q-301`, `TC-Q-302` endpoint hooks absent
+
+## PH-D Reproducibility
+1. From repo root run `pytest`.
+2. Confirm non-zero exit code.
+3. Confirm PH-D failures are concentrated in `TC-*-300+`.
+4. Confirm skip list includes `TC-P-300`.

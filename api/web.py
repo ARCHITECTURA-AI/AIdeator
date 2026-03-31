@@ -122,7 +122,7 @@ def _idea_rows() -> list[dict[str, object]]:
 def _run_rows(*, idea_filter: UUID | None = None) -> list[dict[str, object]]:
     idea_title_map = {idea.idea_id: idea.title for idea in list_ideas()}
     source = list_runs_for_idea(idea_filter) if idea_filter else list_runs()
-    rows = []
+    rows: list[dict[str, object]] = []
     for run in source:
         rows.append(
             {

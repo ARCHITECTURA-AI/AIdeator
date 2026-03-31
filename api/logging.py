@@ -16,7 +16,8 @@ from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import Request
-from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from starlette.responses import Response
 
 from api.config import settings
 
@@ -75,7 +76,7 @@ def _safe_path(path: str) -> str:
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):  # type: ignore[override]
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         logger = logging.getLogger("api.request")
         start = time.perf_counter()
         status_code = 500

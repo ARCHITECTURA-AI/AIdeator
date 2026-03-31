@@ -15,4 +15,4 @@ def test_healthz_smoke() -> None:
     client = TestClient(app)
     res = client.get("/healthz")
     assert res.status_code == 200
-    assert res.json() == {"status": "ok"}
+    assert res.json() == {"status": "ok", "db": "ok"}

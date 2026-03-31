@@ -39,7 +39,7 @@ def _parse_bool(value: str | None, *, default: bool = False) -> bool:
 
 def _default_mode_from_env(raw: str) -> RunMode:
     normalized = raw.strip().lower()
-    mapping = {
+    mapping: dict[str, RunMode] = {
         "local": "local-only",
         "local-only": "local-only",
         "hybrid": "hybrid",

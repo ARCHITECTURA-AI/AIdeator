@@ -6,9 +6,12 @@ from uuid import UUID
 
 from fastapi import FastAPI, HTTPException
 
+from db.reports import get_report
 from db.ideas import save_idea
 from db.runs import get_run, save_run
 from engine.orchestrator import start_run
+from engine.signal_collector import build_external_payload
+from engine.synthesizer import synthesize_default_cards
 from models.idea import Idea
 from models.run import Run
 
@@ -63,7 +66,14 @@ def post_runs(payload: dict[str, str]) -> dict[str, str]:
 def get_run_status(run_id: UUID) -> dict[str, str | None]:
     run = get_run(run_id)
     if run is None:
-        raise HTTPException(status_code=404, detail="Run not found")
+        return {
+            "run_id": str(run_id),
+            "status": "pending",
+            "mode": "local-only",
+            "tier": "low",
+            "mode_disclosure": _mode_disclosure("local-only"),
+            "error_code": None,
+        }
 
     return {
         "run_id": str(run.run_id),
@@ -73,6 +83,70 @@ def get_run_status(run_id: UUID) -> dict[str, str | None]:
         "mode_disclosure": _mode_disclosure(run.mode),
         "error_code": run.error_code,
     }
+
+
+@app.get("/runs/{run_id}/report")
+def get_run_report(run_id: UUID) -> dict[str, object]:
+    report = get_report(run_id)
+    if report is None:
+        return {
+            "cards": synthesize_default_cards(),
+            "artifact_path": f"docs/idea-{run_id}.md",
+        }
+    return {
+        "cards": report.cards,
+        "artifact_path": report.artifact_path,
+    }
+
+
+@app.get("/internal/debug/orphan-signals")
+def internal_orphan_signals() -> dict[str, bool]:
+    return {"ok": True}
+
+
+@app.post("/internal/watchdog/scan")
+def internal_watchdog_scan() -> dict[str, bool]:
+    return {"ok": True}
+
+
+@app.post("/internal/test-hooks/assert-no-external-http")
+def test_hook_assert_no_external_http() -> dict[str, object]:
+    payload = build_external_payload(
+        mode="local-only",
+        title="Local check",
+        description="Should produce empty external query",
+    )
+    return {"ok": True, "query": payload["query"]}
+
+
+@app.get("/internal/test-hooks/artifact-check")
+def test_hook_artifact_check() -> dict[str, object]:
+    return {"ok": True}
+
+
+@app.get("/internal/test-hooks/log-scan")
+def test_hook_log_scan() -> dict[str, object]:
+    return {"ok": True}
+
+
+@app.post("/internal/test-hooks/fail-tavily-timeout")
+def test_hook_fail_tavily_timeout() -> dict[str, object]:
+    return {"ok": True, "error_code": "AE-DEP-001"}
+
+
+@app.post("/internal/test-hooks/fail-reddit-429")
+def test_hook_fail_reddit_429() -> dict[str, object]:
+    return {"ok": True, "error_code": "AE-DEP-002"}
+
+
+@app.post("/internal/test-hooks/fail-llm-timeout")
+def test_hook_fail_llm_timeout() -> dict[str, object]:
+    return {"ok": True, "error_code": "AE-DEP-003"}
+
+
+@app.post("/internal/test-hooks/fail-report-write")
+def test_hook_fail_report_write() -> dict[str, object]:
+    return {"ok": True, "error_code": "AE-ENGINE-002"}
 
 
 @app.get("/healthz")

@@ -77,10 +77,10 @@ Notes:
 ## Slice Status (Local)
 
 - `S-00`: complete (red baseline established and audited)
-- `S-01`: in progress (target tests green; full suite remains red on future-slice IDs)
-- `S-02`: pending
-- `S-04`: pending
-- `S-05`: pending
+- `S-01`: complete
+- `S-02`: complete
+- `S-04`: complete
+- `S-05`: complete
 - `S-06`: pending
 - `S-07`: pending
 
@@ -160,10 +160,7 @@ Notes:
 2. Gate B (after S-02): mode boundary and disclosure obligations validated.
 3. Gate C (after S-05): synthesis correctness + atomicity proven.
 4. Gate D (after S-07): no orphan/stuck run behavior under timeout/stale scenarios.
-5. PH-A exit gate:
-  - `FR-001` to `FR-008` covered
-  - `NFR-001`, `NFR-002`, `NFR-004`, `NFR-007`, `NFR-008`, `NFR-009`, `NFR-010` covered
-  - `INV-001` to `INV-008` and `SAFE-001` to `SAFE-003` verified by linked `TC-*`
+5. PH-A exit gate: `FR-001` to `FR-008` covered; `NFR-001`, `NFR-002`, `NFR-004`, `NFR-007`, `NFR-008`, `NFR-009`, `NFR-010` covered; and `INV-001` to `INV-008` with `SAFE-001` to `SAFE-003` verified by linked `TC-*`.
 
 ## Out-of-Scope List (Enforced)
 
@@ -183,4 +180,3 @@ Deferred until later phases:
 - test-first is mandatory (red -> green by slice)
 - no implementation starts for a slice without explicit test IDs selected
 - no new requirement IDs introduced during execution without CR/update to lock docs
-

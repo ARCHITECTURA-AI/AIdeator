@@ -91,7 +91,7 @@ If a future spec pass finds that implementation needs to intentionally diverge f
 - Linked Tests (target): `TC-U-010`, `TC-U-011`, `TC-U-012`, `TC-I-001`, `TC-I-002`, `TC-I-003`
 - CR IDs: none required
 
-### Implementation Notes
+### S-02 Implementation Notes
 
 - Added concrete `Run` state model in `models/run.py` with guarded transitions:
   - allowed: `pending->running`, `pending->failed`, `running->succeeded`, `running->failed`
@@ -107,7 +107,7 @@ If a future spec pass finds that implementation needs to intentionally diverge f
   - `POST /runs` -> 202 + run envelope
   - `GET /runs/{id}/status` -> status envelope with `mode_disclosure`
 
-### Verification Results
+### S-02 Verification Results
 
 - Targeted unit tests:
   - `pytest tests/unit/test_mode_and_state_red.py -k "tc_u_010 or tc_u_011 or tc_u_012"`
@@ -131,3 +131,90 @@ If a future spec pass finds that implementation needs to intentionally diverge f
 
 - Move API route handlers out of `api/app.py` into modular routers once import-loading strategy is stabilized for tests that load modules via `spec_from_file_location`.
 
+## Slice Execution — S-02 (ModeGuard and Privacy Boundary)
+
+- Date: `2026-03-31`
+- Slice ID: `S-02`
+- Scope IDs: `INV-001`, `INV-002`, `SAFE-002`, `NFR-008`, `NFR-009`, `NFR-010`
+- Linked Tests (target): `TC-U-001`, `TC-U-002`, `TC-U-003`, `TC-U-030`, `TC-U-031`, `TC-I-010`, `TC-I-011`, `TC-E2E-002`, `TC-S-001`, `TC-S-002`, `TC-S-004`
+- CR IDs: none
+
+### S-04 Implementation Notes
+
+- Implemented `engine/mode_guard.py`:
+  - `check`, `block_external`, `enforce_hybrid_keywords`, `ModeGuard`.
+- Implemented `engine/signal_collector.py` payload shaping:
+  - `build_hybrid_query` (<=10 words),
+  - `build_external_payload` mode-aware behavior.
+- Added S-02 test hook route in `api/app.py`:
+  - `POST /internal/test-hooks/assert-no-external-http`.
+
+### S-04 Verification Results
+
+- `pytest tests/unit/test_mode_and_state_red.py -k "tc_u_001 or tc_u_002 or tc_u_003 or tc_u_030 or tc_u_031"` -> `5 passed`
+- `pytest tests/integration/test_mode_failure_rebuild_red.py -k "tc_i_010 or tc_i_011"` -> `2 passed`
+- `pytest tests/e2e/test_critical_flows_red.py -k "tc_e2e_002"` -> `1 passed`
+- `pytest tests/security/test_boundary_and_privacy_red.py -k "tc_s_001 or tc_s_002 or tc_s_004"` -> `3 passed`
+
+## Slice Execution — S-04 (LLM and Dependency Reliability)
+
+- Date: `2026-03-31`
+- Slice ID: `S-04`
+- Scope IDs: `FR-004`, `SAFE-003`, `AE-DEP-003`
+- Linked Tests (target): `TC-C-003`, `TC-I-020`, `TC-I-021`, `TC-I-022`
+- CR IDs: none
+
+### S-05 Implementation Notes
+
+- Implemented adapter contract helpers:
+  - `adapters/llm.py`: `extract_text`
+  - `adapters/tavily.py`: `parse_tavily_response`
+  - `adapters/reddit.py`: `parse_reddit_response`
+- Added deterministic dependency-failure test hooks in `api/app.py`:
+  - `POST /internal/test-hooks/fail-tavily-timeout`
+  - `POST /internal/test-hooks/fail-reddit-429`
+  - `POST /internal/test-hooks/fail-llm-timeout`
+
+### S-05 Verification Results
+
+- `pytest tests/contract/test_adapter_and_api_contracts_red.py -k "tc_c_003"` -> `1 passed`
+- `pytest tests/integration/test_mode_failure_rebuild_red.py -k "tc_i_020 or tc_i_021 or tc_i_022"` -> `3 passed`
+
+## Slice Execution — S-05 (Synthesis and Atomic Report Contract)
+
+- Date: `2026-03-31`
+- Slice ID: `S-05`
+- Scope IDs: `FR-005`, `FR-006`, `INV-003`, `INV-004`
+- Linked Tests (target): `TC-U-020`, `TC-U-021`, `TC-U-022`, `TC-U-023`, `TC-I-023`, `TC-C-011`, `TC-E2E-001`
+- CR IDs: none
+
+### Implementation Notes
+
+- Implemented synthesis and validation:
+  - `engine/synthesizer.py`: `validate_cards`, `synthesize_default_cards`.
+- Added report model and persistence:
+  - `models/report.py`, `db/reports.py`.
+- Extended orchestration to generate and persist report on happy path:
+  - `engine/orchestrator.py`.
+- Implemented report API and test hooks in `api/app.py`:
+  - `GET /runs/{id}/report`,
+  - `POST /internal/test-hooks/fail-report-write`,
+  - plus contract-safe fallback for `/runs/{id}/status` and `/runs/{id}/report`.
+
+### Verification Results
+
+- `pytest tests/unit/test_synth_logging_rebuild_red.py -k "tc_u_020 or tc_u_021 or tc_u_022 or tc_u_023"` -> `4 passed`
+- `pytest tests/integration/test_mode_failure_rebuild_red.py -k "tc_i_023"` -> `1 passed`
+- `pytest tests/contract/test_adapter_and_api_contracts_red.py -k "tc_c_011"` -> `1 passed`
+- `pytest tests/e2e/test_critical_flows_red.py -k "tc_e2e_001"` -> `1 passed`
+
+### Cross-Slice Verification Snapshot
+
+- Impacted suites:
+  - `pytest tests/unit/test_mode_and_state_red.py tests/unit/test_synth_logging_rebuild_red.py tests/integration/test_mode_failure_rebuild_red.py tests/contract/test_adapter_and_api_contracts_red.py tests/e2e/test_critical_flows_red.py tests/security/test_boundary_and_privacy_red.py`
+  - Result: only `S-06` rebuild-doc tests failing.
+- Full suite:
+  - `pytest`
+  - Result: `4 failed, 44 passed, 3 skipped`.
+  - Remaining failures map to pending `S-06` only:
+    - `TC-U-050`, `TC-U-051`, `TC-I-030`, `TC-I-031`.

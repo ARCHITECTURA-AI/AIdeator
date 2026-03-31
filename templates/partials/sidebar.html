@@ -1,0 +1,8 @@
+<aside class="sidebar">
+  <a href="/app/dashboard" class="{% if active_path == '/app/dashboard' %}active{% endif %}">Dashboard</a>
+  <a href="/app/ideas" class="{% if active_path.startswith('/app/ideas') %}active{% endif %}">Ideas</a>
+  <a href="/app/runs" class="{% if active_path.startswith('/app/runs') %}active{% endif %}">Runs</a>
+  <a href="/app/reports" class="{% if active_path.startswith('/app/reports') %}active{% endif %}">Reports</a>
+  <a href="/app/settings" class="{% if active_path.startswith('/app/settings') %}active{% endif %}">Settings</a>
+  <a href="/app/diagnostics" class="{% if active_path.startswith('/app/diagnostics') %}active{% endif %}">Diagnostics</a>
+</aside>

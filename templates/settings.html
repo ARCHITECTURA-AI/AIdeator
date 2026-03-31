@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="section">
+  <h1>Settings</h1>
+  <form method="post" action="/app/settings" class="card form-grid">
+    <label for="default_mode">Default mode</label>
+    <select id="default_mode" name="default_mode" class="input">
+      {% for item in ["local-only", "hybrid", "cloud-enabled"] %}
+      <option value="{{ item }}" {% if settings.default_mode == item %}selected{% endif %}>{{ item }}</option>
+      {% endfor %}
+    </select>
+
+    <label for="allow_cloud">Allow cloud mode</label>
+    <select id="allow_cloud" name="allow_cloud" class="input">
+      <option value="false" {% if not settings.allow_cloud %}selected{% endif %}>No</option>
+      <option value="true" {% if settings.allow_cloud %}selected{% endif %}>Yes</option>
+    </select>
+
+    <label for="telemetry_enabled">Telemetry</label>
+    <select id="telemetry_enabled" name="telemetry_enabled" class="input">
+      <option value="false" {% if not settings.telemetry_enabled %}selected{% endif %}>Disabled</option>
+      <option value="true" {% if settings.telemetry_enabled %}selected{% endif %}>Enabled</option>
+    </select>
+
+    <button class="btn primary" type="submit">Save settings</button>
+  </form>
+</section>
+{% endblock %}

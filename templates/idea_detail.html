@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="section">
+  <div class="section-header">
+    <div>
+      <h1>{{ idea.title }}</h1>
+      <p class="muted">Created {{ idea.created_at }}</p>
+    </div>
+    <a href="/app/reports/{{ idea.id }}" class="btn secondary">View report</a>
+  </div>
+
+  <div class="grid-2">
+    <article class="card">
+      <h3>Description</h3>
+      <p>{{ idea.description }}</p>
+      <p class="muted">Target user: {{ idea.target_user }}</p>
+    </article>
+    <article class="card">
+      <h3>Run validation</h3>
+      <form method="post" action="/app/runs/create" class="form-grid">
+        <input type="hidden" name="idea_id" value="{{ idea.id }}">
+        <label for="mode">Mode</label>
+        <select id="mode" name="mode" class="input">
+          {% for mode in available_modes %}
+            <option value="{{ mode }}" {% if mode == default_mode %}selected{% endif %}>{{ mode }}</option>
+          {% endfor %}
+        </select>
+        <label for="tier">Tier</label>
+        <select id="tier" name="tier" class="input">
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
+        <button type="submit" class="btn primary">Run validation</button>
+      </form>
+    </article>
+  </div>
+</section>
+
+<section class="section">
+  <h2>Run History</h2>
+  {% if runs %}
+  <table class="table">
+    <thead>
+      <tr><th scope="col">Run</th><th scope="col">Status</th><th scope="col">Mode</th><th scope="col">Tier</th><th scope="col">Started</th></tr>
+    </thead>
+    <tbody>
+      {% for run in runs %}
+      <tr>
+        <td><a href="/app/runs/{{ run.id }}">#{{ run.id[:8] }}</a></td>
+        <td>{% set status = run.status %}{% include "partials/status_pill.html" %}</td>
+        <td>{% set mode = run.mode %}{% include "partials/mode_pill.html" %}</td>
+        <td>{{ run.tier }}</td>
+        <td>{{ run.created_at }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    {% set message = "No runs yet for this idea." %}
+    {% set cta_url = "" %}
+    {% set cta_label = "" %}
+    {% include "partials/empty_state.html" %}
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,6 @@
+<div class="empty-state">
+  <p>{{ message }}</p>
+  {% if cta_url and cta_label %}
+    <a href="{{ cta_url }}" class="btn primary">{{ cta_label }}</a>
+  {% endif %}
+</div>

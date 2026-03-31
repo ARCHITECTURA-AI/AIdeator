@@ -1,0 +1,11 @@
+{% if pagination.pages > 1 %}
+<div class="pagination">
+  {% if pagination.has_prev %}
+    <a href="?page={{ pagination.prev_page }}" class="btn ghost">Prev</a>
+  {% endif %}
+  <span>Page {{ pagination.page }} / {{ pagination.pages }}</span>
+  {% if pagination.has_next %}
+    <a href="?page={{ pagination.next_page }}" class="btn ghost">Next</a>
+  {% endif %}
+</div>
+{% endif %}

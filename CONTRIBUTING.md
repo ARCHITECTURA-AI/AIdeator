@@ -1,34 +1,39 @@
-## Contributing
+# Contributing
 
-Thank you for considering a contribution to AIdeator.
+Thanks for contributing to AIdeator.
 
-### Development Setup
+## Basic flow
 
-- Python 3.10
-- Install in editable mode with dev tools:
+1. Fork and clone.
+2. Create a branch from `main`.
+3. Implement focused changes with tests/docs.
+4. Open a PR with clear scope and verification notes.
 
-```bash
-python -m pip install -e ".[dev]"
-pytest
-ruff check .
-mypy api engine models db adapters infra cmd
-```
+## Local dev checks
 
-### Changes and Scope
+- `make lint`
+- `make test`
+- Optional type-check pass:
+  - `python -m mypy api engine models db adapters infra cmd aideator`
 
-- Keep changes within the locked scope in `docs/scope-lock.md`.
-- Do not add business logic that introduces new `FR-*` / `NFR-*` / `INV-*` / `SAFE-*` IDs without updating the docs.
-- Prefer small, focused PRs.
+## Change management
 
-### Tests and Lint
+For user-visible or architectural changes:
 
-- Add or update tests under `tests/` for any behavior changes.
-- Ensure:
-  - `pytest` passes
-  - `ruff check .` is clean
-  - `mypy api engine models db adapters infra cmd` is clean
+- Open/update an issue first.
+- Reference IDs when relevant:
+  - `FR-*` for feature requests
+  - `INV-*` for investigations
+  - `ADR-*` for architecture decisions
+- Post-freeze or scope-exception changes must include a Change Request identifier (`CR-*`) in the issue/PR summary.
 
-### Commit Messages
+Maintainer review expectations:
 
-- Follow the conventions in `docs/conventions.md` (e.g. `feat(engine): ...`, `fix(api): ...`).
+- Update affected ADR docs if architecture changes.
+- Keep `CHANGELOG.md` current for user-visible changes.
+- Update docs (`README.md`, `docs/*.md`) when behavior/config/ops flows change.
+
+## Commit conventions
+
+- Follow `docs/conventions.md` commit style (e.g. `feat(api): ...`, `fix(engine): ...`).
 

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="section">
+  <div class="grid-3">
+    <article class="card metric">
+      <h3>Ideas</h3>
+      <p class="metric-number">{{ summary_ideas_count }}</p>
+      <a href="/app/ideas" class="btn secondary">View ideas</a>
+    </article>
+    <article class="card metric">
+      <h3>Runs</h3>
+      <p class="metric-number">{{ summary_runs_last_24h }}</p>
+      <p class="muted">Failed: {{ summary_runs_failed_last_24h }}</p>
+    </article>
+    <article class="card metric">
+      <h3>Mode</h3>
+      <div class="mode-pill mode-{{ current_mode }}">{{ current_mode }}</div>
+      <a href="/app/settings" class="btn ghost">Change mode</a>
+    </article>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-header">
+    <h2>Recent Ideas</h2>
+    <a href="/app/ideas" class="btn secondary">All ideas</a>
+  </div>
+  {% if recent_ideas %}
+  <table class="table">
+    <thead>
+      <tr><th scope="col">Idea</th><th scope="col">Created</th><th scope="col">Runs</th><th scope="col">Status</th></tr>
+    </thead>
+    <tbody>
+      {% for idea in recent_ideas %}
+      <tr>
+        <td><a href="/app/ideas/{{ idea.id }}">{{ idea.title }}</a></td>
+        <td>{{ idea.created_at }}</td>
+        <td>{{ idea.runs_count }}</td>
+        <td>{% set status = idea.last_run_status %}{% include "partials/status_pill.html" %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    {% set message = "No ideas yet." %}
+    {% set cta_url = "/app/ideas/new" %}
+    {% set cta_label = "Create first idea" %}
+    {% include "partials/empty_state.html" %}
+  {% endif %}
+</section>
+
+<section class="section">
+  <div class="section-header">
+    <h2>Recent Runs</h2>
+    <a href="/app/runs" class="btn secondary">All runs</a>
+  </div>
+  {% if recent_runs %}
+  <table class="table">
+    <thead>
+      <tr><th scope="col">Run</th><th scope="col">Idea</th><th scope="col">Status</th><th scope="col">Mode</th></tr>
+    </thead>
+    <tbody>
+      {% for run in recent_runs %}
+      <tr>
+        <td><a href="/app/runs/{{ run.id }}">#{{ run.id[:8] }}</a></td>
+        <td>{{ run.idea_title }}</td>
+        <td>{% set status = run.status %}{% include "partials/status_pill.html" %}</td>
+        <td>{% set mode = run.mode %}{% include "partials/mode_pill.html" %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    {% set message = "No runs yet." %}
+    {% set cta_url = "/app/ideas" %}
+    {% set cta_label = "Create a run" %}
+    {% include "partials/empty_state.html" %}
+  {% endif %}
+</section>
+{% endblock %}

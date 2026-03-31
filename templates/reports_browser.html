@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="section docs-shell">
+  <aside class="docs-list card">
+    <h2>Reports</h2>
+    {% if docs %}
+      <ul>
+      {% for doc in docs %}
+        <li class="{% if doc.idea_id == selected_idea_id %}active{% endif %}">
+          <a href="/app/reports/{{ doc.idea_id }}">{{ doc.idea_title }}</a>
+        </li>
+      {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">No generated reports yet.</p>
+    {% endif %}
+  </aside>
+
+  <article class="docs-viewer card docs-light-shell">
+    {% if selected_doc_html %}
+      {{ selected_doc_html|safe }}
+    {% else %}
+      <p>Select a report from the left.</p>
+    {% endif %}
+  </article>
+</section>
+{% endblock %}

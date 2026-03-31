@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="section">
+  <div class="section-header">
+    <div>
+      <h1>Run #{{ run.id[:8] }}</h1>
+      <p class="muted">Idea: <a href="/app/ideas/{{ run.idea_id }}">{{ run.idea_title }}</a></p>
+    </div>
+    <div class="row">
+      {% set status = run.status %}{% include "partials/status_pill.html" %}
+      {% set mode = run.mode %}{% include "partials/mode_pill.html" %}
+    </div>
+  </div>
+
+  {% if run.status == "failed" %}
+  <div class="alert error" role="alert">
+    <strong>Run failed</strong>
+    <p>{{ run.error_code }} {{ run.error_message }}</p>
+  </div>
+  {% endif %}
+
+  <div class="grid-2">
+    <article class="card">
+      <h3>Timeline</h3>
+      <ul class="timeline">
+        <li>Queued: {{ run.queued_at }}</li>
+        <li>Started: {{ run.started_at }}</li>
+        <li>Finished: {{ run.finished_at }}</li>
+        <li>Duration: {{ run.duration }}</li>
+      </ul>
+    </article>
+    <article class="card">
+      <h3>Mode disclosure</h3>
+      <p>{{ mode_disclosure }}</p>
+      {% if docs_available %}
+      <a class="btn secondary" href="{{ docs_url }}">Open report markdown</a>
+      {% endif %}
+    </article>
+  </div>
+</section>
+
+<section class="section">
+  <h2>Report Cards</h2>
+  {% if cards %}
+  <div class="grid-2">
+    {% for card in cards %}
+    <article class="card">
+      <h3>{{ card.type|title }}</h3>
+      <p>{{ card.summary }}</p>
+      {% if card.citation_urls %}
+      <button type="button" class="btn ghost citation-toggle" data-target="citations-{{ loop.index }}">Citations</button>
+      <ul id="citations-{{ loop.index }}" class="hidden">
+        {% for item in card.citation_urls %}
+        <li><a href="{{ item }}" target="_blank" rel="noopener">{{ item }}</a></li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+    {% set message = "No report cards yet." %}
+    {% set cta_url = "" %}
+    {% set cta_label = "" %}
+    {% include "partials/empty_state.html" %}
+  {% endif %}
+</section>
+{% endblock %}

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 from threading import Lock
@@ -10,9 +11,13 @@ from uuid import UUID
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from adapters.reddit import parse_reddit_response
 from adapters.tavily import parse_tavily_response
+from api.config import settings
+from api.logging import RequestLoggingMiddleware, setup_logging
+from api.web import router as web_router
 from config.model_routing import (
     RoutingConfig,
     load_prompt_registry,
@@ -28,6 +33,7 @@ from db.runs import (
     get_or_create_idempotent_run,
     get_run,
     import_runs_snapshot,
+    list_runs,
     list_runs_for_idea,
     save_run,
     transition_run,
@@ -65,34 +71,12 @@ from models.run import Run
 
 app = FastAPI(title="AIdeator", version="0.1.0")
 _CONCURRENCY_GUARD = Lock()
-_DEFAULT_BIND_HOST = "127.0.0.1"
+_PROJECT_ROOT = Path(__file__).resolve().parents[1]
+_DEFAULT_BIND_HOST = settings.app_host
+LOGGER = logging.getLogger("api.app")
 
-
-def _debug_log(
-    *,
-    run_id: str,
-    hypothesis_id: str,
-    location: str,
-    message: str,
-    data: dict[str, object],
-) -> None:
-    # region agent log
-    with open("debug-8daad7.log", "a", encoding="utf-8") as debug_file:
-        debug_file.write(
-            json.dumps(
-                {
-                    "sessionId": "8daad7",
-                    "runId": run_id,
-                    "hypothesisId": hypothesis_id,
-                    "location": location,
-                    "message": message,
-                    "data": data,
-                    "timestamp": int(__import__("time").time() * 1000),
-                }
-            )
-            + "\n"
-        )
-    # endregion
+setup_logging()
+app.add_middleware(RequestLoggingMiddleware)
 
 
 def _mode_disclosure(mode: str) -> str:
@@ -129,9 +113,28 @@ def _error_response(
 
 
 def _is_within_docs(path_value: str) -> bool:
-    docs_root = (Path(__file__).resolve().parents[1] / "docs").resolve()
+    docs_root = settings.app_docs_dir.resolve()
     candidate = (docs_root / path_value).resolve()
     return docs_root in candidate.parents or candidate == docs_root
+
+
+@app.on_event("startup")
+def _on_startup() -> None:
+    settings.app_docs_dir.mkdir(parents=True, exist_ok=True)
+    LOGGER.info(
+        "Application startup",
+        extra={
+            "event": "app_startup",
+            "extra_fields": {
+                "env": settings.app_env,
+                "host": settings.app_host,
+                "port": settings.app_port,
+                "default_mode": settings.app_default_mode,
+                "db_url": settings.app_db_url,
+                "docs_dir": str(settings.app_docs_dir),
+            },
+        },
+    )
 
 
 @app.post("/ideas", status_code=201)
@@ -157,12 +160,9 @@ def post_runs(payload: dict[str, str]) -> dict[str, str | bool]:
         raise HTTPException(status_code=422, detail="Invalid tier")
     if mode not in {"local-only", "hybrid", "cloud-enabled"}:
         raise HTTPException(status_code=422, detail="Invalid mode")
-    _debug_log(
-        run_id="pre-fix",
-        hypothesis_id="H2",
-        location="api/app.py:post_runs",
-        message="validated tier/mode at runtime",
-        data={"tier": tier, "mode": mode},
+    LOGGER.debug(
+        "validated tier/mode at runtime",
+        extra={"event": "run_validate", "extra_fields": {"tier": tier, "mode": mode}},
     )
 
     reused = False
@@ -184,6 +184,19 @@ def post_runs(payload: dict[str, str]) -> dict[str, str | bool]:
         save_run(run)
         start_run(run.run_id)
 
+    LOGGER.info(
+        "Run created",
+        extra={
+            "event": "run_created",
+            "extra_fields": {
+                "run_id": str(run.run_id),
+                "idea_id": str(idea_id),
+                "mode": run.mode,
+                "tier": run.tier,
+                "idempotent_reuse": reused,
+            },
+        },
+    )
     return {
         "run_id": str(run.run_id),
         "status": run.status,
@@ -467,14 +480,14 @@ def test_hook_phb_e2e_error_recovery() -> dict[str, object]:
     start_run(recovered.run_id)
     failed_run = get_run(failed.run_id)
     recovered_run = get_run(recovered.run_id)
-    _debug_log(
-        run_id="pre-fix",
-        hypothesis_id="H4",
-        location="api/app.py:test_hook_phb_e2e_error_recovery",
-        message="status lookup nullable check",
-        data={
-            "failed_is_none": failed_run is None,
-            "recovered_is_none": recovered_run is None,
+    LOGGER.debug(
+        "status lookup nullable check",
+        extra={
+            "event": "hook_status_lookup",
+            "extra_fields": {
+                "failed_is_none": failed_run is None,
+                "recovered_is_none": recovered_run is None,
+            },
         },
     )
     return {
@@ -602,16 +615,16 @@ def test_hook_phc_backup_restore() -> dict[str, object]:
         "signals": signals_snapshot,
         "reports": reports_snapshot,
     }
-    _debug_log(
-        run_id="pre-fix",
-        hypothesis_id="H5",
-        location="api/app.py:test_hook_phc_backup_restore",
-        message="pre_payload runtime container types",
-        data={
-            "ideas_type": type(pre_payload["ideas"]).__name__,
-            "runs_type": type(pre_payload["runs"]).__name__,
-            "signals_type": type(pre_payload["signals"]).__name__,
-            "reports_type": type(pre_payload["reports"]).__name__,
+    LOGGER.debug(
+        "pre_payload runtime container types",
+        extra={
+            "event": "hook_backup_types",
+            "extra_fields": {
+                "ideas_type": type(pre_payload["ideas"]).__name__,
+                "runs_type": type(pre_payload["runs"]).__name__,
+                "signals_type": type(pre_payload["signals"]).__name__,
+                "reports_type": type(pre_payload["reports"]).__name__,
+            },
         },
     )
     runs_rows = runs_snapshot.get("runs")
@@ -863,16 +876,16 @@ def test_hook_phd_e2e_export_import() -> dict[str, object]:
         "signals": signals_export,
         "reports": reports_export,
     }
-    _debug_log(
-        run_id="pre-fix",
-        hypothesis_id="H5",
-        location="api/app.py:test_hook_phd_e2e_export_import",
-        message="pre_export runtime container types",
-        data={
-            "ideas_type": type(pre_export["ideas"]).__name__,
-            "runs_type": type(pre_export["runs"]).__name__,
-            "signals_type": type(pre_export["signals"]).__name__,
-            "reports_type": type(pre_export["reports"]).__name__,
+    LOGGER.debug(
+        "pre_export runtime container types",
+        extra={
+            "event": "hook_export_types",
+            "extra_fields": {
+                "ideas_type": type(pre_export["ideas"]).__name__,
+                "runs_type": type(pre_export["runs"]).__name__,
+                "signals_type": type(pre_export["signals"]).__name__,
+                "reports_type": type(pre_export["reports"]).__name__,
+            },
         },
     )
     compat_bundle: dict[str, object] = {
@@ -992,6 +1005,15 @@ def test_hook_fail_report_write() -> dict[str, object]:
 
 
 @app.get("/healthz")
-def healthz() -> dict[str, str]:
-    """CI smoke endpoint."""
-    return {"status": "ok"}
+def healthz() -> dict[str, object]:
+    """Liveness + lightweight in-memory DB reachability check."""
+    try:
+        _ = len(list_runs())
+        return {"status": "ok", "db": "ok"}
+    except Exception:
+        LOGGER.error("Health check failed", extra={"event": "health_failed"}, exc_info=True)
+        return {"status": "error", "db": "error"}
+
+
+app.mount("/static", StaticFiles(directory=_PROJECT_ROOT / "static"), name="static")
+app.include_router(web_router)

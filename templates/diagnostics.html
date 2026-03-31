@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="section">
+  <h1>Diagnostics</h1>
+  <div class="grid-3">
+    <article class="card">
+      <h3>Status</h3>
+      <p>{{ diagnostics.status }}</p>
+    </article>
+    <article class="card">
+      <h3>Ideas</h3>
+      <p>{{ diagnostics.ideas_count }}</p>
+    </article>
+    <article class="card">
+      <h3>Runs</h3>
+      <p>{{ diagnostics.runs_count }}</p>
+    </article>
+  </div>
+</section>
+{% endblock %}

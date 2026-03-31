@@ -4,16 +4,21 @@ build-backend = "hatchling.build"
 
 [project]
 name = "aideator"
-version = "0.1.0"
 description = "AIdeator bootstrap scaffold (no business logic)"
 readme = "README.md"
 requires-python = ">=3.10"
+dynamic = ["version"]
 license = { text = "MIT" }
 authors = [{ name = "AIdeator Team" }]
 dependencies = [
   "fastapi>=0.116.0",
-  "uvicorn>=0.35.0",
+  "uvicorn[standard]>=0.35.0",
 ]
+
+[project.scripts]
+aideator = "aideator.cli:main"
+aideator-serve = "aideator.cli:serve_entrypoint"
+aideator-rebuild-docs = "aideator.cli:rebuild_docs_entrypoint"
 
 [project.optional-dependencies]
 dev = [
@@ -26,6 +31,7 @@ dev = [
 
 [tool.hatch.build.targets.wheel]
 include = [
+  "aideator",
   "api",
   "config",
   "engine",
@@ -37,6 +43,9 @@ include = [
   "prompts",
   "tests",
 ]
+
+[tool.hatch.version]
+path = "aideator/__init__.py"
 
 [tool.pytest.ini_options]
 minversion = "8.0"

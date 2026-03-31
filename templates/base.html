@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{{ page_title }} · AIdeator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body class="app-bg">
+  {% include "partials/topbar.html" %}
+  <div class="app-shell">
+    {% include "partials/sidebar.html" %}
+    <main class="app-main">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

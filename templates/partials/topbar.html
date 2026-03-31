@@ -1,0 +1,14 @@
+<header class="topbar">
+  <a href="/app/dashboard" class="brand">
+    <span class="brand-mark">A</span>
+    <span>AIdeator</span>
+  </a>
+  <nav class="topnav">
+    <a href="/app/dashboard" class="{% if active_path == '/app/dashboard' %}active{% endif %}">Dashboard</a>
+    <a href="/app/ideas" class="{% if active_path.startswith('/app/ideas') %}active{% endif %}">Ideas</a>
+    <a href="/app/runs" class="{% if active_path.startswith('/app/runs') %}active{% endif %}">Runs</a>
+    <a href="/app/reports" class="{% if active_path.startswith('/app/reports') %}active{% endif %}">Reports</a>
+    <a href="/docs" target="_blank" rel="noopener">Docs</a>
+  </nav>
+  <div class="mode-pill mode-{{ current_mode }}">{{ current_mode }}</div>
+</header>

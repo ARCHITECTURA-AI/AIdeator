@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="section">
+  <div class="section-header">
+    <h1>Runs</h1>
+  </div>
+
+  <form method="get" class="form-inline">
+    <select name="status" class="input">
+      <option value="">All statuses</option>
+      {% for item in ["pending", "running", "succeeded", "failed"] %}
+      <option value="{{ item }}" {% if filters.status == item %}selected{% endif %}>{{ item }}</option>
+      {% endfor %}
+    </select>
+    <select name="mode" class="input">
+      <option value="">All modes</option>
+      {% for item in ["local-only", "hybrid", "cloud-enabled"] %}
+      <option value="{{ item }}" {% if filters.mode == item %}selected{% endif %}>{{ item }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn secondary" type="submit">Filter</button>
+  </form>
+
+  {% if runs %}
+  <table class="table">
+    <thead>
+      <tr><th scope="col">Run</th><th scope="col">Idea</th><th scope="col">Status</th><th scope="col">Mode</th><th scope="col">Tier</th><th scope="col">Started</th></tr>
+    </thead>
+    <tbody>
+      {% for run in runs %}
+      <tr>
+        <td><a href="/app/runs/{{ run.id }}">#{{ run.id[:8] }}</a></td>
+        <td>{{ run.idea_title }}</td>
+        <td>{% set status = run.status %}{% include "partials/status_pill.html" %}</td>
+        <td>{% set mode = run.mode %}{% include "partials/mode_pill.html" %}</td>
+        <td>{{ run.tier }}</td>
+        <td>{{ run.created_at }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% include "partials/pagination.html" %}
+  {% else %}
+    {% set message = "No runs yet." %}
+    {% set cta_url = "/app/ideas" %}
+    {% set cta_label = "Create a run" %}
+    {% include "partials/empty_state.html" %}
+  {% endif %}
+</section>
+{% endblock %}

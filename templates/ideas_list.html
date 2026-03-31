@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="section">
+  <div class="section-header">
+    <h1>Ideas</h1>
+    <a href="/app/ideas/new" class="btn primary">New idea</a>
+  </div>
+
+  <form method="get" class="form-inline">
+    <input class="input" type="text" name="q" value="{{ query }}" placeholder="Search ideas">
+    <button type="submit" class="btn secondary">Search</button>
+  </form>
+
+  {% if ideas %}
+  <table class="table">
+    <thead>
+      <tr><th scope="col">Idea</th><th scope="col">Created</th><th scope="col">Runs</th><th scope="col">Last run</th><th scope="col"></th></tr>
+    </thead>
+    <tbody>
+      {% for idea in ideas %}
+      <tr>
+        <td>{{ idea.title }}</td>
+        <td>{{ idea.created_at }}</td>
+        <td>{{ idea.runs_count }}</td>
+        <td>{% set status = idea.last_run_status %}{% include "partials/status_pill.html" %}</td>
+        <td><a href="/app/ideas/{{ idea.id }}" class="btn ghost">Open</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% include "partials/pagination.html" %}
+  {% else %}
+    {% set message = "No ideas found." %}
+    {% set cta_url = "/app/ideas/new" %}
+    {% set cta_label = "Create idea" %}
+    {% include "partials/empty_state.html" %}
+  {% endif %}
+</section>
+{% endblock %}

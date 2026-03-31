@@ -612,3 +612,21 @@ This file should be reviewed at every **phase gate (PH-A/B/C/D)** to ensure trac
 Execution evidence and lock audit:
 - `docs/test-red-baseline.md`
 - `docs/test-changes.md`
+
+## 7. PH-B Authored Red-Baseline Artifacts (2026-03-31)
+- Unit:
+  - `tests/unit/test_phb_config_and_resilience_red.py` (`TC-U-100`, `TC-U-101`, `TC-U-102`, `TC-U-110`, `TC-U-120`, `TC-U-121`)
+- Integration:
+  - `tests/integration/test_phb_workflows_red.py` (`TC-I-100`, `TC-I-101`, `TC-I-102`, `TC-I-110`, `TC-I-111`, `TC-I-120`, `TC-I-121`)
+- Contract:
+  - `tests/contract/test_phb_contracts_red.py` (`TC-C-100`, `TC-C-101`, `TC-C-110`, `TC-C-111`)
+- E2E:
+  - `tests/e2e/test_phb_flows_red.py` (`TC-E2E-100`, `TC-E2E-101`, `TC-E2E-102`)
+- Security:
+  - `tests/security/test_phb_security_red.py` (`TC-S-100`, `TC-S-101`, `TC-S-102`)
+- Performance:
+  - `tests/performance/test_phb_perf_red.py` (`TC-P-100`, `TC-P-101`)
+
+Execution evidence and lock audit:
+- `docs/test-red-baseline.md` (PH-B section)
+- `docs/test-changes.md` (PH-B lock and blockers)

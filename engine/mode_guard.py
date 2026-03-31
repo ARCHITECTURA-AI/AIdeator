@@ -12,8 +12,12 @@ def _host(url: str) -> str:
     return (urlparse(url).hostname or "").lower()
 
 
+def is_allowed_destination(url: str) -> bool:
+    return _host(url) in INTERNAL_HOSTS
+
+
 def block_external(url: str) -> bool:
-    return _host(url) not in INTERNAL_HOSTS
+    return not is_allowed_destination(url)
 
 
 def enforce_hybrid_keywords(payload: str) -> bool:

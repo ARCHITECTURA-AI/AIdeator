@@ -26,12 +26,14 @@ dev = [
 [tool.hatch.build.targets.wheel]
 include = [
   "api",
+  "config",
   "engine",
   "models",
   "db",
   "adapters",
   "infra",
   "cmd",
+  "prompts",
   "tests",
 ]
 

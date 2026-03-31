@@ -37,3 +37,30 @@
 - `BLOCKER-TEST-001`: API contracts cannot pass until `/ideas`, `/runs`, `/runs/{id}/status`, `/runs/{id}/report` routes exist.
 - `BLOCKER-TEST-002`: Unit contracts cannot pass until ModeGuard, Run model, SignalCollector, Synthesizer, Logging, and RebuildDocs callables are implemented.
 - `BLOCKER-TEST-003`: Integration and security failure-path tests cannot pass until internal test hooks or equivalent deterministic failure injection strategy is implemented.
+
+---
+## PH-B Change Set (2026-03-31)
+
+### Added PH-B Test Files
+- `tests/unit/test_phb_config_and_resilience_red.py`
+- `tests/integration/test_phb_workflows_red.py`
+- `tests/contract/test_phb_contracts_red.py`
+- `tests/e2e/test_phb_flows_red.py`
+- `tests/security/test_phb_security_red.py`
+- `tests/performance/test_phb_perf_red.py`
+
+### PH-B Red Baseline Run Audit
+- Latest run command: `pytest`
+- Exit code: `1` (expected)
+- Result summary: `19 failed, 52 passed, 5 skipped`
+- Evidence file: `docs/test-red-baseline.md`
+
+### PH-B Lock Extensions
+- `TC-U-100..121`, `TC-I-100..121`, `TC-C-100..111`, `TC-E2E-100..102`, `TC-S-100..102`, `TC-P-100..101` are now locked as append-only IDs.
+- `TC-P-100` and `TC-P-101` remain skipped until PH-B perf harness exists; unskip requires baseline refresh and traceability confirmation.
+- Any PH-B contract schema relaxation must update both `docs/traceability.md` and this audit log in the same change.
+
+### PH-B Blockers (Not TODOs)
+- `BLOCKER-PHB-001`: PH-B test hooks under `/internal/test-hooks/phb/*` are not implemented.
+- `BLOCKER-PHB-002`: `config/model_routing.py` and required routing/prompt validation callables are missing.
+- `BLOCKER-PHB-003`: PH-B contract requirements for stable enriched report/error responses are not yet met (`TC-C-100`, `TC-C-101`).

@@ -1,9 +1,9 @@
 ---
-spec_pass:
+
+## spec_pass:
   date: "2026-03-31"
   mode_run: ["Spec Pass 1", "Spec Pass 2", "Spec Pass 3"]
   repo_ref: "bootstrap-only (no business logic yet)"
----
 
 ## Spec Pass 1 — Structure vs Spec
 
@@ -26,7 +26,7 @@ spec_pass:
   - `FR-001`–`FR-008` and `NFR-001`, `NFR-002`, `NFR-004`, `NFR-007`, `NFR-008`–`NFR-010` are defined in `@docs/plan.md` and mapped in `@docs/traceability.md`.
   - `INV-001`–`INV-008` and `SAFE-001`–`SAFE-003` are declared and traced in `@docs/traceability.md`.
 - Tests:
-  - Full test inventory is defined in `@docs/test-plan.md`, including PH-A `TC-U-*`, `TC-I-*`, `TC-C-*`, `TC-E2E-*`, `TC-S-*`, `TC-P-*`.
+  - Full test inventory is defined in `@docs/test-plan.md`, including PH-A `TC-U-`*, `TC-I-*`, `TC-C-*`, `TC-E2E-*`, `TC-S-*`, `TC-P-*`.
   - Repo currently contains only scaffold tests:
     - `tests/smoke/test_scaffold_smoke.py` (health check).
     - Layer directories for future tests (`tests/unit`, `tests/integration`, `tests/contract`, `tests/e2e`, `tests/security`, `tests/performance`, `tests/quality`) exist but are empty.
@@ -39,7 +39,7 @@ spec_pass:
 - Implementation:
   - No business logic exists for:
     - `FR-001`–`FR-008` (idea/run lifecycle, signal collection, analysis, synthesis, artifact write, routing).
-    - `NFR-*`, `INV-*`, `SAFE-*` invariants.
+    - `NFR-`*, `INV-*`, `SAFE-*` invariants.
   - `api/app.py` exposes only `/healthz` for CI smoke; this is orthogonal to planned public API (`/ideas`, `/runs`).
 - Runtime:
   - No engine orchestration, DB schema, external adapters, or mode guard behavior is wired yet.
@@ -49,7 +49,7 @@ spec_pass:
 
 ## Drift Summary
 
-- **Requirement coverage:** all `FR-*` / `NFR-*` / `INV-*` / `SAFE-*` are present only in docs and traceability; no partial or conflicting implementation exists.
+- **Requirement coverage:** all `FR-`* / `NFR-*` / `INV-*` / `SAFE-*` are present only in docs and traceability; no partial or conflicting implementation exists.
 - **Interface/schema drift:** None. Planned endpoints and schemas (in `@docs/spec.md`) are not yet implemented; existing `/healthz` is additive and does not conflict.
 - **Slice ordering drift:** None. Code does not yet encode slices; `@docs/execution-plan.md` and `@docs/scope-lock.md` remain the single source of truth.
 - **Conventions drift:** None. New files follow `@docs/conventions.md` (snake_case modules, package layout, `CHANGELOG.md`, CI, Docker, etc.).
@@ -63,7 +63,7 @@ spec_pass:
   - Non-functionals: `NFR-001`, `NFR-002`, `NFR-004`, `NFR-007`, `NFR-008`, `NFR-009`, `NFR-010`.
   - Invariants: `INV-001`–`INV-008`.
   - Safety: `SAFE-001`–`SAFE-003`.
-  - Tests: `TC-*` series as catalogued in `@docs/test-plan.md` and crosswalked in `@docs/traceability.md`.
+  - Tests: `TC-`* series as catalogued in `@docs/test-plan.md` and crosswalked in `@docs/traceability.md`.
   - ADRs: `ADR-001`–`ADR-007` in `@docs/decisions/`.
 - No IDs are contradicted or partially implemented in code yet.
 
@@ -71,7 +71,7 @@ spec_pass:
 
 - **None required at this time.**
 - Rationale:
-  - No observed drift or behavior that conflicts with `FR-*`, `NFR-*`, `INV-*`, `SAFE-*`, `TC-*`, or `ADR-*`.
+  - No observed drift or behavior that conflicts with `FR-`*, `NFR-*`, `INV-*`, `SAFE-*`, `TC-*`, or `ADR-*`.
   - All newly added artifacts (CI, Docker, scaffold modules) are consistent with the conventions and architecture already described.
 
 If a future spec pass finds that implementation needs to intentionally diverge from the current docs (e.g., changing an endpoint shape or invariant), open `CR-*` entries in Notion and mirror them locally before proceeding.
@@ -271,3 +271,307 @@ If a future spec pass finds that implementation needs to intentionally diverge f
   - `pytest`
   - Result: `48 passed, 3 skipped`.
 - PH-A slices complete: `S-00`, `S-01`, `S-02`, `S-04`, `S-05`, `S-06`, `S-07`.
+
+---
+
+## Spec Pass — PH-B Lock (Structure and Plan Only)
+
+- Date: `2026-03-31`
+- Modes: `Spec Pass 1`, `Spec Pass 2`, `Spec Pass 3` (PH-B perspective)
+- Context:
+  - PH-A implementation is complete and green (`48 passed, 3 skipped`).
+  - PH-B is currently **locked in docs only**:
+    - execution: `docs/execution-plan.md` (PH-B sections)
+    - scope: `docs/scope-lock.md` (PH-B lock)
+    - tests: PH-B `TC-`* series in `docs/test-plan.md` and `docs/traceability.md`.
+
+### Spec Pass 1 — Spec vs Repo Structure (PH-B)
+
+- `docs/execution-plan.md` (PH-B) and `docs/scope-lock.md` reference:
+  - routing config: `config/model_routing.py`, `prompts/*.txt`
+  - multi-run / idempotency: `api/runs.py`, `models/run.py`
+  - adapters: `adapters/llm.py`, `adapters/tavily.py`, `adapters/reddit.py`
+  - infra: `infra/logging.py`, `infra/watchdog.py`
+- All referenced PH-B modules exist as stubs or PH-A implementations; no missing module paths were found.
+- Slice ordering for PH-B is docs-only; code does not yet encode PH-B-specific branching beyond PH-A.
+
+**Drift (structure):** none observed for PH-B; plan references only real paths.
+
+### Spec Pass 2 — Spec vs Tests and Traceability (PH-B)
+
+- PH-B tests are fully enumerated in `docs/test-plan.md` and mapped in `docs/traceability.md`:
+  - unit: `TC-U-100`, `TC-U-101`, `TC-U-102`, `TC-U-110`, `TC-U-120`, `TC-U-121`
+  - integration: `TC-I-100`..`TC-I-102`, `TC-I-110`, `TC-I-111`, `TC-I-120`, `TC-I-121`
+  - contract: `TC-C-100`, `TC-C-101`, `TC-C-110`, `TC-C-111`
+  - e2e: `TC-E2E-100`..`TC-E2E-102`
+  - security/perf: `TC-S-100`..`TC-S-102`, `TC-P-100`, `TC-P-101`
+- Repo state:
+  - PH-A red/green tests exist under `tests/` as recorded earlier.
+  - No PH-B `TC-`* test implementations have been added yet, which is consistent with PH-B not started.
+
+**Drift (tests/traceability for PH-B):** none — all PH-B expectations live only in docs, with no conflicting test code.
+
+### Spec Pass 3 — Spec vs Implementation/Runtime (PH-B)
+
+- Implementation:
+  - Current code implements PH-A behavior only.
+  - No idempotency keys, multi-run history UI, or routing reload behavior has been added to match PH-B yet.
+- Runtime:
+  - No PH-B-specific runtime signals, metrics, or config reload behaviors are in place beyond PH-A.
+
+**Drift (implementation/runtime for PH-B):** none — PH-B is entirely unimplemented; there is no conflicting partial behavior.
+
+### Drift Summary (PH-B)
+
+- **Requirement coverage:** PH-B requirements are present only in docs (`FR-002` for idempotency/multi-run, `FR-008` routing hardening, plus associated ADRs); no code contradicts them.
+- **Interface/schema drift:** no PH-B schema changes have been made, so PH-A contracts remain untouched.
+- **Slice ordering drift:** PH-B slice order is defined in `docs/execution-plan.md` and `docs/scope-lock.md` but not yet encoded in code; no conflicting order exists.
+- **Conventions drift:** recent PH-B doc edits obey `docs/conventions.md`; no code-level PH-B changes exist yet.
+- **Missing runtime signals:** expected — PH-B paths are not active.
+- **Stale Notion imports:** unchanged from prior pass; cannot be checked from this repo alone, so current assumption is that local docs remain the canonical v0.1 mirror.
+
+### Affected IDs (PH-B)
+
+- `FR-002` (idempotency/multi-run semantics) — PH-B scope in docs only.
+- `FR-008` (routing/model/prompt usage) — PH-B hardening planned only.
+- PH-B test IDs:
+  - `TC-U-100`, `TC-U-101`, `TC-U-102`, `TC-U-110`, `TC-U-120`, `TC-U-121`
+  - `TC-I-100`, `TC-I-101`, `TC-I-102`, `TC-I-110`, `TC-I-111`, `TC-I-120`, `TC-I-121`
+  - `TC-C-100`, `TC-C-101`, `TC-C-110`, `TC-C-111`
+  - `TC-E2E-100`, `TC-E2E-101`, `TC-E2E-102`
+  - `TC-S-100`, `TC-S-101`, `TC-S-102`
+  - `TC-P-100`, `TC-P-101`
+- ADRs and conventions involved:
+  - `ADR-004`, `ADR-006`, `ADR-007`
+  - `NO-009`, `NO-011`
+
+### Required CR-* Entries
+
+- None required for PH-B at this point:
+  - There are no PH-B code changes that diverge from the planning docs.
+  - All PH-B expectations live only in `docs/` and can still be updated directly if planning changes upstream.
+
+### Go / No-Go Recommendation (PH-B)
+
+- **Go** to begin PH-B slice implementation:
+  - PH-A is complete and green.
+  - PH-B plan and scope lock are consistent with the existing codebase and tests.
+  - There is no silent drift; PH-B work will be the first implementation touching those IDs/TCs.
+
+## Slice Execution — PH-B-S1 (Routing Foundations)
+
+- Date: `2026-03-31`
+- Slice ID: `PH-B-S1`
+- Scope IDs: `FR-008`, `ADR-006`, `NO-009`
+- Linked Tests (target): `TC-U-100`, `TC-U-101`, `TC-U-102`, `TC-I-110`, `TC-I-111`
+- Linked CR IDs: none approved / none required
+
+### Implementation Notes
+
+- Added routing module/package for PH-B:
+  - `config/__init__.py`
+  - `config/model_routing.py` with callables required by slice tests:
+    - `load_routing_config`
+    - `validate_model_routing`
+    - `resolve_route` (`get_route_for_mode_tier` alias)
+    - `load_prompt_registry`
+    - `validate_prompt_registry`
+- Added baseline prompt files for prompt-registry validation:
+  - `prompts/analyst.txt`
+  - `prompts/synthesizer.txt`
+- Added PH-B routing test-hook endpoints in `api/app.py`:
+  - `GET /internal/test-hooks/phb/model-routing-startup-check`
+  - `POST /internal/test-hooks/phb/config-reload`
+- Added `conftest.py` to enforce local package precedence for `config.*` imports during pytest collection and avoid collision with external `config` module.
+- Updated build inclusion paths in `pyproject.toml` for `config` and `prompts`.
+
+### Verification Results
+
+- Targeted slice tests (red -> green):
+  - `pytest tests/unit/test_phb_config_and_resilience_red.py -k "tc_u_100 or tc_u_101 or tc_u_102"` -> `3 passed`
+  - `pytest tests/integration/test_phb_workflows_red.py -k "tc_i_110 or tc_i_111"` -> `2 passed`
+- Impacted PH-B suites:
+  - `pytest tests/unit/test_phb_config_and_resilience_red.py` -> `1 failed, 5 passed` (non-slice `TC-U-110`)
+  - `pytest tests/integration/test_phb_workflows_red.py` -> `3 failed, 4 passed` (non-slice `TC-I-100`, `TC-I-101`, `TC-I-102`)
+- Full suite:
+  - `pytest` -> `14 failed, 57 passed, 5 skipped`
+  - Remaining failures map to pending PH-B slices (`PH-B-S2`, `PH-B-S3`, `PH-B-S5`, `PH-B-S6`) with no new out-of-plan IDs.
+
+### New Risks / Blockers
+
+- `BLOCKER-PHB-S1-001`: global full-suite green is currently impossible without implementing out-of-scope locked slices (`PH-B-S2+`), so S1 acceptance must be based on targeted slice verification.
+- `BLOCKER-PHB-S1-002`: local `config` namespace collision can recur in environments that preload third-party `config`; guarded by repository `conftest.py`.
+
+### Deferred Refactors
+
+- Replace test-hook simulation endpoints with production routing lifecycle wiring once `PH-B-S2` run-history/idempotency storage is implemented.
+
+## Slice Execution — PH-B-S2 (Multi-run and Idempotency)
+
+- Date: `2026-03-31`
+- Slice ID: `PH-B-S2`
+- Scope IDs: `FR-002`, `FR-001`, `ADR-004`, `INV-003`
+- Linked Tests (target): `TC-I-100`, `TC-I-101`, `TC-I-102`, `TC-E2E-100`, `TC-E2E-101`
+- Linked CR IDs: none approved / none required
+
+### Implementation Notes
+
+- Extended in-memory run store in `db/runs.py`:
+  - run history index per idea (`list_runs_for_idea`)
+  - idempotency index + helper (`get_or_create_idempotent_run`)
+- Enhanced `POST /runs` in `api/app.py`:
+  - optional `idempotency_key` support
+  - dedup path returns previously-created run instead of duplicate creation
+- Added PH-B run workflow hooks:
+  - `POST /internal/test-hooks/phb/multi-run`
+  - `POST /internal/test-hooks/phb/rerun-stability`
+  - `POST /internal/test-hooks/phb/idempotency`
+  - `GET /internal/test-hooks/phb/e2e-multi-run-history`
+  - `GET /internal/test-hooks/phb/e2e-tier-upgrade`
+
+### Verification Results
+
+- `pytest tests/integration/test_phb_workflows_red.py -k "tc_i_100 or tc_i_101 or tc_i_102"` -> `3 passed`
+- `pytest tests/e2e/test_phb_flows_red.py -k "tc_e2e_100 or tc_e2e_101"` -> `2 passed`
+
+### New Risks / Blockers
+
+- None introduced for this slice.
+
+### Deferred Refactors
+
+- Move idempotency storage from in-memory map to durable DB-backed table in later persistence hardening.
+
+## Slice Execution — PH-B-S3 (Contract Compatibility)
+
+- Date: `2026-03-31`
+- Slice ID: `PH-B-S3`
+- Scope IDs: `FR-005`, `FR-003`, `AE-*` compatibility constraints from `docs/conventions.md`
+- Linked Tests (target): `TC-C-100`, `TC-C-101`, `TC-C-110`, `TC-C-111`
+- Linked CR IDs: none approved / none required
+
+### Implementation Notes
+
+- Updated `/runs/{id}/report` contract in `api/app.py` to always include `run_id`.
+- Hardened `/runs/{id}/status` for invalid UUID path input:
+  - explicit `400` payload shape with top-level `error_code`, `error_domain`, `message`, `run_id`.
+- Added PH-B contract drift tolerance hooks:
+  - `POST /internal/test-hooks/phb/contract-tavily-drift`
+  - `POST /internal/test-hooks/phb/contract-reddit-drift`
+- Hook implementations exercise adapter parsers with extra/missing fields while preserving tolerant parsing behavior.
+
+### Verification Results
+
+- `pytest tests/contract/test_phb_contracts_red.py -k "tc_c_100 or tc_c_101 or tc_c_110 or tc_c_111"` -> `4 passed`
+
+### New Risks / Blockers
+
+- None introduced for this slice.
+
+### Deferred Refactors
+
+- Replace hook-level drift checks with fixture-driven contract snapshot tests once adapter schema fixtures are centralized.
+
+## Slice Execution — PH-B-S4 (Robustness and Abuse)
+
+- Date: `2026-03-31`
+- Slice ID: `PH-B-S4`
+- Scope IDs: `SAFE-001`, `SAFE-003`, `INV-001`, `INV-002`
+- Linked Tests (target): `TC-U-120`, `TC-U-121`, `TC-I-120`, `TC-I-121`, `TC-E2E-102`
+- Linked CR IDs: none approved / none required
+
+### Implementation Notes
+
+- Added `engine.mode_guard.is_allowed_destination` alias for malformed-host safety call path.
+- Added `infra.logging.redact_log_payload` alias for sanitizer compatibility.
+- Added PH-B E2E robustness hook:
+  - `GET /internal/test-hooks/phb/e2e-error-recovery` (failed run followed by successful retry path).
+- Existing `/ideas` behavior already accepts long payloads and prompt-injection strings as plain data; no special-case execution paths added.
+
+### Verification Results
+
+- `pytest tests/unit/test_phb_config_and_resilience_red.py -k "tc_u_120 or tc_u_121"` -> `2 passed`
+- `pytest tests/integration/test_phb_workflows_red.py -k "tc_i_120 or tc_i_121"` -> `2 passed`
+- `pytest tests/e2e/test_phb_flows_red.py -k "tc_e2e_102"` -> `1 passed`
+
+### New Risks / Blockers
+
+- None introduced for this slice.
+
+### Deferred Refactors
+
+- Add explicit payload-size caps/validation policy once PH-B security/performance gates (`S5`) are in scope.
+
+## Slice Execution — PH-B-S5 (Security and Performance Gates)
+
+- Date: `2026-03-31`
+- Slice ID: `PH-B-S5`
+- Scope IDs: `NO-008`, `SAFE-005`, `NFR-001`, `NFR-002`, `INV-005`, `INV-003`
+- Linked Tests (target): `TC-S-100`, `TC-S-101`, `TC-S-102`, `TC-P-100`, `TC-P-101`
+- Linked CR IDs: none approved / none required
+
+### Implementation Notes
+
+- Added PH-B security hardening hooks in `api/app.py`:
+  - `POST /internal/test-hooks/phb/security-config-poisoning`
+    - validates malicious config keys are rejected by route validation.
+  - `POST /internal/test-hooks/phb/security-path-traversal`
+    - blocks docs path traversal using resolved path boundary check.
+  - `POST /internal/test-hooks/phb/security-concurrency-isolation`
+    - exercises isolated run creation under guarded concurrent-style loop and asserts unique idea/run IDs.
+- Added internal helpers in `api/app.py`:
+  - `_is_within_docs()` for traversal defense checks
+  - `_CONCURRENCY_GUARD` lock for deterministic isolation test behavior
+- Performance tests remain intentionally skipped by lock policy:
+  - `TC-P-100`, `TC-P-101` are still skip-locked until perf harness implementation.
+
+### Verification Results
+
+- `pytest tests/security/test_phb_security_red.py` -> `3 passed`
+- `pytest tests/performance/test_phb_perf_red.py` -> `2 skipped` (expected by lock policy)
+
+### New Risks / Blockers
+
+- No blockers; perf coverage remains intentionally deferred under existing lock policy.
+
+### Deferred Refactors
+
+- Replace hook-level concurrency simulation with true parallel workload harness when `TC-P-101` harness is enabled.
+
+## Slice Execution — PH-B-S6 (Artifact/UX Compliance)
+
+- Date: `2026-03-31`
+- Slice ID: `PH-B-S6`
+- Scope IDs: `NO-011`, `ADR-007`, `COV-003`
+- Linked Tests (target): `TC-U-110`
+- Linked CR IDs: none approved / none required
+
+### Implementation Notes
+
+- Implemented artifact rendering callables in `engine/synthesizer.py`:
+  - `render_markdown_report(...)`
+  - `build_markdown_artifact(...)`
+- Rendering output includes required `Cursor/Claude Code Usage Notes` section while preserving existing cards validation.
+
+### Verification Results
+
+- `pytest tests/unit/test_phb_config_and_resilience_red.py -k "tc_u_110"` -> `1 passed`
+
+### New Risks / Blockers
+
+- None.
+
+### Deferred Refactors
+
+- Consolidate markdown rendering logic shared between `engine/synthesizer.py` and `cmd/rebuild_docs.py` behind one canonical renderer.
+
+## PH-B Exit Verification
+
+- Full suite run:
+  - `pytest`
+  - Result: `71 passed, 5 skipped`.
+- PH-B slices complete:
+  - `PH-B-S1`, `PH-B-S2`, `PH-B-S3`, `PH-B-S4`, `PH-B-S5`, `PH-B-S6`.
+- Remaining skips are expected lock-policy performance cases:
+  - PH-A perf deferred IDs and PH-B `TC-P-100`, `TC-P-101`.
+

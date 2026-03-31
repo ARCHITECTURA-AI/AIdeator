@@ -24,3 +24,23 @@
 - Failure reasons map to known unimplemented modules/routes: satisfied.
 - Every authored critical TC ID appears in output: satisfied.
 - No random/flaky failure signatures observed: satisfied.
+
+---
+## PH-B Baseline Metadata
+- Date: 2026-03-31
+- Command: `pytest`
+- Scope: PH-B `100+` test authoring and lock audit
+- Result: **RED (expected)**, exit code `1`
+
+## PH-B Red Evidence Snapshot
+- Summary: `19 failed, 52 passed, 5 skipped in 2.22s`
+- Newly skipped performance tests: `TC-P-100`, `TC-P-101`
+- Failure class A (PH-B hooks/contracts not implemented): missing `/internal/test-hooks/phb/*` endpoints (`404`)
+- Failure class B (PH-B config/model-routing not implemented): `config.model_routing` import/symbol gaps
+- Failure class C (PH-B contract hardening): response schema mismatches (`TC-C-100`, `TC-C-101`)
+
+## PH-B Reproducibility
+1. From repo root run `pytest`.
+2. Confirm non-zero exit code.
+3. Confirm PH-B failures are concentrated in `TC-*-100+`.
+4. Confirm skip list includes `TC-P-100` and `TC-P-101`.

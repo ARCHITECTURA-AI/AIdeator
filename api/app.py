@@ -67,6 +67,26 @@ _CONCURRENCY_GUARD = Lock()
 _DEFAULT_BIND_HOST = "127.0.0.1"
 
 
+def _debug_log(*, run_id: str, hypothesis_id: str, location: str, message: str, data: dict[str, object]) -> None:
+    # region agent log
+    with open("debug-8daad7.log", "a", encoding="utf-8") as debug_file:
+        debug_file.write(
+            json.dumps(
+                {
+                    "sessionId": "8daad7",
+                    "runId": run_id,
+                    "hypothesisId": hypothesis_id,
+                    "location": location,
+                    "message": message,
+                    "data": data,
+                    "timestamp": int(__import__("time").time() * 1000),
+                }
+            )
+            + "\n"
+        )
+    # endregion
+
+
 def _mode_disclosure(mode: str) -> str:
     return {
         "local-only": "No outbound network calls are allowed in this run.",
@@ -129,6 +149,13 @@ def post_runs(payload: dict[str, str]) -> dict[str, str | bool]:
         raise HTTPException(status_code=422, detail="Invalid tier")
     if mode not in {"local-only", "hybrid", "cloud-enabled"}:
         raise HTTPException(status_code=422, detail="Invalid mode")
+    _debug_log(
+        run_id="pre-fix",
+        hypothesis_id="H2",
+        location="api/app.py:post_runs",
+        message="validated tier/mode at runtime",
+        data={"tier": tier, "mode": mode},
+    )
 
     reused = False
     if idempotency_key:
@@ -426,10 +453,22 @@ def test_hook_phb_e2e_error_recovery() -> dict[str, object]:
     save_run(recovered)
     transition_run(failed.run_id, "failed", error_code="AE-DEP-001")
     start_run(recovered.run_id)
+    failed_run = get_run(failed.run_id)
+    recovered_run = get_run(recovered.run_id)
+    _debug_log(
+        run_id="pre-fix",
+        hypothesis_id="H4",
+        location="api/app.py:test_hook_phb_e2e_error_recovery",
+        message="status lookup nullable check",
+        data={
+            "failed_is_none": failed_run is None,
+            "recovered_is_none": recovered_run is None,
+        },
+    )
     return {
         "ok": True,
-        "failed_status": get_run(failed.run_id).status if get_run(failed.run_id) else None,
-        "recovered_status": get_run(recovered.run_id).status if get_run(recovered.run_id) else None,
+        "failed_status": failed_run.status if failed_run else None,
+        "recovered_status": recovered_run.status if recovered_run else None,
     }
 
 
@@ -546,6 +585,18 @@ def test_hook_phc_backup_restore() -> dict[str, object]:
         "signals": export_signals_snapshot(),
         "reports": export_reports_snapshot(),
     }
+    _debug_log(
+        run_id="pre-fix",
+        hypothesis_id="H5",
+        location="api/app.py:test_hook_phc_backup_restore",
+        message="pre_payload runtime container types",
+        data={
+            "ideas_type": type(pre_payload["ideas"]).__name__,
+            "runs_type": type(pre_payload["runs"]).__name__,
+            "signals_type": type(pre_payload["signals"]).__name__,
+            "reports_type": type(pre_payload["reports"]).__name__,
+        },
+    )
     manifest = build_backup_manifest(
         ideas=len(pre_payload["ideas"]),
         runs=len(pre_payload["runs"]["runs"]),
@@ -791,6 +842,18 @@ def test_hook_phd_e2e_export_import() -> dict[str, object]:
         "signals": export_signals_snapshot(),
         "reports": export_reports_snapshot(),
     }
+    _debug_log(
+        run_id="pre-fix",
+        hypothesis_id="H5",
+        location="api/app.py:test_hook_phd_e2e_export_import",
+        message="pre_export runtime container types",
+        data={
+            "ideas_type": type(pre_export["ideas"]).__name__,
+            "runs_type": type(pre_export["runs"]).__name__,
+            "signals_type": type(pre_export["signals"]).__name__,
+            "reports_type": type(pre_export["reports"]).__name__,
+        },
+    )
     compat_bundle = {
         "export_version": "ph-a/ph-c->ph-d",
         "traceability_id": "TC-E2E-300",

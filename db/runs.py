@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from datetime import datetime
+import json
+import time
 from typing import Final
 from uuid import UUID
 
@@ -11,6 +13,26 @@ from models.run import Run, RunStatus
 _RUNS: Final[dict[UUID, Run]] = {}
 _RUN_HISTORY: Final[dict[UUID, list[UUID]]] = {}
 _IDEMPOTENCY_INDEX: Final[dict[tuple[UUID, str], UUID]] = {}
+
+
+def _debug_log(*, run_id: str, hypothesis_id: str, location: str, message: str, data: dict[str, object]) -> None:
+    # region agent log
+    with open("debug-8daad7.log", "a", encoding="utf-8") as debug_file:
+        debug_file.write(
+            json.dumps(
+                {
+                    "sessionId": "8daad7",
+                    "runId": run_id,
+                    "hypothesisId": hypothesis_id,
+                    "location": location,
+                    "message": message,
+                    "data": data,
+                    "timestamp": int(time.time() * 1000),
+                }
+            )
+            + "\n"
+        )
+    # endregion
 
 
 def save_run(run: Run) -> Run:
@@ -39,6 +61,13 @@ def get_or_create_idempotent_run(
     mode: str,
     idempotency_key: str,
 ) -> tuple[Run, bool]:
+    _debug_log(
+        run_id="pre-fix",
+        hypothesis_id="H2",
+        location="db/runs.py:get_or_create_idempotent_run",
+        message="incoming tier/mode values",
+        data={"tier": tier, "mode": mode},
+    )
     existing_run_id = _IDEMPOTENCY_INDEX.get((idea_id, idempotency_key))
     if existing_run_id is not None:
         run = _RUNS[existing_run_id]
@@ -86,7 +115,15 @@ def import_runs_snapshot(snapshot: dict[str, object]) -> None:
     _RUN_HISTORY.clear()
     _IDEMPOTENCY_INDEX.clear()
 
-    for row in snapshot.get("runs", []):
+    runs_value = snapshot.get("runs", [])
+    _debug_log(
+        run_id="pre-fix",
+        hypothesis_id="H3",
+        location="db/runs.py:import_runs_snapshot",
+        message="snapshot runs container type",
+        data={"runs_type": type(runs_value).__name__},
+    )
+    for row in runs_value:
         run_data = row
         if not isinstance(run_data, dict):
             continue

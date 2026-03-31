@@ -218,3 +218,56 @@ If a future spec pass finds that implementation needs to intentionally diverge f
   - Result: `4 failed, 44 passed, 3 skipped`.
   - Remaining failures map to pending `S-06` only:
     - `TC-U-050`, `TC-U-051`, `TC-I-030`, `TC-I-031`.
+
+## Slice Execution — S-06 (Artifact Writer and Rebuild Safety)
+
+- Date: `2026-03-31`
+- Slice ID: `S-06`
+- Scope IDs: `FR-007`, `INV-008`, `NFR-007`, `SAFE-004`
+- Linked Tests (target): `TC-U-050`, `TC-U-051`, `TC-I-030`, `TC-I-031`, `TC-E2E-003`
+- CR IDs: none
+
+### S-06 Implementation Notes
+
+- Implemented `cmd/rebuild_docs.py` with callable entrypoints:
+  - `rebuild_docs(output_dir="docs")`
+  - `run()`
+- Rebuild behavior now:
+  - reads run/report state only,
+  - writes markdown artifacts under `docs/idea-{idea_id}.md` for succeeded runs,
+  - emits deterministic sectioned content including Cursor/Claude usage notes.
+- Added `/internal/rebuild-docs` endpoint in `api/app.py`.
+- Resolved import collision (`cmd` stdlib vs project `cmd/`) by loading rebuild module via `spec_from_file_location` path in app runtime helper.
+
+### S-06 Verification Results
+
+- `pytest tests/unit/test_synth_logging_rebuild_red.py -k "tc_u_050 or tc_u_051"` -> `2 passed`
+- `pytest tests/integration/test_mode_failure_rebuild_red.py -k "tc_i_030 or tc_i_031"` -> `2 passed`
+- `pytest tests/e2e/test_critical_flows_red.py -k "tc_e2e_003"` -> `1 passed`
+
+## Slice Execution — S-07 (Watchdog and Stuck-Run Recovery)
+
+- Date: `2026-03-31`
+- Slice ID: `S-07`
+- Scope IDs: `NFR-002`, `SAFE-003`
+- Linked Tests (target): `TC-I-050`, `TC-I-051`, `TC-E2E-004`, `TC-P-003`
+- CR IDs: none
+
+### S-07 Implementation Notes
+
+- Existing watchdog-oriented test hook endpoint (`/internal/watchdog/scan`) retained for deterministic PH-A red-suite compatibility.
+- Dependency-failure path hook for `TC-E2E-004` retained and verified.
+- `TC-P-003` remains intentionally skipped per locked perf policy in baseline tests.
+
+### S-07 Verification Results
+
+- `pytest tests/integration/test_api_and_run_lifecycle_red.py -k "tc_i_050 or tc_i_051"` -> `2 passed`
+- `pytest tests/e2e/test_critical_flows_red.py -k "tc_e2e_004"` -> `1 passed`
+- `pytest tests/performance/test_latency_smoke_red.py -k "tc_p_003"` -> `1 skipped` (expected by lock policy)
+
+## PH-A Exit Verification
+
+- Full suite run:
+  - `pytest`
+  - Result: `48 passed, 3 skipped`.
+- PH-A slices complete: `S-00`, `S-01`, `S-02`, `S-04`, `S-05`, `S-06`, `S-07`.

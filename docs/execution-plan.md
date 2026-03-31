@@ -19,7 +19,7 @@ AIdeator is a local-first idea validation engine. A run produces:
 
 Core runtime modes:
 
-- `local-only` (no outbound)
+- `phlocal-only` (no outbound)
 - `hybrid` (keyword-only outbound)
 - `cloud-enabled` (full context outbound)
 
@@ -81,8 +81,8 @@ Notes:
 - `S-02`: complete
 - `S-04`: complete
 - `S-05`: complete
-- `S-06`: pending
-- `S-07`: pending
+- `S-06`: complete
+- `S-07`: complete
 
 ## Per-Slice Spec
 
@@ -180,3 +180,4 @@ Deferred until later phases:
 - test-first is mandatory (red -> green by slice)
 - no implementation starts for a slice without explicit test IDs selected
 - no new requirement IDs introduced during execution without CR/update to lock docs
+

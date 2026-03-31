@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from importlib.util import module_from_spec, spec_from_file_location
+from pathlib import Path
 from uuid import UUID
 
 from fastapi import FastAPI, HTTPException
@@ -24,6 +26,16 @@ def _mode_disclosure(mode: str) -> str:
         "hybrid": "Outbound calls are restricted to keyword-only payloads.",
         "cloud-enabled": "Outbound providers may receive richer run context.",
     }[mode]
+
+
+def _run_rebuild_docs() -> dict[str, object]:
+    module_file = Path(__file__).resolve().parents[1] / "cmd" / "rebuild_docs.py"
+    spec = spec_from_file_location("aideator_cmd_rebuild_docs_runtime", module_file)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("Unable to load rebuild docs module")
+    module = module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.run()
 
 
 @app.post("/ideas", status_code=201)
@@ -107,6 +119,12 @@ def internal_orphan_signals() -> dict[str, bool]:
 @app.post("/internal/watchdog/scan")
 def internal_watchdog_scan() -> dict[str, bool]:
     return {"ok": True}
+
+
+@app.post("/internal/rebuild-docs")
+def internal_rebuild_docs() -> dict[str, object]:
+    result = _run_rebuild_docs()
+    return {"ok": True, **result}
 
 
 @app.post("/internal/test-hooks/assert-no-external-http")

@@ -17,3 +17,7 @@ def save_report(report: Report) -> Report:
 
 def get_report(run_id: UUID) -> Report | None:
     return _REPORTS.get(run_id)
+
+
+def list_reports() -> list[Report]:
+    return list(_REPORTS.values())

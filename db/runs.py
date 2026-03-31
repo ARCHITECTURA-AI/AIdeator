@@ -19,6 +19,10 @@ def get_run(run_id: UUID) -> Run | None:
     return _RUNS.get(run_id)
 
 
+def list_runs() -> list[Run]:
+    return list(_RUNS.values())
+
+
 def transition_run(run_id: UUID, next_status: RunStatus, *, error_code: str | None = None) -> Run:
     run = _RUNS[run_id]
     run.transition_to(next_status, error_code=error_code)

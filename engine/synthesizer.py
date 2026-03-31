@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-
 REQUIRED_CARD_TYPES = {"demand", "competition", "risk", "next_steps"}
 REQUIRES_CITATIONS = {"demand", "competition", "risk"}
 
@@ -16,7 +15,9 @@ def validate_cards(cards: list[dict[str, object]]) -> None:
     for card in cards:
         card_type = str(card.get("type"))
         citations = card.get("citation_urls", [])
-        if card_type in REQUIRES_CITATIONS and (not isinstance(citations, list) or len(citations) == 0):
+        if card_type in REQUIRES_CITATIONS and (
+            not isinstance(citations, list) or len(citations) == 0
+        ):
             raise ValueError(f"Missing citations for card type: {card_type}")
 
 

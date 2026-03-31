@@ -70,7 +70,10 @@ def export_runs_snapshot() -> dict[str, object]:
         }
         for run in _RUNS.values()
     ]
-    history = {str(idea_id): [str(run_id) for run_id in run_ids] for idea_id, run_ids in _RUN_HISTORY.items()}
+    history = {
+        str(idea_id): [str(run_id) for run_id in run_ids]
+        for idea_id, run_ids in _RUN_HISTORY.items()
+    }
     idempotency = [
         {"idea_id": str(idea_id), "key": key, "run_id": str(run_id)}
         for (idea_id, key), run_id in _IDEMPOTENCY_INDEX.items()
@@ -112,4 +115,6 @@ def import_runs_snapshot(snapshot: dict[str, object]) -> None:
         for row in idempotency:
             if not isinstance(row, dict):
                 continue
-            _IDEMPOTENCY_INDEX[(UUID(str(row["idea_id"])), str(row["key"]))] = UUID(str(row["run_id"]))
+            _IDEMPOTENCY_INDEX[(UUID(str(row["idea_id"])), str(row["key"]))] = UUID(
+                str(row["run_id"])
+            )

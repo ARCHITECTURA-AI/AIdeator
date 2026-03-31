@@ -36,7 +36,11 @@ def test_tc_i_002_post_runs_creates_pending_run() -> None:
     client = TestClient(app)
     response = client.post(
         "/runs",
-        json={"idea_id": "11111111-1111-1111-1111-111111111111", "tier": "low", "mode": "local-only"},
+        json={
+            "idea_id": "11111111-1111-1111-1111-111111111111",
+            "tier": "low",
+            "mode": "local-only",
+        },
     )
     assert response.status_code == 202, response.text
 
@@ -46,7 +50,11 @@ def test_tc_i_003_run_lifecycle_happy_path_pending_to_succeeded() -> None:
     client = TestClient(app)
     create = client.post(
         "/runs",
-        json={"idea_id": "11111111-1111-1111-1111-111111111111", "tier": "low", "mode": "local-only"},
+        json={
+            "idea_id": "11111111-1111-1111-1111-111111111111",
+            "tier": "low",
+            "mode": "local-only",
+        },
     )
     assert create.status_code == 202, create.text
 

@@ -5,8 +5,7 @@ from __future__ import annotations
 from uuid import UUID
 
 from db.reports import save_report
-from db.runs import get_run
-from db.runs import transition_run
+from db.runs import get_run, transition_run
 from engine.synthesizer import synthesize_default_cards
 from models.report import Report
 

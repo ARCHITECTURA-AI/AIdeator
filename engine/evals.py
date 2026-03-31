@@ -67,7 +67,11 @@ def evaluate_card_semantics(
     return {"score": score, "pass": score >= threshold}
 
 
-def evaluate_notes_actionability(*, notes_markdown: str, threshold: float = 0.55) -> dict[str, float | bool]:
+def evaluate_notes_actionability(
+    *,
+    notes_markdown: str,
+    threshold: float = 0.55,
+) -> dict[str, float | bool]:
     """Score actionability by counting clear imperative next-step markers."""
     lower_notes = notes_markdown.lower()
     action_markers = ("must", "should", "next", "implement", "verify", "run", "measure")

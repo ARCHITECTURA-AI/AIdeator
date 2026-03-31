@@ -31,7 +31,10 @@ def test_tc_e2e_001_happy_path_idea_to_report() -> None:
     assert create_idea.status_code == 201, create_idea.text
 
     idea_id = create_idea.json()["idea_id"]
-    create_run = client.post("/runs", json={"idea_id": idea_id, "tier": "low", "mode": "local-only"})
+    create_run = client.post(
+        "/runs",
+        json={"idea_id": idea_id, "tier": "low", "mode": "local-only"},
+    )
     assert create_run.status_code == 202, create_run.text
 
     run_id = create_run.json()["run_id"]

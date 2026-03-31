@@ -32,6 +32,13 @@ from db.runs import (
     transition_run,
 )
 from db.signals import export_signals_snapshot, import_signals_snapshot
+from engine.evals import (
+    check_eval_budget,
+    enforce_eval_budget,
+    evaluate_card_semantics,
+    evaluate_notes_actionability,
+)
+from engine.mode_guard import check as mode_guard_check
 from engine.orchestrator import start_run
 from engine.plugin_sandbox import assert_plugin_caps, enforce_plugin_policy
 from engine.plugins import (
@@ -41,17 +48,14 @@ from engine.plugins import (
     load_plugins,
     register_plugin,
 )
-from engine.evals import (
-    check_eval_budget,
-    enforce_eval_budget,
-    evaluate_card_semantics,
-    evaluate_notes_actionability,
-)
 from engine.signal_collector import build_external_payload
 from engine.synthesizer import synthesize_default_cards
-from engine.mode_guard import check as mode_guard_check
 from infra.authz import assert_row_scope, enforce_user_scope
-from infra.backup import build_backup_manifest, canonicalize_backup_payload, validate_backup_manifest
+from infra.backup import (
+    build_backup_manifest,
+    canonicalize_backup_payload,
+    validate_backup_manifest,
+)
 from infra.logging import sanitize_log_event
 from migrations.guard import verify_invariants_after_migration
 from models.idea import Idea
@@ -250,11 +254,7 @@ def test_hook_phb_model_routing_startup_check() -> dict[str, object]:
     fail_fast = False
     try:
         validate_model_routing(
-            {
-                "unknown-mode": {
-                    "low": {"provider": "litellm", "model": "x", "prompt_id": "analyst"}
-                }
-            }
+            {"unknown-mode": {"low": {"provider": "litellm", "model": "x", "prompt_id": "analyst"}}}
         )
     except ValueError:
         fail_fast = True
@@ -439,9 +439,7 @@ def test_hook_phb_security_config_poisoning() -> dict[str, object]:
         "cloud-enabled": {
             "low": {"provider": "litellm", "model": "safe-model", "prompt_id": "analyst"}
         },
-        "__proto__": {
-            "low": {"provider": "litellm", "model": "poison", "prompt_id": "analyst"}
-        },
+        "__proto__": {"low": {"provider": "litellm", "model": "poison", "prompt_id": "analyst"}},
     }
     blocked = False
     try:
@@ -668,10 +666,13 @@ def test_hook_phc_security_log_secret_scan() -> dict[str, object]:
         "client_secret": "client-secret-123",
     }
     sanitized = sanitize_log_event(raw_event)
-    leaked = any(
-        str(sanitized.get(key, "")).lower().find("secret") >= 0
-        for key in ("api_key", "client_secret")
-    ) or sanitized.get("idea_description") != "[REDACTED]"
+    leaked = (
+        any(
+            str(sanitized.get(key, "")).lower().find("secret") >= 0
+            for key in ("api_key", "client_secret")
+        )
+        or sanitized.get("idea_description") != "[REDACTED]"
+    )
     return {"ok": not leaked, "leaked": leaked}
 
 
@@ -701,8 +702,16 @@ def test_hook_phd_plugin_mode_boundary() -> dict[str, object]:
         description="longer business description text that should not pass through in full",
     )
 
-    local_guard = mode_guard_check(mode="local-only", target_url="https://api.example.com", payload=local_payload["query"])
-    hybrid_guard = mode_guard_check(mode="hybrid", target_url="https://api.example.com", payload=hybrid_payload["query"])
+    local_guard = mode_guard_check(
+        mode="local-only",
+        target_url="https://api.example.com",
+        payload=local_payload["query"],
+    )
+    hybrid_guard = mode_guard_check(
+        mode="hybrid",
+        target_url="https://api.example.com",
+        payload=hybrid_payload["query"],
+    )
     is_keyword_only = len(hybrid_payload["query"].split()) <= 10
 
     ok = (not local_guard) and hybrid_guard and is_keyword_only and local_payload["query"] == ""
@@ -719,7 +728,10 @@ def test_hook_phd_plugin_mode_boundary() -> dict[str, object]:
 def test_hook_phd_plugin_contract() -> dict[str, object]:
     register_plugin(
         "sample.source.hn",
-        {"api_version": PLUGIN_API_VERSION, "hooks": list(REQUIRED_PLUGIN_HOOKS) + list(OPTIONAL_PLUGIN_HOOKS)},
+        {
+            "api_version": PLUGIN_API_VERSION,
+            "hooks": list(REQUIRED_PLUGIN_HOOKS) + list(OPTIONAL_PLUGIN_HOOKS),
+        },
     )
     loaded = load_plugins()
     contract_shape = [
@@ -745,7 +757,9 @@ def test_hook_phd_plugin_contract() -> dict[str, object]:
 def test_hook_phd_security_sandbox() -> dict[str, object]:
     caps_ok = assert_plugin_caps({"signals:read", "signals:emit"})
     caps_rejected = not assert_plugin_caps({"signals:emit", "db:write"})
-    blocked_external = not enforce_plugin_policy(action="network_call", target="https://api.tavily.com/search")
+    blocked_external = not enforce_plugin_policy(
+        action="network_call", target="https://api.tavily.com/search"
+    )
     blocked_file_escape = not enforce_plugin_policy(action="file_read", target="../secrets.txt")
     ok = caps_ok and caps_rejected and blocked_external and blocked_file_escape
     return {

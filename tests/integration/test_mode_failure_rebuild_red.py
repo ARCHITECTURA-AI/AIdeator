@@ -20,7 +20,11 @@ def test_tc_i_010_local_only_zero_outbound_http() -> None:
     client = TestClient(app)
     response = client.post(
         "/runs",
-        json={"idea_id": "11111111-1111-1111-1111-111111111111", "tier": "low", "mode": "local-only"},
+        json={
+            "idea_id": "11111111-1111-1111-1111-111111111111",
+            "tier": "low",
+            "mode": "local-only",
+        },
     )
     assert response.status_code == 202, response.text
 
@@ -30,7 +34,11 @@ def test_tc_i_011_hybrid_keyword_only_payloads() -> None:
     client = TestClient(app)
     response = client.post(
         "/runs",
-        json={"idea_id": "11111111-1111-1111-1111-111111111111", "tier": "medium", "mode": "hybrid"},
+        json={
+            "idea_id": "11111111-1111-1111-1111-111111111111",
+            "tier": "medium",
+            "mode": "hybrid",
+        },
     )
     assert response.status_code == 202, response.text
 

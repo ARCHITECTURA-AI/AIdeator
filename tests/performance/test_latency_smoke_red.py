@@ -17,7 +17,9 @@ def test_tc_p_002_medium_tier_p95_latency_bound() -> None:
     raise AssertionError("TC-P-002 not implemented yet")
 
 
-@pytest.mark.skip(reason="TC-P-003 locked for implementation phase with watchdog benchmark harness.")
+@pytest.mark.skip(
+    reason="TC-P-003 locked for implementation phase with watchdog benchmark harness."
+)
 def test_tc_p_003_watchdog_overhead_bound() -> None:
     """TC-P-003 -> LIVE-002, NFR-001."""
     raise AssertionError("TC-P-003 not implemented yet")

@@ -12,17 +12,14 @@ def enforce_user_scope(*, actor_user_id: str, row_user_id: str | None, resource_
         raise PermissionError(f"Resource {resource_id} has no user scope")
     if actor_user_id != row_user_id:
         raise PermissionError(
-            f"User scope violation for resource {resource_id}: {actor_user_id} cannot access {row_user_id}"
+            f"User scope violation for resource {resource_id}: "
+            f"{actor_user_id} cannot access {row_user_id}"
         )
 
 
 def assert_row_scope(actor_user_id: str, row: Mapping[str, Any]) -> None:
     """Extract a row owner field and enforce the caller scope."""
-    row_user_id = (
-        row.get("target_user")
-        or row.get("user_id")
-        or row.get("owner_user_id")
-    )
+    row_user_id = row.get("target_user") or row.get("user_id") or row.get("owner_user_id")
     resource_id = str(row.get("idea_id") or row.get("run_id") or row.get("id") or "<unknown>")
     enforce_user_scope(
         actor_user_id=actor_user_id,

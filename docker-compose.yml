@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  aideator:
+    build: .
+    container_name: aideator
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENV: development
+      LOG_LEVEL: INFO
+    volumes:
+      - ./docs:/app/docs
+      - ./logs:/app/logs

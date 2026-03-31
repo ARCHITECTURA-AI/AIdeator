@@ -1,0 +1,1 @@
+"""Rebuild docs command scaffold."""

@@ -1,0 +1,20 @@
+---
+description: Enforce test-first and traceability for AIdeator
+alwaysApply: true
+---
+
+# TDD and Traceability
+
+- Treat `@docs/test-plan.md` and `@docs/traceability.md` as the source of truth for tests.
+- For any behavior change, start by:
+  - locating relevant `FR-*` / `NFR-*` / `INV-*` / `SAFE-*` IDs in `@docs/plan.md`, `@docs/spec.md`, or `@docs/traceability.md`
+  - selecting or adding `TC-*` entries in `@docs/test-plan.md`
+- Prefer adding or updating tests before implementing code:
+  - unit: `TC-U-*`
+  - integration: `TC-I-*`
+  - contract: `TC-C-*`
+  - end-to-end: `TC-E2E-*`
+  - security/perf/quality: `TC-S-*`, `TC-P-*`, `TC-Q-*`
+- When suggesting changes, mention the exact IDs you are satisfying and where tests should live (file and `TC-*`).
+- Do not invent new ID schemes; only extend the existing series.
+

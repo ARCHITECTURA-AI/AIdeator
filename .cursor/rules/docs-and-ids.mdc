@@ -1,0 +1,21 @@
+---
+description: Documentation and ID discipline for AIdeator
+alwaysApply: true
+---
+
+# Docs and Traceability
+
+- Prefer citing local docs instead of restating behavior:
+  - `@docs/plan.md` – execution strategy, risks, and slices.
+  - `@docs/spec.md` – flows, contracts, and data rules.
+  - `@docs/test-plan.md` – test inventory and red-baseline policy.
+  - `@docs/traceability.md` – requirement-to-test mappings.
+  - `@docs/decisions/ADR-*.md` – architectural decisions.
+- When proposing a change:
+  - call out which `FR-*` / `NFR-*` / `INV-*` / `SAFE-*` / `ADR-*` you are touching.
+  - suggest specific `TC-*` updates (or additions) and where they live under `tests/`.
+- Keep `CHANGELOG.md` and docs in sync with significant changes:
+  - new or changed IDs
+  - new external dependencies or infra behavior
+  - any change that affects runtime modes or data boundaries.
+

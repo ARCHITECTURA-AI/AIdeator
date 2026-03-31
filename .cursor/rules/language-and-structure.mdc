@@ -1,0 +1,19 @@
+---
+description: Python/FastAPI and project structure conventions
+alwaysApply: true
+---
+
+# Language and Structure
+
+- Primary stack: Python (>=3.10), FastAPI, uvicorn.
+- Follow the architecture described in `@docs/plan.md` and `@docs/spec.md`:
+  - `api/` – HTTP layer only, no business logic.
+  - `engine/` – orchestration and engine nodes.
+  - `models/` – domain models for ideas, runs, reports, signals.
+  - `db/` – SQLite schema and repositories.
+  - `adapters/` – Tavily, Reddit, LLM, and other externals.
+  - `infra/` – logging, watchdog, telemetry.
+  - `cmd/` – CLI and maintenance commands.
+- Use the naming, migrations, error code, and release policies in `@docs/conventions.md`.
+- Prefer small, pure functions and explicit dependencies; avoid hidden globals.
+

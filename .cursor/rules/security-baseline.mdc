@@ -1,0 +1,18 @@
+---
+description: Security, privacy, and mode-guard rules for AIdeator
+alwaysApply: true
+---
+
+# Security Baseline
+
+- Always honor the mode semantics from `@docs/spec.md` and `@docs/plan.md`:
+  - `local-only` → no external HTTP or cloud LLM calls (`INV-001`, `SAFE-002`).
+  - `hybrid` → keyword-only outbound, never full idea text (`INV-002`, `NFR-009`).
+  - `cloud-enabled` → only as explicitly configured.
+- Never propose hidden or implicit network calls; all endpoints must be explicit and go through ModeGuard.
+- Logs must never contain idea text or user content; follow `SAFE-001` and logging rules in `@docs/spec.md` and `@docs/conventions.md`.
+- For security-related changes, cross-check:
+  - invariants: `INV-*`
+  - safety rules: `SAFE-*`
+  - tests: `TC-S-*` in `@docs/test-plan.md` and mappings in `@docs/traceability.md`.
+

@@ -1,0 +1,1 @@
+"""ModeGuard scaffold."""

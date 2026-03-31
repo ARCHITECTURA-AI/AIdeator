@@ -1,0 +1,1 @@
+"""Signal collector scaffold."""

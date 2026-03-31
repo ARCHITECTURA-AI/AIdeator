@@ -1,0 +1,21 @@
+---
+description: Core AIdeator project standards and philosophy
+alwaysApply: true
+---
+
+# Core Standards
+
+- Read and respect the local planning docs:
+  - `@docs/plan.md` (handoff / execution overview)
+  - `@docs/spec.md` (behavior and contracts)
+  - `@docs/conventions.md` (naming, migrations, error codes, release policy)
+  - `@docs/NON_OBVIOUS.md` and `@docs/model-routing.md`
+  - `@docs/decisions/ADR-*.md`
+- Preserve the planning vocabulary and IDs exactly:
+  - Requirements: `FR-*`, `NFR-*`
+  - Invariants and safety: `INV-*`, `SAFE-*`
+  - Errors and changes: `AE-*`, `CR-*` (change requests)
+  - Tests: `TC-U-*`, `TC-I-*`, `TC-C-*`, `TC-E2E-*`, `TC-S-*`, `TC-P-*`, `TC-Q-*`
+- Prefer minimal, vertical slices that match `@docs/execution-plan.md` and `@docs/scope-lock.md`.
+- Never silently expand scope beyond the locked PH-A features; point back to scope lock first.
+

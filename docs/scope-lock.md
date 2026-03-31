@@ -1,22 +1,24 @@
-# AIdeator Scope Lock (PH-B)
+# AIdeator Scope Lock (PH-C)
 
 ## Approval Status
 
 - Planning readiness: **GO**
-- Lock scope: **PH-B implementation window**
+- Lock scope: **PH-C implementation window**
 - Lock authority: this file + `docs/execution-plan.md`
 - Change policy: any deviation requires explicit `CR-*` entry before implementation
 
-## MVP Features (PH-B Locked In)
+## MVP Features (PH-C Locked In)
 
-PH-A baseline is assumed complete; PH-B scope is now:
+PH-A and PH-B baselines are assumed complete; PH-C scope is now:
 
-- `FR-002` multi-run behavior and idempotency-key correctness
-- `FR-008` model routing and prompt registry hardening (`ADR-006`)
-- PH-B contract compatibility (`TC-C-100`..`TC-C-111`)
-- PH-B robustness (`TC-U-120`, `TC-U-121`, `TC-I-120`, `TC-I-121`)
-- PH-B security/performance gates (`TC-S-100`..`TC-S-102`, `TC-P-100`..`TC-P-101`)
-- artifact requirement retention (`TC-U-110`, `NO-011`, `ADR-007`)
+- multi-user/run isolation (`TC-I-200`)
+- backup and restore operations in containerized workflows (`TC-I-201`)
+- migration-path reliability (`TC-I-202`)
+- compatibility across minor upgrades (`TC-C-200`, `TC-E2E-200`)
+- operational hardening:
+  - no secret leakage in crash/log output (`TC-S-200`)
+  - secure bind defaults (`TC-S-201`)
+  - long-run soak stability (`TC-P-200`)
 
 Carry-forward constraints still mandatory:
 
@@ -28,18 +30,17 @@ Carry-forward constraints still mandatory:
 
 No implementation work for:
 
-- PH-C (`TC-*-200`): multi-user/auth isolation, backup/restore automation, migration-path delivery
 - PH-D (`TC-*-300`, `TC-Q-*`): plugin framework, LLM-as-judge quality stack, export/import extensions
-- any net-new API/UI surface that is not required by PH-B IDs and tests listed above
+- any net-new API/UI surface that is not required by PH-C IDs and tests listed above
 
 ## Approved Slice Order (Locked)
 
-1. Routing foundations (`TC-U-100`, `TC-U-101`, `TC-U-102`, `TC-I-110`, `TC-I-111`)
-2. Multi-run + idempotency (`TC-I-100`, `TC-I-101`, `TC-I-102`, `TC-E2E-100`, `TC-E2E-101`)
-3. Contract compatibility (`TC-C-100`, `TC-C-101`, `TC-C-110`, `TC-C-111`)
-4. Robustness and abuse (`TC-U-120`, `TC-U-121`, `TC-I-120`, `TC-I-121`, `TC-E2E-102`)
-5. Security/performance gates (`TC-S-100`, `TC-S-101`, `TC-S-102`, `TC-P-100`, `TC-P-101`)
-6. Artifact compliance (`TC-U-110`)
+1. Isolation foundations (`TC-I-200`)
+2. Backup/restore (`TC-I-201`)
+3. Migration reliability (`TC-I-202`)
+4. Compatibility/upgrade (`TC-C-200`, `TC-E2E-200`)
+5. Operational security (`TC-S-200`, `TC-S-201`)
+6. Soak/performance (`TC-P-200`)
 
 Do not reorder without updating both lock files.
 
@@ -47,22 +48,22 @@ Do not reorder without updating both lock files.
 
 - Start work from `docs/test-plan.md` and `docs/traceability.md`, not from ad-hoc implementation ideas.
 - Every code change must point to affected `TC-*` IDs before merge.
-- A PH-B item is not complete until mapped tests are green and traceability still resolves to valid IDs.
+- A PH-C item is not complete until mapped tests are green and traceability still resolves to valid IDs.
 
-Minimum PH-B gates:
+Minimum PH-C gates:
 
-- idempotency behavior: `TC-I-102`
-- startup/config fail-fast: `TC-I-110`
-- backward-compatible response behavior: `TC-C-100`, `TC-C-101`
-- security hardening: `TC-S-100`, `TC-S-101`, `TC-S-102`
+- isolation: `TC-I-200`
+- durability: `TC-I-201`, `TC-I-202`
+- upgrade safety: `TC-C-200`, `TC-E2E-200`
+- operational hardening: `TC-S-200`, `TC-S-201`, `TC-P-200`
 
 ## Enforcement Rules
 
-- No opportunistic expansion beyond PH-B lock.
+- No opportunistic expansion beyond PH-C lock.
 - No new ID families; keep `FR-*`, `NFR-*`, `INV-*`, `SAFE-*`, `TC-*`, `ADR-*`, `CR-*`.
 - If scope is disputed or unstable, stop implementation and resolve docs first.
 
 ## Approval Record
 
-- State: **ACTIVE PH-B LOCK**
+- State: **ACTIVE PH-C LOCK**
 - This file is the enforceable boundary for implementation decisions.

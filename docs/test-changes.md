@@ -64,3 +64,30 @@
 - `BLOCKER-PHB-001`: PH-B test hooks under `/internal/test-hooks/phb/*` are not implemented.
 - `BLOCKER-PHB-002`: `config/model_routing.py` and required routing/prompt validation callables are missing.
 - `BLOCKER-PHB-003`: PH-B contract requirements for stable enriched report/error responses are not yet met (`TC-C-100`, `TC-C-101`).
+
+---
+## PH-C Change Set (2026-03-31)
+
+### Added PH-C Test Files
+- `tests/unit/test_phc_runtime_and_migration_red.py`
+- `tests/integration/test_phc_operations_red.py`
+- `tests/contract/test_phc_contracts_red.py`
+- `tests/e2e/test_phc_upgrade_red.py`
+- `tests/security/test_phc_security_red.py`
+- `tests/performance/test_phc_perf_red.py`
+
+### PH-C Red Baseline Run Audit
+- Latest run command: `pytest`
+- Exit code: `1` (expected)
+- Result summary: `10 failed, 71 passed, 6 skipped`
+- Evidence file: `docs/test-red-baseline.md`
+
+### PH-C Lock Extensions
+- `TC-U-200..202`, `TC-I-200..202`, `TC-C-200`, `TC-E2E-200`, `TC-S-200..201`, `TC-P-200` are now locked as append-only IDs.
+- `TC-P-200` remains skipped until PH-C soak harness exists; unskip requires baseline refresh and traceability confirmation.
+- Any PH-C migration or backup semantics changes require same-change updates to `docs/traceability.md` and this audit log.
+
+### PH-C Blockers (Not TODOs)
+- `BLOCKER-PHC-001`: PH-C test hooks under `/internal/test-hooks/phc/*` are not implemented.
+- `BLOCKER-PHC-002`: PH-C infra modules for authz/backup and migration invariant guard are missing (`infra.authz`, `infra.backup`, `migrations.guard`).
+- `BLOCKER-PHC-003`: PH-C API compatibility contract harness is not implemented (`TC-C-200`, `TC-E2E-200`).

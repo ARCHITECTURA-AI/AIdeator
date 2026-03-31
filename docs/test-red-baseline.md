@@ -44,3 +44,22 @@
 2. Confirm non-zero exit code.
 3. Confirm PH-B failures are concentrated in `TC-*-100+`.
 4. Confirm skip list includes `TC-P-100` and `TC-P-101`.
+
+---
+## PH-C Baseline Metadata
+- Date: 2026-03-31
+- Command: `pytest`
+- Scope: PH-C `200+` test authoring and lock audit
+- Result: **RED (expected)**, exit code `1`
+
+## PH-C Red Evidence Snapshot
+- Summary: `10 failed, 71 passed, 6 skipped in 2.17s`
+- Newly skipped performance test: `TC-P-200`
+- Failure class A (PH-C hooks/contracts not implemented): missing `/internal/test-hooks/phc/*` endpoints (`404`)
+- Failure class B (PH-C infra/migration modules missing): `infra.authz`, `infra.backup`, `migrations.guard`
+
+## PH-C Reproducibility
+1. From repo root run `pytest`.
+2. Confirm non-zero exit code.
+3. Confirm PH-C failures are concentrated in `TC-*-200+`.
+4. Confirm skip list includes `TC-P-200`.

@@ -1,8 +1,8 @@
-# AIdeator Execution Plan (PH-B Lock)
+# AIdeator Execution Plan (PH-C Lock)
 
 ## Objective
 
-Turn the mirrored planning docs into a PH-B execution contract that is explicit, test-first, and drift-resistant.
+Turn the mirrored planning docs into a PH-C execution contract that is explicit, test-first, and drift-resistant.
 
 ## Project Overview
 
@@ -12,25 +12,27 @@ AIdeator remains a local-first validation engine with three runtime modes:
 - `hybrid`
 - `cloud-enabled`
 
-PH-A baseline is treated as complete. This plan locks PH-B expansion only:
+PH-A and PH-B baselines are treated as complete. This plan locks PH-C expansion only:
 
-- routing and prompt registry hardening (`FR-008`, `ADR-006`)
-- multi-run history and idempotency (`FR-002`, `ADR-004`)
-- backward-compatible contract growth (`TC-C-100`..`TC-C-111`)
-- PH-B security/performance hardening (`TC-S-100`..`TC-S-102`, `TC-P-100`..`TC-P-101`)
+- multi-user and isolation capabilities (`TC-I-200`)
+- backup/restore operational path in containerized setups (`TC-I-201`)
+- migration reliability path (`TC-I-202`)
+- compatibility and upgrade safety (`TC-C-200`, `TC-E2E-200`)
+- operational security/perf hardening (`TC-S-200`, `TC-S-201`, `TC-P-200`)
 
 ## Architecture Summary
 
-PH-B work is constrained to the approved architecture paths:
+PH-C work is constrained to the approved architecture paths:
 
 - API: `api/ideas.py`, `api/runs.py`
 - Engine: `engine/orchestrator.py`, `engine/mode_guard.py`, `engine/signal_collector.py`, `engine/analyst.py`, `engine/synthesizer.py`
 - DB: `db/schema.py`, `db/runs.py`, `db/reports.py`, `db/signals.py`
-- Adapters/config: `adapters/llm.py`, `config/model_routing.py`, `prompts/*.txt`
+- Data ops: backup/export/restore paths under `db/`, `cmd/`, and container mounts
+- Adapters/config: existing adapter stack remains intact; PH-C should not alter PH-B routing semantics
 - Infra: `infra/logging.py`, `infra/watchdog.py`
 - Commands/docs: `cmd/rebuild_docs.py`, `docs/`
 
-## Engine Summary (PH-B)
+## Engine Summary (PH-C)
 
 Non-negotiable carry-over properties:
 
@@ -39,118 +41,104 @@ Non-negotiable carry-over properties:
 - `INV-007`: run mode immutability still strict
 - `SAFE-001`, `SAFE-002`, `SAFE-003`: no privacy/safety regression
 
-PH-B engine additions focus on:
+PH-C engine/runtime additions focus on:
 
-- route/model/prompt validation and reload behavior
-- idempotency key behavior on run creation
-- multi-run per idea lifecycle correctness
+- isolation boundaries between user contexts
+- durability and recoverability of canonical state (`db/aideator.db`)
+- upgrade-safe behavior without violating invariants (`INV-003`, `INV-005`, `INV-006`)
 
-## Build Order (Locked for PH-B)
+## Build Order (Locked for PH-C)
 
-1. **PH-B Routing Foundations**
-   - `TC-U-100`, `TC-U-101`, `TC-U-102`
-   - `TC-I-110`, `TC-I-111`
-2. **PH-B Multi-run and Idempotency**
-   - `TC-I-100`, `TC-I-101`, `TC-I-102`
-   - `TC-E2E-100`, `TC-E2E-101`
-3. **PH-B Contract Compatibility**
-   - `TC-C-100`, `TC-C-101`, `TC-C-110`, `TC-C-111`
-4. **PH-B Robustness and Abuse Cases**
-   - `TC-U-120`, `TC-U-121`, `TC-I-120`, `TC-I-121`, `TC-E2E-102`
-5. **PH-B Security and Performance Gates**
-   - `TC-S-100`, `TC-S-101`, `TC-S-102`
-   - `TC-P-100`, `TC-P-101`
-6. **PH-B Artifact/UX Compliance**
-   - `TC-U-110` (Cursor/Claude usage notes section retained in artifacts)
+1. **PH-C Isolation Foundations**
+   - `TC-I-200`
+2. **PH-C Backup/Restore**
+   - `TC-I-201`
+3. **PH-C Migration Reliability**
+   - `TC-I-202`
+4. **PH-C Compatibility/Upgrade**
+   - `TC-C-200`, `TC-E2E-200`
+5. **PH-C Operational Security**
+   - `TC-S-200`, `TC-S-201`
+6. **PH-C Soak/Performance**
+   - `TC-P-200`
 
 No reordering without updating `docs/scope-lock.md`.
 
 ## Slice Status (Local)
 
-- `PH-B-S1` Routing Foundations (`FR-008`, `TC-U-100`, `TC-U-101`, `TC-U-102`, `TC-I-110`, `TC-I-111`): **completed** (`2026-03-31`)
-- `PH-B-S2` Multi-run and Idempotency (`FR-002`, `TC-I-100`, `TC-I-101`, `TC-I-102`, `TC-E2E-100`, `TC-E2E-101`): **completed** (`2026-03-31`)
-- `PH-B-S3` Contract Compatibility (`TC-C-100`, `TC-C-101`, `TC-C-110`, `TC-C-111`): **completed** (`2026-03-31`)
-- `PH-B-S4` Robustness and Abuse (`TC-U-120`, `TC-U-121`, `TC-I-120`, `TC-I-121`, `TC-E2E-102`): **completed** (`2026-03-31`)
-- `PH-B-S5` Security and Performance (`TC-S-100`, `TC-S-101`, `TC-S-102`, `TC-P-100`, `TC-P-101`): **completed** (`2026-03-31`)
-- `PH-B-S6` Artifact Compliance (`TC-U-110`): **completed** (`2026-03-31`)
+- `PH-C-S1` Isolation Foundations (`TC-I-200`): **completed** (`2026-03-31`)
+- `PH-C-S2` Backup/Restore (`TC-I-201`): **completed** (`2026-03-31`)
+- `PH-C-S3` Migration Reliability (`TC-I-202`): **completed** (`2026-03-31`)
+- `PH-C-S4` Compatibility/Upgrade (`TC-C-200`, `TC-E2E-200`): **completed** (`2026-03-31`)
+- `PH-C-S5` Operational Security (`TC-S-200`, `TC-S-201`): **completed** (`2026-03-31`)
+- `PH-C-S6` Soak/Performance (`TC-P-200`): **completed (lock-verified skipped test)** (`2026-03-31`)
 
 ## Per-Slice Spec
 
-### 1) Routing Foundations
+### 1) Isolation Foundations
 
-- IDs: `FR-008`, `ADR-006`, `NO-009`
+- IDs: `INV-005`, `INV-003`, PH-C isolation requirements (`TC-I-200`)
 - Deliverables:
-  - strict routing config parse/validation
-  - startup fail-fast on bad routing/prompt refs
-  - config reload applies to new runs only
+  - explicit tenant/user partitioning strategy for ideas/runs/artifacts
+  - no cross-user read/write leakage
 
-### 2) Multi-run and Idempotency
+### 2) Backup/Restore
 
-- IDs: `FR-002`, `FR-001`, `ADR-004`, `INV-003`
+- IDs: `ADR-005`, `NO-002`, `NO-005`, `TC-I-201`
 - Deliverables:
-  - multiple runs per idea with clean separation
-  - idempotency key prevents duplicate run creation
-  - run history remains consistent across retries/failures
+  - deterministic backup + restore path validated in container workflow
+  - restored state parity for ideas/runs/signals/reports
 
-### 3) Contract Compatibility
+### 3) Migration Reliability
 
-- IDs: `FR-005`, `FR-003`, `AE-*` schema stability from `docs/conventions.md`
+- IDs: `ADR-005` revisit, `INV-003`, `INV-005`, `INV-006`, `TC-I-202`
 - Deliverables:
-  - PH-A clients tolerate PH-B optional response fields
-  - stable non-2xx error schema (`error_code`, `error_domain`, `message`, `run_id`)
-  - tolerant parsers for external adapter minor schema drift
+  - migration execution path preserving invariants
+  - rollback/recovery strategy documented and testable
 
-### 4) Robustness and Abuse
+### 4) Compatibility and Upgrade
 
-- IDs: `SAFE-001`, `SAFE-003`, `INV-001`, `INV-002`
+- IDs: conventions upgrade policy, `TC-C-200`, `TC-E2E-200`
 - Deliverables:
-  - long-input resilience
-  - prompt-injection treated strictly as data
-  - hardened mode guard and log sanitizer fuzz safety
+  - backward-compatible API behavior through upgrade windows
+  - zero-downtime style upgrade workflow validation
 
-### 5) Security and Performance Gates
+### 5) Operational Security
 
-- IDs: `NO-008`, `SAFE-005`, `NFR-001`, `NFR-002`, `INV-005`, `INV-003`
+- IDs: `SAFE-001`, `NO-003`, `NO-004`, `TC-S-200`, `TC-S-201`
 - Deliverables:
-  - config poisoning prevention
-  - docs path traversal prevention
-  - parallel run isolation under stress
-  - latency/throughput regression within PH-B guardrails
+  - no secret leakage in logs/crash dumps
+  - secure default network binding behavior
 
-### 6) Artifact/UX Compliance
+### 6) Soak and Long-run Stability
 
-- IDs: `NO-011`, `ADR-007`, `COV-003`
+- IDs: `NFR-001`, `LIVE-001`, `LIVE-002`, `TC-P-200`
 - Deliverables:
-  - markdown artifact contains required Cursor/Claude usage notes section
+  - sustained workload health with no stuck runs/leaks
 
 ## Risks and Mitigations
 
-- Routing misconfig causes runtime instability -> gate with `TC-U-100`, `TC-U-101`, `TC-I-110`
-- Idempotency defects duplicate runs -> gate with `TC-I-102`
-- Contract regressions break PH-A clients -> gate with `TC-C-100`, `TC-C-101`
-- Security regressions in config/path handling -> gate with `TC-S-100`, `TC-S-101`
-- Concurrency cross-contamination -> gate with `TC-S-102`, `TC-P-101`
+- Cross-user data leakage risk -> gate with `TC-I-200`
+- Restore corruption risk -> gate with `TC-I-201`
+- Migration invariant breakage -> gate with `TC-I-202`
+- Upgrade compatibility regressions -> gate with `TC-C-200`, `TC-E2E-200`
+- Operational leakage or unsafe binds -> gate with `TC-S-200`, `TC-S-201`
+- Long-run instability -> gate with `TC-P-200`
 
 ## Checkpoints
 
-1. **CP-B1**: routing layer stable; no startup/runtime config drift.
-2. **CP-B2**: idempotency + multi-run history stable.
-3. **CP-B3**: contract compatibility checks all green.
-4. **CP-B4**: abuse/security suite all green.
-5. **CP-B5 (PH-B Exit)**:
-   - `TC-U-100`..`TC-U-121` implemented and green
-   - `TC-I-100`..`TC-I-121` implemented and green
-   - `TC-C-100`..`TC-C-111` implemented and green
-   - `TC-E2E-100`..`TC-E2E-102` implemented and green
-   - `TC-S-100`..`TC-S-102` and `TC-P-100`..`TC-P-101` implemented and green
+1. **CP-C1**: isolation foundations validated (`TC-I-200`).
+2. **CP-C2**: backup/restore reliability validated (`TC-I-201`).
+3. **CP-C3**: migration reliability validated (`TC-I-202`).
+4. **CP-C4**: compatibility + upgrade checks green (`TC-C-200`, `TC-E2E-200`).
+5. **CP-C5**: operational security and soak checks green (`TC-S-200`, `TC-S-201`, `TC-P-200`).
 
-## Out-of-Scope List (PH-B)
+## Out-of-Scope List (PH-C)
 
 Still out-of-scope in this lock:
 
-- PH-C work (`TC-*-200` series): multi-user isolation, backup/restore automation, migration track
-- PH-D work (`TC-*-300` and `TC-Q-*`): plugin system and LLM-as-judge eval stack
-- Unplanned API/UI expansion not tied to PH-B IDs above
+- PH-D work (`TC-*-300` and `TC-Q-*`): plugin system, export/import extensions, LLM-as-judge eval stack
+- unplanned product/API expansion not required by PH-C IDs/tests above
 
 ## Operational Rules
 

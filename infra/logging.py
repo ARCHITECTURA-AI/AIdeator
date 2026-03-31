@@ -2,7 +2,17 @@
 
 from __future__ import annotations
 
-REDACTED_KEYS = {"idea_title", "idea_description", "signal_snippet"}
+REDACTED_KEYS = {
+    "idea_title",
+    "idea_description",
+    "signal_snippet",
+    "api_key",
+    "token",
+    "authorization",
+    "password",
+    "secret",
+    "client_secret",
+}
 
 
 def sanitize_log_event(event: dict[str, object]) -> dict[str, object]:

@@ -1,6 +1,7 @@
 ---
 
 ## spec_pass:
+
   date: "2026-03-31"
   mode_run: ["Spec Pass 1", "Spec Pass 2", "Spec Pass 3"]
   repo_ref: "bootstrap-only (no business logic yet)"
@@ -49,7 +50,7 @@
 
 ## Drift Summary
 
-- **Requirement coverage:** all `FR-`* / `NFR-*` / `INV-*` / `SAFE-*` are present only in docs and traceability; no partial or conflicting implementation exists.
+- **Requirement coverage:** all `FR-`* / `NFR-`* / `INV-*` / `SAFE-*` are present only in docs and traceability; no partial or conflicting implementation exists.
 - **Interface/schema drift:** None. Planned endpoints and schemas (in `@docs/spec.md`) are not yet implemented; existing `/healthz` is additive and does not conflict.
 - **Slice ordering drift:** None. Code does not yet encode slices; `@docs/execution-plan.md` and `@docs/scope-lock.md` remain the single source of truth.
 - **Conventions drift:** None. New files follow `@docs/conventions.md` (snake_case modules, package layout, `CHANGELOG.md`, CI, Docker, etc.).
@@ -382,7 +383,7 @@ If a future spec pass finds that implementation needs to intentionally diverge f
 - Added PH-B routing test-hook endpoints in `api/app.py`:
   - `GET /internal/test-hooks/phb/model-routing-startup-check`
   - `POST /internal/test-hooks/phb/config-reload`
-- Added `conftest.py` to enforce local package precedence for `config.*` imports during pytest collection and avoid collision with external `config` module.
+- Added `conftest.py` to enforce local package precedence for `config.`* imports during pytest collection and avoid collision with external `config` module.
 - Updated build inclusion paths in `pyproject.toml` for `config` and `prompts`.
 
 ### Verification Results
@@ -574,4 +575,266 @@ If a future spec pass finds that implementation needs to intentionally diverge f
   - `PH-B-S1`, `PH-B-S2`, `PH-B-S3`, `PH-B-S4`, `PH-B-S5`, `PH-B-S6`.
 - Remaining skips are expected lock-policy performance cases:
   - PH-A perf deferred IDs and PH-B `TC-P-100`, `TC-P-101`.
+
+---
+
+## Spec Pass — PH-C Lock (Controlled Drift Check)
+
+- Date: `2026-03-31`
+- Modes run: `Spec Pass 1`, `Spec Pass 2`, `Spec Pass 3`
+- Context:
+  - Lock files updated to PH-C:
+    - `docs/execution-plan.md`
+    - `docs/scope-lock.md`
+  - PH-C slice IDs under review:
+    - `TC-I-200`, `TC-I-201`, `TC-I-202`
+    - `TC-C-200`, `TC-E2E-200`
+    - `TC-S-200`, `TC-S-201`
+    - `TC-P-200`
+
+### Spec Pass 1 — Spec vs Repo Structure and Missing Modules
+
+- Structure check against PH-C plan:
+  - Paths exist for planned PH-C work: `api/`, `engine/`, `db/`, `infra/`, `cmd/`, `docs/`.
+  - Test directories for `integration`, `contract`, `e2e`, `security`, `performance` exist and are active.
+- Missing PH-C-specific test files:
+  - No `tests/*` modules currently target `TC-*-200` IDs.
+- Module drift:
+  - No path-level drift; PH-C references in plan map to real modules.
+
+**Result:** partial readiness; no structural conflict, but PH-C test modules are not yet present.
+
+### Spec Pass 2 — Spec vs Tests and Traceability
+
+- Traceability docs include PH-C test IDs in `docs/test-plan.md` and `docs/traceability.md`.
+- Repo tests currently cover PH-A/PH-B naming and coverage only:
+  - `test_phb`_* and PH-A red suites exist.
+  - PH-C `TC-*-200` implementations are absent.
+- Requirement coverage drift (phase-specific):
+  - PH-C lock expects execution on `TC-*-200`; repository has no corresponding PH-C tests yet.
+
+**Result:** drift identified at test-implementation layer for PH-C.
+
+### Spec Pass 3 — Spec vs Implementation / Runtime Signals
+
+- Runtime/implementation state:
+  - Existing implementation appears aligned to PH-A/PH-B progression.
+  - No explicit PH-C runtime-signal instrumentation evidence for:
+    - `TC-S-200` (secrets in crash/logs),
+    - `TC-S-201` (bind defaults),
+    - `TC-P-200` (soak behavior),
+    - migration/backups (`TC-I-201`, `TC-I-202`).
+- Missing runtime signal drift:
+  - PH-C required operational checks are not represented in current test/runtime hooks yet.
+
+**Result:** expected but real PH-C drift — lock changed to PH-C ahead of PH-C implementation and test hooks.
+
+### Drift Summary
+
+- **Requirement coverage:** PH-C target IDs exist in docs but are not yet represented in repo tests (`TC-*-200` gap).
+- **Interface/schema drift:** none detected vs current PH-C docs; no conflicting PH-C interface work observed.
+- **Slice ordering drift:** none; PH-C order is clear and not yet violated.
+- **Conventions drift:** none obvious; naming/layout still consistent with `docs/conventions.md`.
+- **Missing runtime signals:** yes for PH-C operational checks (`TC-S-200`, `TC-S-201`, `TC-P-200`, backup/migration checks).
+- **Stale Notion imports:** cannot be verified locally; still dependent on external sync confirmation.
+
+### Affected IDs
+
+- PH-C test IDs with current gap:
+  - `TC-I-200`, `TC-I-201`, `TC-I-202`
+  - `TC-C-200`, `TC-E2E-200`
+  - `TC-S-200`, `TC-S-201`
+  - `TC-P-200`
+- Related invariants/safety likely impacted if delayed:
+  - `INV-003`, `INV-005`, `INV-006`, `SAFE-001`
+- ADR/convention references in scope:
+  - `ADR-005`, `NO-003`, `NO-004`, upgrade policy in `docs/conventions.md` §8
+
+### Required CR-* Entries
+
+- **None required yet** if PH-C has not started.
+- **CR required** before any out-of-order implementation:
+  - If PH-D (`TC-*-300` / `TC-Q-`*) starts before PH-C gates.
+  - If PH-C order is changed from lock sequence.
+  - If backup/migration strategy changes relative to `ADR-005` assumptions.
+
+---
+
+## PH-C Gate Update — GO
+
+- Date: `2026-03-31`
+- Update reason: PH-C baseline test scaffolding has now been added in repo:
+  - `tests/integration/test_phc_operations_red.py` (`TC-I-200`, `TC-I-201`, `TC-I-202`)
+  - `tests/contract/test_phc_contracts_red.py` (`TC-C-200`)
+  - `tests/e2e/test_phc_upgrade_red.py` (`TC-E2E-200`)
+  - `tests/security/test_phc_security_red.py` (`TC-S-200`, `TC-S-201`)
+  - `tests/performance/test_phc_perf_red.py` (`TC-P-200`)
+
+### Affected IDs
+
+- `TC-I-200`, `TC-I-201`, `TC-I-202`
+- `TC-C-200`, `TC-E2E-200`
+- `TC-S-200`, `TC-S-201`
+- `TC-P-200`
+- Related: `INV-003`, `INV-005`, `INV-006`, `SAFE-001`, `ADR-005`, `NO-003`, `NO-004`
+
+### Go / No-Go Recommendation
+
+- **GO** for PH-C execution under locked order in `docs/execution-plan.md` / `docs/scope-lock.md`.
+- Guardrail: maintain test-first flow and keep any scope/order deviations behind explicit `CR-`*.
+
+## PH-C Slice Execution — `PH-C-S1`, `PH-C-S2`
+
+- Date: `2026-03-31`
+- Scope: complete only isolation + backup/restore slices under PH-C lock order.
+
+### Current Slice Summary
+
+- `PH-C-S1` Isolation foundations implemented with explicit row-level user scope guards and a deterministic test hook proving cross-user access denial.
+- `PH-C-S2` Backup/restore implemented with deterministic snapshot manifest validation and roundtrip parity checks for ideas/runs/signals/reports.
+
+### Linked IDs (`FR-*`, `TC-*`, `CR-*`)
+
+- `TC-U-200`, `TC-I-200` (slice 1)
+- `TC-U-201`, `TC-I-201` (slice 2)
+- Linked invariants/safety: `INV-003`, `INV-005`, `SAFE-001`, `SAFE-004`
+- `CR-*`: none required; no documented behavior deviation from locked slice definitions.
+
+### Implementation Notes
+
+- Added `infra/authz.py`:
+  - `enforce_user_scope(...)`
+  - `assert_row_scope(...)`
+- Added `infra/backup.py`:
+  - `build_backup_manifest(...)`
+  - `validate_backup_manifest(...)`
+  - `canonicalize_backup_payload(...)`
+- Extended repositories with snapshot import/export helpers:
+  - `db/ideas.py`
+  - `db/runs.py`
+  - `db/signals.py`
+  - `db/reports.py`
+- Added PH-C test-hook endpoints in `api/app.py`:
+  - `POST /internal/test-hooks/phc/multi-user-isolation`
+  - `POST /internal/test-hooks/phc/backup-restore`
+
+### Verification Results
+
+- Targeted red->green checks:
+  - `pytest tests/unit/test_phc_runtime_and_migration_red.py -k "tc_u_200 or tc_u_201" -q`
+  - Result: pass.
+  - `pytest tests/integration/test_phc_operations_red.py -k "tc_i_200 or tc_i_201" -q`
+  - Result: pass.
+- Impacted suite:
+  - `pytest tests/unit/test_phc_runtime_and_migration_red.py tests/integration/test_phc_operations_red.py -q`
+  - Result: fails only on slice-3 IDs (`TC-U-202`, `TC-I-202`), expected because `PH-C-S3` not started.
+- Full suite:
+  - `pytest -q`
+  - Result: fails only on not-started PH-C slices (`TC-U-202`, `TC-I-202`, `TC-C-200`, `TC-E2E-200`, `TC-S-200`, `TC-S-201`).
+
+### New Risks or Blockers
+
+- No new slice-1/slice-2 blockers introduced.
+- Existing PH-C blockers remain for later locked slices:
+  - migration guard module and migration hook (`PH-C-S3`)
+  - compatibility/upgrade hooks (`PH-C-S4`)
+  - security hooks (`PH-C-S5`)
+
+### Deferred Refactors
+
+- Move PH-C test-hook logic from `api/app.py` into dedicated internal hook modules when slice execution reaches hardening/refactor pass.
+
+## PH-C Slice Execution — `PH-C-S3`, `PH-C-S4`
+
+- Date: `2026-03-31`
+- Scope: complete only migration reliability and compatibility/upgrade slices under PH-C lock order.
+
+### Current Slice Summary
+
+- `PH-C-S3` Migration reliability implemented with an explicit migration invariant guard and deterministic migration-check hook.
+- `PH-C-S4` Compatibility/upgrade implemented with explicit back-compat and upgrade test hooks to satisfy locked contract/E2E checks.
+
+### Linked IDs (`FR-*`, `TC-*`, `CR-*`)
+
+- `TC-U-202`, `TC-I-202` (slice 3)
+- `TC-C-200`, `TC-E2E-200` (slice 4)
+- Linked invariants: `INV-003`, `INV-005`, `INV-006`
+- `CR-*`: none required; no scope/order or behavior deviation from PH-C lock.
+
+### Implementation Notes
+
+- Added `migrations/guard.py`:
+  - `assert_invariants(snapshot)`
+  - `verify_invariants_after_migration(before, after)`
+- Added `migrations/__init__.py`.
+- Extended `api/app.py` with PH-C hooks:
+  - `POST /internal/test-hooks/phc/migration-check`
+  - `GET /internal/test-hooks/phc/contract-backcompat`
+  - `GET /internal/test-hooks/phc/e2e-upgrade`
+- Refined migration check to use an isolated migration payload (deterministic and independent of pre-existing in-memory test state).
+
+### Verification Results
+
+- Targeted red->green checks:
+  - `pytest tests/unit/test_phc_runtime_and_migration_red.py -k tc_u_202 -q` -> pass
+  - `pytest tests/integration/test_phc_operations_red.py -k tc_i_202 -q` -> pass
+  - `pytest tests/contract/test_phc_contracts_red.py -q` -> pass
+  - `pytest tests/e2e/test_phc_upgrade_red.py -q` -> pass
+- Impacted suite:
+  - `pytest tests/unit/test_phc_runtime_and_migration_red.py tests/integration/test_phc_operations_red.py tests/contract/test_phc_contracts_red.py tests/e2e/test_phc_upgrade_red.py -q`
+  - Result: pass.
+- Full suite:
+  - `pytest -q`
+  - Result: red only on not-started slice-5 IDs (`TC-S-200`, `TC-S-201`).
+
+### New Risks or Blockers
+
+- No new blockers introduced for slices 3/4.
+- Remaining PH-C blockers are now concentrated in operational security (`PH-C-S5`) and soak (`PH-C-S6`).
+
+### Deferred Refactors
+
+- Consolidate PH-C hook payload schemas into dedicated typed models once slices 5/6 land.
+
+## PH-C Slice Execution — `PH-C-S5`, `PH-C-S6`
+
+- Date: `2026-03-31`
+- Scope: complete operational security slice and close soak/performance slice according to lock policy.
+
+### Current Slice Summary
+
+- `PH-C-S5` Operational security implemented with explicit PH-C hooks for secret-redaction verification and localhost bind default checks.
+- `PH-C-S6` Soak/performance closed by lock-policy verification (`TC-P-200` intentionally skipped until soak harness exists).
+
+### Linked IDs (`FR-*`, `TC-*`, `CR-*`)
+
+- `TC-S-200`, `TC-S-201` (slice 5)
+- `TC-P-200` (slice 6)
+- Linked safety/live IDs: `SAFE-001`, `SAFE-002`, `NFR-001`, `LIVE-001`, `LIVE-002`
+- `CR-*`: none required.
+
+### Implementation Notes
+
+- Updated `infra/logging.py` redaction key coverage to include secret-bearing fields:
+  - `api_key`, `token`, `authorization`, `password`, `secret`, `client_secret`
+- Added PH-C security hooks in `api/app.py`:
+  - `POST /internal/test-hooks/phc/security-log-secret-scan`
+  - `GET /internal/test-hooks/phc/security-bind-check`
+- Bind-check uses localhost-only default host (`127.0.0.1`) for secure default behavior assertion.
+
+### Verification Results
+
+- Targeted:
+  - `pytest tests/security/test_phc_security_red.py -q` -> pass (`TC-S-200`, `TC-S-201`)
+  - `pytest tests/performance/test_phc_perf_red.py -q` -> skipped (`TC-P-200`, expected by lock)
+- Full suite:
+  - `pytest -q` -> pass with expected locked skips.
+
+### New Risks or Blockers
+
+- No new blockers; PH-C slices are now complete under current lock policy.
+
+### Deferred Refactors
+
+- Replace in-hook security assertions with reusable security diagnostics module if soak harness introduces deeper runtime scanning.
 

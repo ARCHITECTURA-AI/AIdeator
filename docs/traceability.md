@@ -630,3 +630,21 @@ Execution evidence and lock audit:
 Execution evidence and lock audit:
 - `docs/test-red-baseline.md` (PH-B section)
 - `docs/test-changes.md` (PH-B lock and blockers)
+
+## 8. PH-C Authored Red-Baseline Artifacts (2026-03-31)
+- Unit:
+  - `tests/unit/test_phc_runtime_and_migration_red.py` (`TC-U-200`, `TC-U-201`, `TC-U-202`)
+- Integration:
+  - `tests/integration/test_phc_operations_red.py` (`TC-I-200`, `TC-I-201`, `TC-I-202`)
+- Contract:
+  - `tests/contract/test_phc_contracts_red.py` (`TC-C-200`)
+- E2E:
+  - `tests/e2e/test_phc_upgrade_red.py` (`TC-E2E-200`)
+- Security:
+  - `tests/security/test_phc_security_red.py` (`TC-S-200`, `TC-S-201`)
+- Performance:
+  - `tests/performance/test_phc_perf_red.py` (`TC-P-200`)
+
+Execution evidence and lock audit:
+- `docs/test-red-baseline.md` (PH-C section)
+- `docs/test-changes.md` (PH-C lock and blockers)

@@ -7,7 +7,11 @@
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;600;800&amp;family=JetBrains+Mono:wght@400;700&amp;family=Space+Grotesk:wght@300;500;700&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link rel="icon" type="image/png" href="../logo.png">
+<link rel="apple-touch-icon" href="../logo.png">
+<meta name="description" content="AIdeator Blog: Research logs, emergent reasoning patterns, and aesthetic developments in kinetic frameworks.">
+<meta property="og:title" content="AIdeator | Neural_Log_Research">
+<meta property="og:image" content="../logo.png">
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script id="tailwind-config">
       tailwind.config = {
@@ -107,7 +111,8 @@
 <!-- Top Navigation Shell -->
 <nav class="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-2xl border-b border-white/5 shadow-[0_8px_32px_rgba(167,165,255,0.08)]">
 <div class="flex justify-between items-center px-8 h-20 max-w-[1920px] mx-auto">
-<a href="index.html" class="text-2xl font-light tracking-tighter text-white uppercase font-headline">
+<a href="index.html" class="flex items-center gap-3 text-2xl font-light tracking-tighter text-white uppercase font-headline">
+            <img src="../logo.png" alt="AIdeator Logo" class="w-16 h-16 object-contain">
             AIdeator
         </a>
 <div class="hidden md:flex items-center gap-8">
@@ -121,9 +126,9 @@
 <span class="material-symbols-outlined hover:text-primary transition-colors cursor-pointer text-sm">sensors</span>
 <span class="material-symbols-outlined hover:text-primary transition-colors cursor-pointer text-sm">terminal</span>
 </div>
-<button class="font-label text-primary hover:scale-105 active:scale-95 transition-all duration-300 ease-in-out px-4 py-2 border border-primary/20 bg-primary/5 text-[10px] tracking-widest">
+<a href="https://pypi.org/project/aideator/" target="_blank" class="font-label text-primary hover:scale-105 active:scale-95 transition-all duration-300 ease-in-out px-4 py-2 border border-primary/20 bg-primary/5 text-[10px] tracking-widest no-underline flex items-center">
                 _RUN_ENGINE
-            </button>
+            </a>
 </div>
 </div>
 </nav>
@@ -153,7 +158,7 @@
                         </a>
 <div class="flex flex-col">
 <span class="font-['JetBrains_Mono'] text-[9px] text-on-surface-variant uppercase tracking-tighter">PUBLISHED_AT</span>
-<span class="font-['JetBrains_Mono'] text-xs text-white">2024.11.08 // 14:00 UTC</span>
+<span class="font-['JetBrains_Mono'] text-xs text-white">2026.11.08 // 14:00 UTC</span>
 </div>
 </div>
 </div>
@@ -350,13 +355,13 @@
 <footer class="bg-black w-full py-12 px-8 border-t border-white/5">
 <div class="flex flex-col md:flex-row justify-between items-center max-w-[1920px] mx-auto gap-4">
 <div class="font-['JetBrains_Mono'] text-[9px] text-white/30 uppercase tracking-widest">
-                ©2024 AIDEATOR_SYSTEMS [KINETIC_MONOLITH]
+                ©2026 AIDEATOR_SYSTEMS [KINETIC_MONOLITH]
             </div>
 <div class="flex gap-8 font-['JetBrains_Mono'] text-[9px] text-white/30 uppercase tracking-widest">
-<a class="hover:text-[#a7a5ff] transition-colors" href="legal.html">Privacy</a>
-<a class="hover:text-[#a7a5ff] transition-colors" href="legal.html">Terms</a>
-<a class="hover:text-[#a7a5ff] transition-colors" href="legal.html">Security</a>
-<a class="hover:text-[#a7a5ff] transition-colors" href="#">Status</a>
+<a class="hover:text-primary transition-colors" href="legal.html#privacy">Privacy</a>
+<a class="hover:text-primary transition-colors" href="legal.html#terms">Terms</a>
+<a class="hover:text-primary transition-colors" href="legal.html#security">Security</a>
+<a class="hover:text-primary transition-colors" href="status.html">Status</a>
 </div>
 <div class="flex gap-4">
 <span class="w-2 h-2 rounded-full bg-secondary shadow-[0_0_8px_#69f6b8]"></span>
@@ -389,7 +394,7 @@
             </a>
 <a class="sidebar-link flex items-center gap-4 px-4 py-3 rounded-sm text-white/40 hover:bg-white/5 hover:text-white transition-all font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest cursor-pointer" href="index.html">
 <span class="material-symbols-outlined">home</span>
-                Home_Return
+                Home
             </a>
 </nav>
 <div class="mt-auto">
@@ -402,36 +407,7 @@
 <a class="text-white/40 hover:text-white transition-all" href="#"><span class="material-symbols-outlined text-sm">description</span></a>
 </div>
 </aside>
-<script>
-    function switchView(viewId, element) {
-        // Hide all views
-        document.querySelectorAll('.view-content').forEach(view => {
-            view.classList.add('hidden');
-            view.classList.remove('active-view');
-        });
-        
-        // Show target view
-        const targetView = document.getElementById('view-' + viewId);
-        if (targetView) {
-            targetView.classList.remove('hidden');
-            setTimeout(() => targetView.classList.add('active-view'), 10);
-        }
-        
-        // Update sidebar links
-        document.querySelectorAll('.sidebar-link').forEach(link => {
-            link.classList.remove('bg-white/5', 'text-primary', 'border-l-2', 'border-primary');
-            link.classList.add('text-white/40');
-        });
-        
-        if (element) {
-            element.classList.add('bg-white/5', 'text-primary', 'border-l-2', 'border-primary');
-            element.classList.remove('text-white/40');
-        }
 
-        // Scroll to top
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-</script>
 <script>
     function switchView(viewId, element) {
         // Hide all views

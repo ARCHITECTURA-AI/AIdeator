@@ -1,4 +1,13 @@
 User-agent: *
 Allow: /
+Disallow: /tmp/
+Disallow: /data/
 
-Sitemap: https://aideator.app/sitemap.xml
+# AI crawler friendly directives
+User-agent: GPTBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+Sitemap: https://aideator.ai/sitemap.xml

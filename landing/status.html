@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>System Status | AIdeator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700&family=JetBrains+Mono:wght@300;400;700&family=Space+Grotesk:wght@300;400;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link rel="icon" type="image/png" href="../logo.png">
+    <link rel="apple-touch-icon" href="../logo.png">
+    <meta name="description" content="AIdeator Real-time System Status: Monitoring neural engine health, telemetry streams, and core cluster stability.">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#a7a5ff",
+                        secondary: "#69f6b8",
+                        surface: "#0e0e0e",
+                        "surface-container": "#191919",
+                        "on-surface-variant": "#ababab"
+                    },
+                    fontFamily: {
+                        headline: ["Inter"],
+                        body: ["Inter"],
+                        label: ["Space Grotesk"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 200, 'GRAD' 0, 'opsz' 24; }
+        .nexus-grid {
+            background-image: 
+                linear-gradient(to right, rgba(72, 72, 72, 0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(72, 72, 72, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        .status-pulse {
+            animation: pulse-ring 2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.33); opacity: 1; }
+            80%, 100% { opacity: 0; }
+        }
+    </style>
+</head>
+<body class="bg-[#0e0e0e] text-white font-body selection:bg-primary/30 min-h-screen">
+    <div class="fixed inset-0 nexus-grid pointer-events-none opacity-20 z-0"></div>
+
+    <!-- TopNavBar -->
+    <nav class="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-2xl border-b border-white/5">
+        <div class="flex justify-between items-center px-8 h-20 max-w-[1920px] mx-auto">
+            <a href="index.html" class="flex items-center gap-3 text-2xl font-light tracking-tighter text-white uppercase font-headline">
+                <img src="../logo.png" alt="AIdeator Logo" class="w-16 h-16 object-contain">
+                AIdeator
+            </a>
+            <div class="hidden md:flex items-center gap-10">
+                <a class="text-white/60 hover:text-white transition-colors font-headline font-light tracking-tight text-sm" href="index.html">Home</a>
+                <a class="text-white/60 hover:text-white transition-colors font-headline font-light tracking-tight text-sm" href="docs.html">Documentation</a>
+                <a class="text-white/60 hover:text-white transition-colors font-headline font-light tracking-tight text-sm" href="blog.html">Blog</a>
+                <a class="text-white/60 hover:text-white transition-colors font-headline font-light tracking-tight text-sm" href="changelog.html">Changelog</a>
+            </div>
+            <a href="https://pypi.org/project/aideator/" target="_blank" class="bg-primary/10 border border-primary/20 text-primary px-6 py-2 rounded-sm font-label text-xs tracking-widest uppercase hover:bg-primary/20 transition-all no-underline">_RUN_ENGINE</a>
+        </div>
+    </nav>
+
+    <main class="pt-40 pb-20 px-8 max-w-[1200px] mx-auto relative z-10">
+        <header class="mb-20 border-l-2 border-secondary/40 pl-8">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="relative w-3 h-3">
+                    <div class="absolute inset-0 bg-secondary rounded-full status-pulse"></div>
+                    <div class="relative w-3 h-3 bg-secondary rounded-full shadow-[0_0_12px_#69f6b8]"></div>
+                </div>
+                <span class="font-label text-[10px] text-secondary uppercase tracking-[0.4em]">All Systems Nominal</span>
+            </div>
+            <h1 class="text-6xl md:text-8xl font-headline font-extralight tracking-tighter text-white leading-[0.9] mb-8">
+                System<br/><span class="text-secondary/40 italic">Vitality</span>
+            </h1>
+            <p class="text-on-surface-variant max-w-xl font-body leading-relaxed opacity-80">
+                Real-time monitoring of the AIdeator Forge Engine, neural node distribution, and regional telemetry gateways.
+            </p>
+        </header>
+
+        <!-- Status Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
+            <!-- Engine Card -->
+            <div class="bg-white/5 border border-white/10 p-8 hover:border-primary/40 transition-all duration-500 group">
+                <div class="flex justify-between items-start mb-12">
+                    <span class="material-symbols-outlined text-primary text-3xl font-light">bolt</span>
+                    <span class="font-label text-[9px] text-secondary">ACTIVE</span>
+                </div>
+                <h3 class="text-xl font-headline font-light text-white mb-2">Forge Engine</h3>
+                <p class="text-on-surface-variant text-sm font-light">Synthesis clusters are processing at peak efficiency.</p>
+                <div class="mt-8 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                    <div class="h-full bg-secondary w-[98%] shadow-[0_0_8px_#69f6b8]"></div>
+                </div>
+                <div class="flex justify-between mt-2 font-label text-[8px] text-white/40 uppercase tracking-widest">
+                    <span>Performance</span>
+                    <span>99.8%</span>
+                </div>
+            </div>
+
+            <!-- Telemetry Card -->
+            <div class="bg-white/5 border border-white/10 p-8 hover:border-primary/40 transition-all duration-500 group">
+                <div class="flex justify-between items-start mb-12">
+                    <span class="material-symbols-outlined text-primary text-3xl font-light">sensors</span>
+                    <span class="font-label text-[9px] text-secondary">STABLE</span>
+                </div>
+                <h3 class="text-xl font-headline font-light text-white mb-2">Neural Telemetry</h3>
+                <p class="text-on-surface-variant text-sm font-light">End-to-end encrypted streams are routing with 12ms latency.</p>
+                <div class="mt-8 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                    <div class="h-full bg-secondary w-[100%]"></div>
+                </div>
+                <div class="flex justify-between mt-2 font-label text-[8px] text-white/40 uppercase tracking-widest">
+                    <span>Integrity</span>
+                    <span>100%</span>
+                </div>
+            </div>
+
+            <!-- Web Search Card -->
+            <div class="bg-white/5 border border-white/10 p-8 hover:border-primary/40 transition-all duration-500 group">
+                <div class="flex justify-between items-start mb-12">
+                    <span class="material-symbols-outlined text-primary text-3xl font-light">search</span>
+                    <span class="font-label text-[9px] text-secondary">NOMINAL</span>
+                </div>
+                <h3 class="text-xl font-headline font-light text-white mb-2">AEO Indexers</h3>
+                <p class="text-on-surface-variant text-sm font-light">Search Engine crawlers and AEO indexers are fully reachable.</p>
+                <div class="mt-8 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                    <div class="h-full bg-secondary w-[99.5%] shadow-[0_0_8px_#69f6b8]"></div>
+                </div>
+                <div class="flex justify-between mt-2 font-label text-[8px] text-white/40 uppercase tracking-widest">
+                    <span>Accessibility</span>
+                    <span>99.9%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Uptime Table -->
+        <div class="bg-white/5 border border-white/10 p-8">
+            <h3 class="font-label text-xs tracking-widest text-primary uppercase mb-8 flex items-center gap-4">
+                <span class="material-symbols-outlined text-sm">history</span>
+                90_DAY_UPTIME_HISTORY
+            </h3>
+            <div class="space-y-4">
+                <div class="flex items-center justify-between p-4 bg-white/[0.02] border-l border-secondary">
+                    <span class="font-headline font-light text-sm">North America Grid</span>
+                    <span class="font-label text-[10px] text-secondary uppercase">Operational - 99.99%</span>
+                </div>
+                <div class="flex items-center justify-between p-4 bg-white/[0.02] border-l border-secondary">
+                    <span class="font-headline font-light text-sm">Europe Core Cluster</span>
+                    <span class="font-label text-[10px] text-secondary uppercase">Operational - 99.98%</span>
+                </div>
+                <div class="flex items-center justify-between p-4 bg-white/[0.02] border-l border-secondary">
+                    <span class="font-headline font-light text-sm">Asia-Pacific Edge</span>
+                    <span class="font-label text-[10px] text-secondary uppercase">Operational - 99.97%</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="w-full py-12 px-8 bg-black border-t border-white/5 mt-auto">
+        <div class="flex flex-col md:flex-row justify-between items-center max-w-[1920px] mx-auto gap-4">
+            <div class="font-label text-[9px] text-white/30 uppercase tracking-[0.2em]">©2026 AIDEATOR_SYSTEMS [KINETIC_MONOLITH]</div>
+            <div class="flex gap-8">
+                <a class="font-label text-[9px] text-white/30 uppercase hover:text-primary transition-colors tracking-widest" href="legal.html#privacy">Privacy</a>
+                <a class="font-label text-[9px] text-white/30 uppercase hover:text-primary transition-colors tracking-widest" href="legal.html#terms">Terms</a>
+                <a class="font-label text-[9px] text-white/30 uppercase hover:text-primary transition-colors tracking-widest" href="legal.html#security">Security</a>
+                <a class="font-label text-[9px] text-white uppercase hover:text-primary transition-colors tracking-widest" href="status.html">Status</a>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

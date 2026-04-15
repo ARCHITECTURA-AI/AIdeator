@@ -23,7 +23,7 @@ def _save_shares(shares: Dict[str, dict]):
 
 def generate_share_link(idea_id: UUID, expiry_days: int = 7) -> str:
     """Generate a share hash and store it with an expiry date."""
-    salt = "NEXUS_SALT_2024"
+    salt = "NEXUS_SALT_2026"
     hash_obj = hashlib.sha256(f"{idea_id}{salt}{datetime.now()}".encode())
     share_hash = hash_obj.hexdigest()[:16]  # Short hash
     

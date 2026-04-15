@@ -1,0 +1,96 @@
+{
+  "site": {
+    "name": "AIdeator",
+    "tagline": "Local-first idea validation with investor-grade, privacy-safe reports.",
+    "baseUrl": "https://aideator.app"
+  },
+  "cta": {
+    "primaryLabel": "PyPI",
+    "primaryHref": "https://pypi.org/project/aideator/",
+    "contactLabel": "Contact Team",
+    "contactHref": "/contact/",
+    "githubHref": "https://github.com/ARCHITECTURA-AI/AIdeator",
+    "loomHref": "https://www.loom.com/share/REPLACE_WITH_YOUR_VIDEO_ID"
+  },
+  "forms": {
+    "waitlistEndpoint": "/api/early-access",
+    "contactEndpoint": "/api/contact"
+  },
+  "seo": {
+    "/": {
+      "title": "AIdeator - Local-First Idea Validation Engine",
+      "description": "Validate startup ideas with demand, competition, risk, and next-step cards while keeping idea text local by default.",
+      "canonical": "https://aideator.app/"
+    },
+    "/docs/": {
+      "title": "AIdeator Docs - Modes, Methodology, and Outputs",
+      "description": "Read how AIdeator modes work, where signals come from, and how report cards and markdown artifacts are produced.",
+      "canonical": "https://aideator.app/docs/"
+    },
+    "/compare/": {
+      "title": "AIdeator vs Ad-hoc Validation - Compare Workflows",
+      "description": "Compare AIdeator against manual research and generic AI prompting for traceability, privacy controls, and repeatability.",
+      "canonical": "https://aideator.app/compare/"
+    },
+    "/about/": {
+      "title": "About AIdeator - Why Local-First Validation",
+      "description": "Learn why AIdeator focuses on local-first validation, explicit mode boundaries, and auditable market signals.",
+      "canonical": "https://aideator.app/about/"
+    },
+    "/changelog/": {
+      "title": "AIdeator Changelog - Product Releases",
+      "description": "Track AIdeator feature releases, validation improvements, and reporting updates.",
+      "canonical": "https://aideator.app/changelog/"
+    },
+    "/blog/": {
+      "title": "AIdeator Blog - Validation Playbooks",
+      "description": "Practical playbooks for testing startup ideas, improving signal quality, and presenting investor-grade findings.",
+      "canonical": "https://aideator.app/blog/"
+    },
+    "/waitlist/": {
+      "title": "AIdeator Early Access - Join Waitlist",
+      "description": "Join the AIdeator early access list to test local-first idea validation workflows with your own startup concepts.",
+      "canonical": "https://aideator.app/waitlist/"
+    },
+    "/install/": {
+      "title": "AIdeator Install - Local Setup Quickstart",
+      "description": "Install AIdeator locally and run your first validation in local-only mode with explicit outbound controls.",
+      "canonical": "https://aideator.app/install/"
+    },
+    "/product/": {
+      "title": "AIdeator Product - Validation Workflow Overview",
+      "description": "Explore AIdeator flow from idea intake to report generation, including mode guardrails and traceable evidence.",
+      "canonical": "https://aideator.app/product/"
+    },
+    "/features/": {
+      "title": "AIdeator Features - Demand, Competition, Risk, Next Steps",
+      "description": "Explore the full AIdeator feature set, including report cards, mode controls, and markdown artifacts for review.",
+      "canonical": "https://aideator.app/features/"
+    },
+    "/signin/": {
+      "title": "AIdeator Sign In",
+      "description": "Sign in to AIdeator to access your validation runs, reports, and settings.",
+      "canonical": "https://aideator.app/signin/"
+    },
+    "/privacy/": {
+      "title": "AIdeator Privacy",
+      "description": "AIdeator privacy commitments, data boundaries, and mode-specific handling rules.",
+      "canonical": "https://aideator.app/privacy/"
+    },
+    "/terms/": {
+      "title": "AIdeator Terms",
+      "description": "Terms for using AIdeator, including permitted usage and responsibility boundaries.",
+      "canonical": "https://aideator.app/terms/"
+    },
+    "/pricing/": {
+      "title": "AIdeator Pricing - Plans for Builders and Teams",
+      "description": "Choose AIdeator pricing for solo founders, product teams, and organizations needing governed idea validation.",
+      "canonical": "https://aideator.app/pricing/"
+    },
+    "/contact/": {
+      "title": "Contact AIdeator",
+      "description": "Contact the AIdeator team for product questions, partnerships, and early access support.",
+      "canonical": "https://aideator.app/contact/"
+    }
+  }
+}

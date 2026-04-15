@@ -1,24 +1,63 @@
 {% extends "base.html" %}
+
 {% block content %}
-<section class="section">
-  <h1>Create Idea</h1>
-  <form method="post" action="/app/ideas/new" class="card form-grid">
-    <label for="title">Title</label>
-    <input id="title" name="title" class="input" required>
+<!-- Header Section -->
+<div class="mb-12">
+    <p class="font-mono text-[10px] text-primary tracking-[0.3em] mb-2 uppercase">Concept_Initialisation / Nexus_Engine</p>
+    <h2 class="text-6xl font-light tracking-tighter text-white">Create <span class="text-primary font-bold">Concept</span></h2>
+</div>
 
-    <label for="description">Description</label>
-    <textarea id="description" name="description" class="input" rows="5" required></textarea>
+<div class="max-w-4xl">
+    <form action="/app/ideas/new" method="POST" class="glass-panel p-12 border border-white/5 relative overflow-hidden group">
+        <div class="scanline absolute inset-0 opacity-10"></div>
+        <div class="absolute top-0 right-0 p-6 opacity-10">
+            <span class="material-symbols-outlined text-8xl">lightbulb</span>
+        </div>
 
-    <label for="target_user">Target user</label>
-    <input id="target_user" name="target_user" class="input" required>
+        <div class="space-y-12 relative z-10">
+            <!-- Title -->
+            <div class="space-y-4">
+                <label class="font-mono text-[10px] text-white/40 uppercase tracking-[0.2em]">01_CONCEPT_IDENTIFIER</label>
+                <input name="title" required class="w-full bg-transparent border-0 border-b border-white/10 text-3xl font-light text-white focus:ring-0 focus:border-primary transition-all pb-4 placeholder:text-white/10 uppercase" placeholder="Enter concept name..."/>
+            </div>
 
-    <label for="context">Context</label>
-    <textarea id="context" name="context" class="input" rows="4"></textarea>
+            <!-- Description -->
+            <div class="space-y-4">
+                <label class="font-mono text-[10px] text-white/40 uppercase tracking-[0.2em]">02_TECHNICAL_DECOMPOSITION</label>
+                <textarea name="description" required rows="4" class="w-full bg-transparent border-0 border-b border-white/10 text-lg text-white/60 focus:ring-0 focus:border-primary transition-all pb-4 placeholder:text-white/10 resize-none" placeholder="Describe the core logic, hardware requirements, or market thesis..."></textarea>
+            </div>
 
-    <div>
-      <button type="submit" class="btn primary">Create idea</button>
-      <a href="/app/ideas" class="btn ghost">Cancel</a>
+            <!-- Target User -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <div class="space-y-4">
+                    <label class="font-mono text-[10px] text-white/40 uppercase tracking-[0.2em]">03_TARGET_ACTOR</label>
+                    <input name="target_user" required class="w-full bg-transparent border-0 border-b border-white/10 text-white font-mono text-sm focus:ring-0 focus:border-primary transition-all pb-2 placeholder:text-white/10" placeholder="e.g. Enterprise Architect"/>
+                </div>
+                <div class="space-y-4">
+                    <label class="font-mono text-[10px] text-white/40 uppercase tracking-[0.2em]">04_DOMAIN_CONTEXT</label>
+                    <input name="context" class="w-full bg-transparent border-0 border-b border-white/10 text-white font-mono text-sm focus:ring-0 focus:border-primary transition-all pb-2 placeholder:text-white/10" placeholder="e.g. Fintech / Web3"/>
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <div class="pt-8 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-secondary animate-pulse shadow-[0_0_8px_#69f6b8]"></span>
+                    <span class="font-mono text-[10px] text-secondary tracking-widest uppercase">Encryption_Active</span>
+                </div>
+                <button type="submit" class="px-12 py-4 bg-primary text-black font-mono font-bold tracking-[0.3em] uppercase hover:brightness-110 active:scale-95 transition-all shadow-[0_0_30px_rgba(167,165,255,0.3)]">
+                    _COMMIT_TO_ENGINE
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Guide Panel -->
+    <div class="mt-8 p-6 border-l-2 border-white/10 bg-white/[0.02]">
+        <p class="font-mono text-[10px] text-white/40 uppercase tracking-widest mb-2">Note_To_Architect</p>
+        <p class="text-xs text-white/20 leading-relaxed italic">
+            Initialising a concept creates a permanent record in the Neural Archive. Once committed, the Nexus Engine will begin generating heuristic validation options for this concept. Ensure the technical decomposition is as specific as possible for higher accuracy scores.
+        </p>
     </div>
-  </form>
-</section>
+</div>
 {% endblock %}

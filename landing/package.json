@@ -1,0 +1,10 @@
+{
+  "name": "aideator-landing",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "seo:validate": "node ./scripts/validate-seo.mjs",
+    "seo:validate:strict": "node ./scripts/validate-seo.mjs --strict"
+  }
+}

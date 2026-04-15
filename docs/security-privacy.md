@@ -1,62 +1,127 @@
-# Security and privacy
+# Security and Privacy
 
-## Local-only guarantees
+## Design Principles
 
-When runs execute in `local-only` mode:
+AIdeator is **local-first by default**. The privacy mode system ensures that data egress is explicit, auditable, and user-controlled.
 
-- External HTTP calls are blocked by mode guardrails.
-- Idea processing stays on local runtime components.
-- Data is stored locally in configured paths:
-  - DB URL/path from `APP_DB_URL`
-  - Markdown reports in `APP_DOCS_DIR` (default `./docs`)
+## Privacy Modes
 
-Caveats:
+### `local-only` (default)
 
-- Logs can include run IDs, paths, statuses, and operational metadata.
-- Avoid writing secrets into idea content if logs are shared.
+**Guarantees:**
+- Zero outbound HTTP calls during run execution
+- Idea title, description, target user, and context never leave the machine
+- Search signals are skipped entirely
+- LLM must be a local provider (e.g., Ollama)
 
-## Telemetry and logging
+**Caveats:**
+- Logs may include run IDs, timestamps, and status metadata
+- If a cloud LLM provider is configured but mode is `local-only`, search is still blocked but LLM calls depend on provider configuration
+- Avoid placing secrets in idea content fields
 
-AIdeator logs are process-local by default:
+### `hybrid`
 
-- Request logs (`method`, `path`, `status`, `duration_ms`)
-- Run lifecycle logs (`run_created`, `run_started`, `run_succeeded`, `run_failed`)
-- Error logs include stack traces at `ERROR` level
+**Guarantees:**
+- Search queries are truncated to **10 keywords maximum** — no full idea text is sent
+- Only the search query payload leaves the machine (no description, context, or target user)
+- LLM outbound follows provider configuration
 
-Defaults:
+**What external providers see:**
+- A keyword-only search query like `"AI code review developer tool SaaS"`
+- LLM prompts (if a cloud LLM is configured)
 
-- Logs go to stdout/stderr.
-- No remote telemetry exporter is configured by default.
+### `cloud-enabled`
 
-Configuration:
+**Guarantees:**
+- Full idea context may be sent to external search and LLM providers
+- Run payloads should be treated as potentially externalized data
 
-- `LOG_LEVEL=debug|info|warn|error`
-- `LOG_JSON=true|false` for machine-readable log format
+**What external providers see:**
+- Full search queries including title + description
+- Full LLM prompts with idea context
 
-## External calls and controls
+## Data Storage
 
-Potential external integrations:
+| Data | Location | Format |
+|------|----------|--------|
+| Ideas, runs, reports | `APP_DB_URL` (default: SQLite file) | In-memory dict or SQLite |
+| Markdown reports | `APP_DOCS_DIR` (default: `~/.local/share/aideator/docs`) | `.md` files |
+| Config file | `~/.config/aideator/config.toml` | TOML |
+| Logs | stdout/stderr | Text or JSON |
 
-- Tavily (`TAVILY_API_KEY`)
-- Reddit (`REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`)
-- LLM provider (`LLM_API_BASE`, `LLM_API_KEY`)
+No data is stored on remote servers. All persistence is local to the configured paths.
 
-Hardening guidance:
+## API Keys
 
-- For fully offline operation:
-  - Set `APP_DEFAULT_MODE=local`
-  - Keep external API keys empty
-  - Enforce network egress controls at host/container level
-- For `hybrid`:
-  - Use scoped API keys
-  - Restrict allowed destinations with firewall/network policy
-- For `cloud-enabled`:
-  - Treat run payloads as potentially externalized data
-  - Use least-privilege keys and short key rotation windows
+### Storage
+- API keys are loaded from **environment variables** or the **config file**
+- Keys in config file are stored in plain text — use file permissions to restrict access
+- The `config show` command redacts secrets in output
 
-## Team/org recommendations
+### Rotation
+- Keys can be rotated by updating the environment variable or config file
+- No session caching — new keys take effect on next server restart
 
-- Run with container runtime isolation where possible.
-- Store secrets outside source control (`.env`, secret manager, CI vault).
-- Centralize logs in approved internal observability systems only.
-- Review mode defaults before release (`APP_DEFAULT_MODE` and env files).
+### Per-provider keys
+
+| Provider | Environment Variable | Required? |
+|----------|---------------------|-----------|
+| Tavily | `TAVILY_API_KEY` | Only if `SEARCH_PROVIDER=tavily` |
+| Exa | `EXA_API_KEY` | Only if `SEARCH_PROVIDER=exa` |
+| OpenAI | `LLM_API_KEY` | Only if `LLM_PROVIDER=openai-compatible` |
+| Anthropic | `LLM_API_KEY` | Only if `LLM_PROVIDER=anthropic-compatible` |
+| Mistral | `LLM_API_KEY` | Only if `LLM_PROVIDER=mistral-compatible` |
+| Ollama | — | No key needed (local) |
+| Built-in search | — | No key needed |
+
+## Telemetry
+
+- **No remote telemetry** is configured by default
+- Logs go to stdout/stderr only
+- No analytics, tracking, or usage reporting
+- Set `LOG_JSON=true` for machine-parseable log format
+
+## Network Egress Summary
+
+| Mode | Search Provider | LLM Provider | Outbound Calls |
+|------|----------------|-------------|----------------|
+| `local-only` | Any | Ollama (local) | **None** |
+| `local-only` | Any | Cloud (misconfigured) | LLM only ⚠️ |
+| `hybrid` | Builtin | Ollama | **None** |
+| `hybrid` | Tavily/Exa | Cloud LLM | Search + LLM |
+| `cloud-enabled` | Tavily/Exa | Cloud LLM | Full egress |
+
+## Container Hardening
+
+For production or sensitive environments:
+
+```yaml
+# docker-compose.yml example
+services:
+  aideator:
+    image: your-org/aideator:latest
+    environment:
+      APP_DEFAULT_MODE: local
+      LOG_JSON: "true"
+    # Block all outbound except localhost
+    networks:
+      - internal
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+```
+
+**Recommendations:**
+- Run with `APP_DEFAULT_MODE=local` in regulated environments
+- Use read-only filesystem with tmpfs for temporary files
+- Store secrets in a secret manager (Docker secrets, Vault, cloud KMS)
+- Keep external API keys empty for guaranteed offline operation
+- Apply network egress controls at the container/host level
+- Centralize logs in approved internal observability systems only
+- Review mode defaults before release (`APP_DEFAULT_MODE` and env files)
+
+## Reporting Vulnerabilities
+
+Please report security issues by opening a private issue on the [GitHub repository](https://github.com/ARCHITECTURA-AI/AIdeator/security/advisories).

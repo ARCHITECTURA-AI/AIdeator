@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 
 from db.runs import get_run, save_run
-from engine.orchestrator import start_run
+from engine.orchestrator import execute_run
 from models.run import Run, RunMode, RunTier
 
 router = APIRouter(tags=["runs"])
@@ -47,10 +47,10 @@ def _mode_disclosure(mode: str) -> str:
 
 
 @router.post("/runs", status_code=202, response_model=CreateRunResponse)
-def post_runs(payload: CreateRunRequest) -> CreateRunResponse:
+def post_runs(payload: CreateRunRequest, background_tasks: BackgroundTasks) -> CreateRunResponse:
     run = Run(idea_id=payload.idea_id, tier=payload.tier, mode=payload.mode)
     save_run(run)
-    start_run(run.run_id)
+    background_tasks.add_task(execute_run, run.run_id)
     return CreateRunResponse(
         run_id=str(run.run_id),
         status=run.status,

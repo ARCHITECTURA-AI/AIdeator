@@ -1,21 +1,35 @@
-# AIdeator Scope Lock (PH-D)
+# AIdeator Scope Lock (V1)
 
 ## Approval Status
 
 - Planning readiness: **GO**
-- Lock scope: **PH-D implementation window**
-- Lock authority: this file + `docs/execution-plan.md`
+- Lock scope: **V1 implementation window**
+- Lock authority: this file + `Final-v1-plan.md`
 - Change policy: any deviation requires explicit `CR-*` entry before implementation
 
-## MVP Features (PH-D Locked In)
+## Supersedes
 
-PH-A, PH-B, and PH-C baselines are assumed complete; PH-D scope is now:
+This scope lock supersedes the previous PH-D lock. PH-A through PH-D baselines are treated as complete.
 
-- plugin isolation and extension safety (`TC-I-300`, `TC-C-300`, `TC-S-300`)
-- source expansion with mode-safe boundaries (`TC-I-301`)
-- export/import compatibility (`TC-E2E-300`)
-- eval cost/budget controls (`TC-P-300`)
-- semantic quality evaluation gates (`TC-Q-300`, `TC-Q-301`, `TC-Q-302`)
+## V1 Features (Locked In)
+
+1. **Storage & Runtime** (§1): cross-platform path helpers, config integration, CLI overrides
+2. **LLM Provider Config** (§2): provider abstraction (Ollama, OpenAI, Anthropic, Mistral), registry, UI
+3. **Search Provider Abstraction** (§3): `SearchProvider` ABC, builtin (minimal web fetch), Tavily, Exa, registry
+4. **Configuration UX** (§4): TOML config file, `config init` wizard, `config show`
+5. **Web UI v1** (§5): dashboard with badges/scores, create idea + run flow, polling
+6. **Report Sharing** (§6): HTML report route, print-optimized CSS PDF export
+7. **Scoring & Benchmarking** (§7): 0–100 scores + band (new runs only), internal benchmark percentiles
+8. **Onboarding** (§8): first-run detection, banner, idea templates
+9. **Docs & Positioning** (§9): README rewrite, config docs, security/privacy docs
+10. **Tests & Quality Gates** (§10): unit/e2e/smoke tests, release checklist
+
+## Resolved Decisions
+
+- PDF export: print-optimized CSS + browser print (no WeasyPrint)
+- Builtin search: minimal web fetch only (no Reddit/GitHub/YouTube adapters in V1)
+- Score migration: only new runs use 0–100 scale; existing runs unchanged
+- Scope override: V1 supersedes PH-D lock
 
 Carry-forward constraints still mandatory:
 
@@ -27,40 +41,24 @@ Carry-forward constraints still mandatory:
 
 No implementation work for:
 
-- post-PH-D expansion not represented in approved artifacts
-- any net-new API/UI surface that is not required by PH-D IDs and tests listed above
-
-## Approved Slice Order (Locked)
-
-1. Plugin isolation foundations (`TC-I-300`, `TC-C-300`, `TC-S-300`)
-2. Source expansion boundaries (`TC-I-301`)
-3. Export/import compatibility (`TC-E2E-300`)
-4. Eval cost/runtime controls (`TC-P-300`)
-5. Semantic quality gates (`TC-Q-300`, `TC-Q-301`, `TC-Q-302`)
-
-Do not reorder without updating both lock files.
+- Reddit, GitHub, YouTube source adapters (post-V1)
+- Server-side PDF generation (WeasyPrint)
+- Retroactive score migration for existing runs
+- Post-V1 expansion not represented in `Final-v1-plan.md`
 
 ## Test-First Policy
 
 - Start work from `docs/test-plan.md` and `docs/traceability.md`, not from ad-hoc implementation ideas.
-- Every code change must point to affected `TC-*` IDs before merge.
-- A PH-D item is not complete until mapped tests are green and traceability still resolves to valid IDs.
-
-Minimum PH-D gates:
-
-- plugin safety: `TC-I-300`, `TC-C-300`, `TC-S-300`
-- boundary compliance: `TC-I-301`
-- portability/compatibility: `TC-E2E-300`
-- runtime cost control: `TC-P-300`
-- semantic quality: `TC-Q-300`, `TC-Q-301`, `TC-Q-302`
+- Every code change must point to affected plan section (§1–§10).
+- A V1 item is not complete until mapped tests are green.
 
 ## Enforcement Rules
 
-- No opportunistic expansion beyond PH-D lock.
+- No opportunistic expansion beyond V1 lock.
 - No new ID families; keep `FR-*`, `NFR-*`, `INV-*`, `SAFE-*`, `TC-*`, `ADR-*`, `CR-*`.
 - If scope is disputed or unstable, stop implementation and resolve docs first.
 
 ## Approval Record
 
-- State: **ACTIVE PH-D LOCK**
+- State: **ACTIVE V1 LOCK**
 - This file is the enforceable boundary for implementation decisions.

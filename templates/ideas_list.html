@@ -1,39 +1,130 @@
 {% extends "base.html" %}
+
 {% block content %}
-<section class="section">
-  <div class="section-header">
-    <h1>Ideas</h1>
-    <a href="/app/ideas/new" class="btn primary">New idea</a>
-  </div>
-
-  <form method="get" class="form-inline">
-    <input class="input" type="text" name="q" value="{{ query }}" placeholder="Search ideas">
-    <button type="submit" class="btn secondary">Search</button>
-  </form>
-
-  {% if ideas %}
-  <table class="table">
-    <thead>
-      <tr><th scope="col">Idea</th><th scope="col">Created</th><th scope="col">Runs</th><th scope="col">Last run</th><th scope="col"></th></tr>
-    </thead>
-    <tbody>
-      {% for idea in ideas %}
-      <tr>
-        <td>{{ idea.title }}</td>
-        <td>{{ idea.created_at }}</td>
-        <td>{{ idea.runs_count }}</td>
-        <td>{% set status = idea.last_run_status %}{% include "partials/status_pill.html" %}</td>
-        <td><a href="/app/ideas/{{ idea.id }}" class="btn ghost">Open</a></td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% include "partials/pagination.html" %}
-  {% else %}
-    {% set message = "No ideas found." %}
-    {% set cta_url = "/app/ideas/new" %}
-    {% set cta_label = "Create idea" %}
-    {% include "partials/empty_state.html" %}
-  {% endif %}
+<!-- Header Section -->
+<section class="mb-12">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+            <p class="font-mono text-[10px] text-primary tracking-widest mb-2 uppercase">System.Module_02 // Library</p>
+            <h2 class="text-6xl font-light tracking-tighter text-white">Idea <span class="text-primary font-bold">Catalog</span></h2>
+        </div>
+        <div class="text-right">
+            <span class="font-mono text-[10px] text-white/30 block mb-1 uppercase">Total_Records</span>
+            <span class="text-2xl font-mono text-white/80">{{ total }}</span>
+        </div>
+    </div>
 </section>
+
+<!-- Search Nexus -->
+<section class="mb-16">
+    <div class="relative group">
+        <form action="/app/ideas" method="get">
+            <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                <span class="material-symbols-outlined text-primary/60">search</span>
+            </div>
+            <input name="q" class="w-full bg-white/5 border-0 border-b border-white/10 focus:border-primary transition-all duration-500 py-6 pl-14 pr-6 font-mono text-lg tracking-wider placeholder:text-white/20 focus:ring-0" placeholder="SCAN_FOR_CONCEPTS..." type="text" value="{{ query or '' }}"/>
+            <div class="absolute bottom-0 left-0 h-[2px] w-0 bg-primary transition-all duration-700 group-focus-within:w-full"></div>
+        </form>
+    </div>
+</section>
+
+<!-- Batch Action Bar -->
+<div x-data="{ 
+    selected: [],
+    async batchValidate() {
+        for (const id of this.selected) {
+            await fetch('/app/runs/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    idea_id: id,
+                    mode: '{{ current_mode }}',
+                    tier: 'Standard'
+                })
+            });
+        }
+        window.location.href = '/app/runs';
+    }
+}" class="relative">
+    <div x-show="selected.length > 0" 
+         x-transition:enter="transition ease-out duration-300 transform"
+         x-transition:enter-start="translate-y-20 opacity-0"
+         x-transition:enter-end="translate-y-0 opacity-100"
+         class="fixed bottom-24 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-6 px-8 py-4 bg-black/90 border border-primary/40 shadow-[0_0_50px_rgba(167,165,255,0.2)] rounded-full">
+        <span class="font-mono text-xs text-white/60 tracking-widest uppercase">
+            <span class="text-primary font-bold" x-text="selected.length"></span>_CONCEPTS_SELECTED
+        </span>
+        <div class="h-4 w-px bg-white/10"></div>
+        <button @click="batchValidate()" class="font-mono text-[10px] text-primary hover:text-white transition-colors tracking-[0.3em] uppercase flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">rocket_launch</span>
+            BATCH_VALIDATE
+        </button>
+        <button @click="selected = []" class="font-mono text-[10px] text-white/30 hover:text-white transition-colors tracking-[0.3em] uppercase">
+            CANCEL
+        </button>
+    </div>
+
+    <!-- Idea Grid -->
+    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {% for idea in ideas %}
+        <div class="relative group">
+            <!-- Selector Checkbox -->
+            <label class="absolute top-8 left-8 z-20 cursor-pointer">
+                <input type="checkbox" :value="'{{ idea.id }}'" x-model="selected" class="hidden">
+                <div class="w-5 h-5 border-2 border-white/10 rounded group-hover:border-primary/50 transition-all flex items-center justify-center"
+                     :class="selected.includes('{{ idea.id }}') ? 'bg-primary border-primary' : 'bg-transparent'">
+                    <span x-show="selected.includes('{{ idea.id }}')" class="material-symbols-outlined text-black text-sm font-bold">check</span>
+                </div>
+            </label>
+
+            <a href="/app/ideas/{{ idea.id }}" class="block p-8 pt-16 glass-panel border border-white/5 hover:border-primary/30 transition-all duration-500 hover:scale-[1.02] overflow-hidden"
+               :class="selected.includes('{{ idea.id }}') ? 'border-primary/40 bg-primary/5' : ''">
+                <div class="absolute top-0 right-0 p-4 font-mono text-[10px] text-white/20 uppercase">ID: {{ idea.id[:5] }}</div>
+                <div class="scanline absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                <div class="flex flex-col h-full space-y-6">
+                    <div class="space-y-2">
+                        <h3 class="text-2xl font-light tracking-tight text-white/90 group-hover:text-primary transition-colors uppercase">{{ idea.title }}</h3>
+                        <p class="text-sm text-white/40 line-clamp-2 leading-relaxed">{{ idea.description }}</p>
+                    </div>
+                    
+                    <div class="mt-auto pt-6 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary text-sm">play_circle</span>
+                            <span class="font-mono text-xs text-primary font-bold uppercase">Run_Count: {{ idea.runs_count }}</span>
+                        </div>
+                        <span class="material-symbols-outlined text-white/20 group-hover:text-white transition-colors">arrow_forward</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </section>
+</div>
+
+<!-- Pagination -->
+{% if pagination.pages > 1 %}
+<section class="mt-16 flex justify-center gap-4">
+    {% if pagination.has_prev %}
+    <a href="/app/ideas?page={{ pagination.prev_page }}&q={{ query or '' }}" class="p-4 glass-panel hover:bg-white/10 transition-colors">
+        <span class="material-symbols-outlined text-white/40">arrow_back</span>
+    </a>
+    {% endif %}
+    
+    <div class="flex items-center px-8 glass-panel font-mono text-xs text-white/40 tracking-widest uppercase">
+        Page {{ pagination.page }} // {{ pagination.pages }}
+    </div>
+
+    {% if pagination.has_next %}
+    <a href="/app/ideas?page={{ pagination.next_page }}&q={{ query or '' }}" class="p-4 glass-panel hover:bg-white/10 transition-colors">
+        <span class="material-symbols-outlined text-white/40">arrow_forward</span>
+    </a>
+    {% endif %}
+</section>
+{% endif %}
+
+<!-- FAB -->
+<a href="/app/ideas/new" class="fixed bottom-10 right-10 flex items-center gap-3 px-6 py-4 bg-primary text-on-primary font-mono text-xs font-bold tracking-widest shadow-[0_0_30px_rgba(167,165,255,0.4)] hover:scale-105 active:scale-95 transition-all z-50 group">
+    <span class="material-symbols-outlined group-hover:rotate-90 transition-transform duration-300">add</span>
+    CREATE CONCEPT
+</a>
 {% endblock %}

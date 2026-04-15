@@ -1,19 +1,235 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html class="dark" lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>{{ page_title }} · AIdeator</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="/static/css/app.css">
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>AIDEATOR_OS // {{ page_title|upper }}</title>
+    
+    <!-- Core Assets -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;700&family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@300;500&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed": "#9795ff",
+                        "on-background": "#ffffff",
+                        "tertiary-dim": "#e79400",
+                        "error": "#ff6e84",
+                        "secondary": "#69f6b8",
+                        "background": "#0e0e0e",
+                        "inverse-surface": "#f9f9f9",
+                        "inverse-on-surface": "#555555",
+                        "on-tertiary-fixed-variant": "#563400",
+                        "on-primary-fixed": "#000000",
+                        "primary-fixed-dim": "#8885ff",
+                        "surface-dim": "#0e0e0e",
+                        "primary-container": "#9795ff",
+                        "on-error-container": "#ffb2b9",
+                        "tertiary-fixed": "#f8a010",
+                        "on-tertiary-container": "#4a2c00",
+                        "on-secondary-fixed": "#00452d",
+                        "secondary-fixed": "#69f6b8",
+                        "on-primary": "#1c00a0",
+                        "surface-container-low": "#131313",
+                        "surface-container-highest": "#262626",
+                        "secondary-fixed-dim": "#58e7ab",
+                        "outline-variant": "#484848",
+                        "surface-container-high": "#1f1f1f",
+                        "surface-bright": "#2c2c2c",
+                        "tertiary": "#ffb148",
+                        "surface-container": "#191919",
+                        "on-surface-variant": "#ababab",
+                        "on-primary-container": "#14007e",
+                        "on-tertiary": "#573500",
+                        "on-secondary-fixed-variant": "#006544",
+                        "surface": "#0e0e0e",
+                        "secondary-dim": "#58e7ab",
+                        "error-dim": "#d73357",
+                        "on-secondary-container": "#e1ffec",
+                        "primary-dim": "#645efb",
+                        "surface-container-lowest": "#000000",
+                        "surface-variant": "#262626",
+                        "surface-tint": "#a7a5ff",
+                        "secondary-container": "#006c49",
+                        "tertiary-container": "#f8a010",
+                        "tertiary-fixed-dim": "#e79400",
+                        "primary": "#a7a5ff",
+                        "on-surface": "#ffffff",
+                        "on-error": "#490013",
+                        "inverse-primary": "#4e45e4",
+                        "error-container": "#a70138",
+                        "on-primary-fixed-variant": "#1a0099",
+                        "on-tertiary-fixed": "#2a1700",
+                        "on-secondary": "#005a3c",
+                        "outline": "#757575"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Space Grotesk"],
+                        "mono": ["JetBrains Mono"]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.06);
+            --glass-hover: rgba(255, 255, 255, 0.08);
+            --primary-glow: rgba(167, 165, 255, 0.15);
+        }
+
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Neural Mesh Background */
+        .neural-mesh {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 50% 50%, rgba(167, 165, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(105, 246, 184, 0.03) 0%, transparent 30%);
+            opacity: 0.8;
+        }
+
+        .nexus-grid {
+            background-size: 60px 60px;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .glass-panel:hover {
+            background: var(--glass-hover);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .primary-glow-box {
+            box-shadow: 0 0 30px var(--primary-glow);
+        }
+
+        /* Advanced Typography */
+        .font-neural {
+            font-family: 'Space Grotesk', sans-serif;
+            letter-spacing: -0.02em;
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, #ffffff 0%, #a7a5ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        @keyframes scan {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(1000%); }
+        }
+
+        .scanning-line {
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary-fixed), transparent);
+            position: absolute;
+            top: 0;
+            left: 0;
+            animation: scan 4s linear infinite;
+            opacity: 0.5;
+            z-index: 10;
+        }
+
+        /* Transitions */
+        .sidebar-transition {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 3px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a7a5ff; }
+
+        @media print {
+            aside, nav, .fixed, button, .top-nav, .sidebar, .floating-indicator, .neural-mesh {
+                display: none !important;
+            }
+            main {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                color: black !important;
+                background: white !important;
+            }
+            .glass-panel {
+                border: none !important;
+                background: transparent !important;
+                box-shadow: none !important;
+                backdrop-filter: none !important;
+                color: black !important;
+                padding: 0 !important;
+            }
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
 </head>
-<body class="app-bg">
-  {% include "partials/topbar.html" %}
-  <div class="app-shell">
-    {% include "partials/sidebar.html" %}
-    <main class="app-main">
-      {% block content %}{% endblock %}
+<body class="nexus-grid min-h-screen relative" x-data="{ focusMode: false }">
+    <div class="neural-mesh"></div>
+
+    <!-- SideNavBar -->
+    <div :class="focusMode ? '-translate-x-full opacity-0' : 'translate-x-0 opacity-100'" class="sidebar-transition">
+        {% include "partials/sidebar.html" %}
+    </div>
+
+    <!-- TopNavBar -->
+    <div :class="focusMode ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'" class="sidebar-transition">
+        {% include "partials/topbar.html" %}
+    </div>
+
+    <!-- Main Canvas -->
+    <main :class="focusMode ? 'ml-0 pt-8' : 'ml-64 pt-24'" class="p-8 min-h-screen sidebar-transition">
+        <div class="max-w-7xl mx-auto">
+            {% block content %}{% endblock %}
+        </div>
     </main>
-  </div>
-  <script src="/static/js/app.js"></script>
+
+    <!-- Contextual Floating Indicator -->
+    <div class="fixed bottom-8 right-8 z-50 flex items-center gap-4">
+        <div class="glass-panel px-4 py-2 flex items-center gap-3">
+            <span class="w-2 h-2 bg-secondary rounded-full animate-pulse"></span>
+            <span class="font-mono text-[10px] tracking-widest text-white/60">ENGINE_STABLE</span>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

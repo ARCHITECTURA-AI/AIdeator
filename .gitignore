@@ -205,3 +205,10 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+# AIdeator Local Data
+aideator.db
+data/
+test_export.pdf
+
+# Temporary Landing Artifacts
+landing/oolddsd.html

@@ -1,8 +1,44 @@
-<aside class="sidebar">
-  <a href="/app/dashboard" class="{% if active_path == '/app/dashboard' %}active{% endif %}">Dashboard</a>
-  <a href="/app/ideas" class="{% if active_path.startswith('/app/ideas') %}active{% endif %}">Ideas</a>
-  <a href="/app/runs" class="{% if active_path.startswith('/app/runs') %}active{% endif %}">Runs</a>
-  <a href="/app/reports" class="{% if active_path.startswith('/app/reports') %}active{% endif %}">Reports</a>
-  <a href="/app/settings" class="{% if active_path.startswith('/app/settings') %}active{% endif %}">Settings</a>
-  <a href="/app/diagnostics" class="{% if active_path.startswith('/app/diagnostics') %}active{% endif %}">Diagnostics</a>
+<aside class="fixed left-0 top-0 h-full flex flex-col z-50 w-64 border-r border-white/5 bg-[#000000]">
+    <div class="text-xl font-light tracking-tighter text-[#a7a5ff] px-6 py-8">
+        <h1 class="font-bold tracking-widest text-white">AIDEATOR_OS</h1>
+        <p class="font-mono text-[10px] text-white/40 mt-1">V_1.0.4_STABLE</p>
+    </div>
+    
+    <nav class="flex-1 px-4 space-y-2 mt-4">
+        <!-- Dashboard -->
+        <a href="/app/dashboard" class="flex items-center gap-3 px-4 py-3 {% if active_path == '/app/dashboard' %}text-[#a7a5ff] bg-[#a7a5ff]/10 shadow-[0_0_15px_rgba(167,165,255,0.2)] border-r-2 border-[#a7a5ff]{% else %}text-white/40 hover:text-white/80 hover:bg-white/5 hover:scale-[1.02]{% endif %} transition-all duration-300 font-mono text-sm uppercase tracking-tight">
+            <span class="material-symbols-outlined">memory</span>
+            <span>Nexus Engine</span>
+        </a>
+
+        <!-- Ideas -->
+        <a href="/app/ideas" class="flex items-center gap-3 px-4 py-3 {% if active_path.startswith('/app/ideas') %}text-[#a7a5ff] bg-[#a7a5ff]/10 shadow-[0_0_15px_rgba(167,165,255,0.2)] border-r-2 border-[#a7a5ff]{% else %}text-white/40 hover:text-white/80 hover:bg-white/5 hover:scale-[1.02]{% endif %} transition-all duration-300 font-mono text-sm uppercase tracking-tight">
+            <span class="material-symbols-outlined">experiment</span>
+            <span>Project Lab</span>
+        </a>
+
+        <!-- Runs -->
+        <a href="/app/runs" class="flex items-center gap-3 px-4 py-3 {% if active_path.startswith('/app/runs') %}text-[#a7a5ff] bg-[#a7a5ff]/10 shadow-[0_0_15px_rgba(167,165,255,0.2)] border-r-2 border-[#a7a5ff]{% else %}text-white/40 hover:text-white/80 hover:bg-white/5 hover:scale-[1.02]{% endif %} transition-all duration-300 font-mono text-sm uppercase tracking-tight">
+            <span class="material-symbols-outlined">query_stats</span>
+            <span>Data Streams</span>
+        </a>
+
+        <!-- Reports -->
+        <a href="/app/reports" class="flex items-center gap-3 px-4 py-3 {% if active_path.startswith('/app/reports') %}text-[#a7a5ff] bg-[#a7a5ff]/10 shadow-[0_0_15px_rgba(167,165,255,0.2)] border-r-2 border-[#a7a5ff]{% else %}text-white/40 hover:text-white/80 hover:bg-white/5 hover:scale-[1.02]{% endif %} transition-all duration-300 font-mono text-sm uppercase tracking-tight">
+            <span class="material-symbols-outlined">database</span>
+            <span>Neural Archive</span>
+        </a>
+
+        <!-- Settings -->
+        <a href="/app/settings" class="flex items-center gap-3 px-4 py-3 {% if active_path == '/app/settings' %}text-[#a7a5ff] bg-[#a7a5ff]/10 shadow-[0_0_15px_rgba(167,165,255,0.2)] border-r-2 border-[#a7a5ff]{% else %}text-white/40 hover:text-white/80 hover:bg-white/5 hover:scale-[1.02]{% endif %} transition-all duration-300 font-mono text-sm uppercase tracking-tight">
+            <span class="material-symbols-outlined">settings</span>
+            <span>Settings</span>
+        </a>
+    </nav>
+
+    <div class="p-6">
+        <a href="/app/ideas/new" class="block w-full text-center py-4 bg-primary text-on-primary font-mono text-xs tracking-widest uppercase hover:bg-primary-fixed transition-colors">
+            _CREATE_CONCEPT
+        </a>
+    </div>
 </aside>

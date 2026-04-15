@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex flex-col items-center min-h-screen pb-32">
+    <!-- Top HUD / Breadcrumbs -->
+    <div class="w-full max-w-4xl flex justify-between items-center mb-12 px-4">
+        <div class="flex items-center gap-6">
+            <a href="/app/reports" class="glass-panel p-2 flex items-center justify-center hover:text-primary transition-all">
+                <span class="material-symbols-outlined text-sm">arrow_back</span>
+            </a>
+            <div class="flex flex-col">
+                <span class="font-mono text-[9px] text-white/40 uppercase tracking-[0.3em]">Neural Archive</span>
+                <span class="font-neural text-sm text-white/80 uppercase tracking-widest">Report_ID // {{ report.id[:8] }}</span>
+            </div>
+        </div>
+        
+        <!-- Focus Mode Toggle -->
+        <button @click="focusMode = !focusMode" 
+                class="glass-panel px-4 py-2 flex items-center gap-3 hover:bg-white/10 transition-all font-mono text-[10px] tracking-[0.2em] text-white/60">
+            <span class="material-symbols-outlined text-sm" x-text="focusMode ? 'fullscreen_exit' : 'fullscreen'"></span>
+            <span x-text="focusMode ? 'EXIT_IMMERSION' : 'ENTER_IMMERSION'"></span>
+        </button>
+    </div>
+
+    <!-- Persistent Top Status (Success Toast Moved Here) -->
+    <div x-data="{ localForgeSuccess: false }" @forge-complete.window="localForgeSuccess = true; setTimeout(() => localForgeSuccess = false, 5000)">
+        <template x-if="localForgeSuccess">
+            <div class="mb-8 w-full max-w-4xl glass-panel px-8 py-4 border-secondary/30 flex items-center justify-between animate-pulse">
+                <div class="flex items-center gap-4">
+                    <span class="material-symbols-outlined text-secondary text-sm">check_circle</span>
+                    <span class="font-mono text-[10px] text-secondary tracking-[widest] uppercase">Protocol_Alpha: concept.md forged in root</span>
+                </div>
+                <div class="font-mono text-[8px] text-white/20 whitespace-nowrap">MISSION_READY</div>
+            </div>
+        </template>
+    </div>
+
+
+    <!-- Main Report Canvas -->
+    <article class="w-full max-w-4xl glass-panel p-16 relative overflow-hidden group shadow-[0_0_100px_rgba(167,165,255,0.05)] border-white/10">
+        <!-- Floating Scanline -->
+        <div class="scanning-line opacity-20"></div>
+        
+        <header class="mb-16">
+            <div class="flex items-center gap-4 mb-8">
+                <div class="h-0.5 w-16 bg-primary shadow-[0_0_10px_#a7a5ff]"></div>
+                <span class="font-mono text-[11px] text-primary tracking-[0.5em] uppercase">Intelligence_Sovereignty_Report</span>
+            </div>
+            
+            <h1 class="text-6xl font-light tracking-tighter text-white mb-10 leading-[1.1] uppercase font-neural">
+                {{ report.title }}
+            </h1>
+            
+            <div class="flex items-center gap-10 border-y border-white/5 py-8 font-mono text-[10px] text-white/30 uppercase tracking-[0.3em]">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-sm text-secondary">verified_user</span>
+                    <span>Auth: System_Root</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-sm text-primary">sync</span>
+                    <span>Synchronized: {{ report.created_at }}</span>
+                </div>
+                <div class="flex-1"></div>
+                <!-- Concept Shield -->
+                <div class="flex items-center gap-3 px-4 py-1.5 border border-white/10 rounded-full bg-white/[0.03]">
+                    <div class="w-2.5 h-2.5 rounded-full animate-pulse shadow-[0_0_8px_#a7a5ff]" style="background-color: {{ launcher_data.brand_hex or '#a7a5ff' }}"></div>
+                    <span class="font-mono text-[9px] text-white/50 uppercase tracking-widest">{{ launcher_data.tier or 'PRIME' }}</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Executive Summary -->
+        <div class="text-2xl font-light leading-relaxed text-white/90 border-l-2 border-primary pl-10 py-4 bg-primary/5 mb-16 italic font-neural">
+            {{ report.summary or "Neural synthesis complete. Initializing executive readout..." }}
+        </div>
+
+        <!-- Rendered Content -->
+        <div class="prose prose-invert max-w-none text-white/70 leading-relaxed font-light space-y-8 report-content">
+            {% if report.content %}
+                {{ report.content | safe }}
+            {% else %}
+                <div class="flex flex-col items-center justify-center p-24 border border-dashed border-white/10 rounded-xl bg-white/[0.01]">
+                    <span class="material-symbols-outlined text-4xl text-white/20 mb-4 animate-spin">cyclone</span>
+                    <p class="font-mono text-[10px] text-white/40 tracking-[0.2em] uppercase">Processing Data Stream...</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- End of Transmission -->
+        <div class="mt-24 flex items-center gap-6">
+            <div class="font-mono text-[9px] text-white/20 tracking-[0.4em] uppercase">End of_Archive_Node // Vault_Service</div>
+            <div class="flex-1 h-[1px] bg-white/5"></div>
+        </div>
+    </article>
+
+    <!-- Floating Action HUD -->
+    <div class="fixed bottom-12 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 p-2 glass-panel rounded-full shadow-2xl scale-110" 
+         x-data="{ 
+            forging: false, 
+            forgeSuccess: false,
+            async triggerForge() {
+                this.forging = true;
+                try {
+                    const res = await fetch('/api/forge', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ idea_id: '{{ report.id }}' })
+                    });
+                    const data = await res.json();
+                    if(data.success) {
+                        this.forgeSuccess = true;
+                        window.dispatchEvent(new CustomEvent('forge-complete'));
+                        setTimeout(() => this.forgeSuccess = false, 5000);
+                    }
+                } finally {
+                    this.forging = false;
+                }
+            }
+         }">
+        
+        <button @click="triggerForge()" 
+                :disabled="forging"
+                class="px-8 py-3 rounded-full bg-primary text-on-primary font-mono text-[10px] tracking-[0.3em] uppercase flex items-center gap-3 hover:scale-105 transition-all shadow-[0_0_20px_rgba(167,165,255,0.4)] relative overflow-hidden group">
+            <div x-show="forging" class="absolute inset-0 bg-primary-fixed overflow-hidden">
+                <div class="scanning-line"></div>
+            </div>
+            <span class="material-symbols-outlined text-sm" x-text="forging ? 'bolt' : (forgeSuccess ? 'done_all' : 'diamond')"></span>
+            <span x-text="forging ? 'FORGING...' : (forgeSuccess ? 'FORGE_SUCCESSFUL' : 'FORGE_LOCAL_FILE')"></span>
+        </button>
+
+        <a href="/app/reports/{{ report.id }}/pdf" class="p-3 rounded-full hover:bg-white/10 transition-all text-white/60 hover:text-white">
+            <span class="material-symbols-outlined text-sm">picture_as_pdf</span>
+        </a>
+
+        <div class="w-[1px] h-6 bg-white/10 flex-shrink-0"></div>
+
+        <button class="px-6 py-3 rounded-full hover:bg-white/5 transition-all font-mono text-[10px] text-white/40 tracking-widest uppercase flex items-center gap-3">
+             <span class="material-symbols-outlined text-sm">ios_share</span>
+             Share_Vault
+        </button>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    .report-content h1 { @apply text-3xl font-light text-white mb-8 mt-16 uppercase tracking-tight; }
+    .report-content h2 { @apply text-xl font-medium text-primary mb-6 mt-12 uppercase tracking-widest; }
+    .report-content p { @apply mb-6 leading-relaxed text-white/70 font-light; }
+    .report-content ul { @apply list-none space-y-4 mb-8; }
+    .report-content li { @apply flex items-start gap-4 before:content-['_>>'] before:text-primary before:font-mono before:text-[10px]; }
+    .report-content strong { @apply text-white font-normal; }
+    .report-content blockquote { @apply border-l-2 border-secondary/30 pl-8 italic text-secondary/60 my-10; }
+</style>
+{% endblock %}

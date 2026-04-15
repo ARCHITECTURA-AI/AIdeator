@@ -1,14 +1,27 @@
-<header class="topbar">
-  <a href="/app/dashboard" class="brand">
-    <span class="brand-mark">A</span>
-    <span>AIdeator</span>
-  </a>
-  <nav class="topnav">
-    <a href="/app/dashboard" class="{% if active_path == '/app/dashboard' %}active{% endif %}">Dashboard</a>
-    <a href="/app/ideas" class="{% if active_path.startswith('/app/ideas') %}active{% endif %}">Ideas</a>
-    <a href="/app/runs" class="{% if active_path.startswith('/app/runs') %}active{% endif %}">Runs</a>
-    <a href="/app/reports" class="{% if active_path.startswith('/app/reports') %}active{% endif %}">Reports</a>
-    <a href="/docs" target="_blank" rel="noopener">Docs</a>
-  </nav>
-  <div class="mode-pill mode-{{ current_mode }}">{{ current_mode }}</div>
+<header class="flex justify-between items-center w-[calc(100%-16rem)] ml-64 px-8 fixed top-0 left-0 z-40 bg-[#000000]/80 backdrop-blur-xl h-16 border-b border-white/5">
+    <div class="flex items-center gap-8">
+        <span class="text-lg font-mono font-bold text-white tracking-widest">NEXUS_ENGINE_PRO</span>
+        <div class="hidden md:flex gap-6">
+            <span class="font-mono text-[10px] tracking-wider uppercase {% if current_mode == 'local-only' %}text-[#a7a5ff] border-b-2 border-[#645efb] font-medium{% else %}text-white/40{% endif %}">Local</span>
+            <span class="font-mono text-[10px] tracking-wider uppercase {% if current_mode == 'hybrid' %}text-[#a7a5ff] border-b-2 border-[#645efb] font-medium{% else %}text-white/40{% endif %}">Hybrid</span>
+            <span class="font-mono text-[10px] tracking-wider uppercase {% if current_mode == 'cloud-enabled' %}text-[#a7a5ff] border-b-2 border-[#645efb] font-medium{% else %}text-white/40{% endif %}">Cloud</span>
+        </div>
+    </div>
+    
+    <div class="flex items-center gap-6">
+        <div class="relative flex items-center">
+            <form action="/app/ideas" method="get">
+                <input name="q" class="bg-transparent border-none focus:ring-0 font-mono text-xs text-white/60 placeholder:text-white/20 w-48 text-right" placeholder="QUERY_SYSTEM..." type="text" value="{{ query or '' }}"/>
+                <button type="submit" class="material-symbols-outlined text-white/40 text-sm ml-2">search</button>
+            </form>
+        </div>
+        <div class="flex gap-4 text-white/40">
+            <span class="material-symbols-outlined hover:text-primary transition-colors cursor-pointer">sensors</span>
+            <a href="/app/diagnostics" class="material-symbols-outlined hover:text-primary transition-colors cursor-pointer">terminal</a>
+            <span class="material-symbols-outlined hover:text-primary transition-colors cursor-pointer">account_tree</span>
+        </div>
+        <div class="w-8 h-8 flex items-center justify-center border border-primary/20 bg-primary/10">
+            <span class="material-symbols-outlined text-primary text-sm">person</span>
+        </div>
+    </div>
 </header>

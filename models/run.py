@@ -28,6 +28,7 @@ class Run:
     status: RunStatus = "pending"
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    duration_ms: int | None = None
     error_code: str | None = None
 
     def transition_to(self, next_status: RunStatus, *, error_code: str | None = None) -> None:

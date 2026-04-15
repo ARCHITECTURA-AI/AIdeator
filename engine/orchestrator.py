@@ -6,18 +6,21 @@ import logging
 import time
 from uuid import UUID
 
+from db.ideas import get_idea
 from db.reports import save_report
 from db.runs import get_run, transition_run
-from engine.synthesizer import synthesize_default_cards
+from api.config import settings
+from engine.analyst import analyze_dimensions
+from engine.signal_collector import collect_search_signals
+from engine.synthesizer import build_markdown_artifact, synthesize_intelligence
 from models.report import Report
 
 LOGGER = logging.getLogger("engine.orchestrator")
 
 
-def start_run(run_id: UUID) -> None:
+async def execute_run(run_id: UUID) -> None:
     """Advance a run through the minimal happy-path lifecycle."""
     started_at = time.perf_counter()
-    transition_run(run_id, "running")
     run = get_run(run_id)
     if run is None:
         raise ValueError("Run not found")
@@ -31,10 +34,71 @@ def start_run(run_id: UUID) -> None:
     )
 
     try:
-        cards = synthesize_default_cards()
-        save_report(Report(run_id=run_id, cards=cards, artifact_path=f"docs/idea-{run.idea_id}.md"))
+        transition_run(run_id, "running")
+        
+        # Collect search signals based on mode
+        idea = get_idea(run.idea_id)
+        search_results = []
+        if idea is not None:
+            search_results = await collect_search_signals(
+                mode=run.mode,
+                title=idea.title,
+                description=idea.description,
+                limit=5,
+            )
+            LOGGER.info(
+                "Search signals collected",
+                extra={
+                    "event": "search_signals_collected",
+                    "extra_fields": {
+                        "run_id": str(run_id),
+                        "results_count": len(search_results),
+                    },
+                },
+            )
+
+        citations = [
+            {
+                "source_id": f"SRC-{i:03d}",
+                "content": res.snippet,
+                "url": res.url,
+            }
+            for i, res in enumerate(search_results, 1)
+        ]
+        
+        # Dimensional sifting (Node 2)
+        analysis = await analyze_dimensions(
+            title=idea.title if idea else "Unknown",
+            description=idea.description if idea else "",
+            citations=citations
+        )
+        
+        # Real intelligence synthesis using LLM (Node 3)
+        cards = await synthesize_intelligence(
+            title=idea.title if idea else "Unknown",
+            description=idea.description if idea else "",
+            citations=citations,
+            analysis=analysis
+        )
+        
+        # Build and write markdown artifact
+        report_text = build_markdown_artifact(idea_id=str(run.idea_id), cards=cards)
+        artifact_name = f"idea-{run.idea_id}.md"
+        artifact_path = settings.app_docs_dir / artifact_name
+        artifact_path.parent.mkdir(parents=True, exist_ok=True)
+        artifact_path.write_text(report_text, encoding="utf-8")
+
+        save_report(
+            Report(
+                run_id=run_id,
+                cards=cards,
+                artifact_path=str(artifact_path),
+                citations=citations,
+            )
+        )
+        duration_ms = int((time.perf_counter() - started_at) * 1000)
+        run.duration_ms = duration_ms
         transition_run(run_id, "succeeded")
-        duration_ms = round((time.perf_counter() - started_at) * 1000, 2)
         LOGGER.info(
             "Run succeeded",
             extra={
@@ -47,11 +111,12 @@ def start_run(run_id: UUID) -> None:
                 },
             },
         )
-    except Exception:
+    except Exception as e:
+        duration_ms = int((time.perf_counter() - started_at) * 1000)
+        run.duration_ms = duration_ms
         transition_run(run_id, "failed", error_code="AE-ENGINE-001")
-        duration_ms = round((time.perf_counter() - started_at) * 1000, 2)
         LOGGER.error(
-            "Run failed",
+            f"Run execution failed: {e}",
             extra={
                 "event": "run_failed",
                 "extra_fields": {
@@ -59,8 +124,10 @@ def start_run(run_id: UUID) -> None:
                     "idea_id": str(run.idea_id),
                     "mode": run.mode,
                     "duration_ms": duration_ms,
+                    "error": str(e),
                 },
             },
             exc_info=True,
         )
-        raise
+        # We don't re-raise here because this is running in a background task
+        # and we've already transitioned the state to 'failed'.

@@ -15,3 +15,5 @@ class Idea:
     context: str
     idea_id: UUID = field(default_factory=uuid4)
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    tier: str = "Bronze"
+    brand_hex: str = "#888888"

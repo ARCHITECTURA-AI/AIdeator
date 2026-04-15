@@ -1,68 +1,233 @@
 {% extends "base.html" %}
+
 {% block content %}
-<section class="section">
-  <div class="section-header">
-    <div>
-      <h1>Run #{{ run.id[:8] }}</h1>
-      <p class="muted">Idea: <a href="/app/ideas/{{ run.idea_id }}">{{ run.idea_title }}</a></p>
+<!-- Header Section -->
+<header class="flex justify-between items-end mb-12">
+    <div class="max-w-3xl">
+        <div class="font-mono text-[10px] text-primary tracking-[0.3em] uppercase mb-4 flex items-center gap-2">
+            <span class="w-2 h-2 bg-primary {% if run.status in ['pending', 'running'] %}animate-pulse{% endif %}"></span>
+            Intelligence_Extract // ID: {{ run.id[:8] }}
+        </div>
+        <h1 class="font-headline font-light text-6xl tracking-tighter text-white uppercase">
+            {{ run.idea_title }} <span class="text-white/20">Analysis</span>
+        </h1>
     </div>
-    <div class="row">
-      {% set status = run.status %}{% include "partials/status_pill.html" %}
-      {% set mode = run.mode %}{% include "partials/mode_pill.html" %}
+    <div class="text-right font-mono">
+        <div class="text-white/40 text-[10px] uppercase tracking-widest mb-1">Intelligence Confidence</div>
+        <div class="text-4xl font-light text-secondary">
+            {% if run.status == 'succeeded' %}{{ run.confidence_score }}%{% else %}—{% endif %}
+        </div>
     </div>
-  </div>
+</header>
 
-  {% if run.status == "failed" %}
-  <div class="alert error" role="alert">
-    <strong>Run failed</strong>
-    <p>{{ run.error_code }} {{ run.error_message }}</p>
-  </div>
-  {% endif %}
+<!-- Timeline Widget (Dynamic State) -->
+<div class="mb-12 glass-panel p-6 rounded-sm border-l-2 {% if run.status == 'failed' %}border-error{% else %}border-primary{% endif %} relative overflow-hidden">
+    <div class="scanline absolute inset-0 opacity-10"></div>
+    <div class="flex justify-between items-center relative z-10 font-mono">
+        <div class="flex items-center gap-12 w-full">
+            <!-- Step 1: Collection -->
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 border {% if run.status in ['running', 'succeeded', 'failed'] %}border-secondary/30 text-secondary{% else %}border-white/10 text-white/20{% endif %} flex items-center justify-center">
+                    <span class="material-symbols-outlined">check_circle</span>
+                </div>
+                <div>
+                    <div class="text-xs font-bold text-white uppercase tracking-tighter">Collection</div>
+                    <div class="text-[10px] text-white/40 uppercase">{% if run.status in ['running', 'succeeded', 'failed'] %}Complete{% else %}Queued{% endif %}</div>
+                </div>
+            </div>
+            <div class="flex-1 h-[1px] bg-white/5">
+                <div class="h-full bg-secondary {% if run.status in ['running', 'succeeded', 'failed'] %}w-full{% else %}w-0{% endif %} transition-all duration-1000"></div>
+            </div>
+            
+            <!-- Step 2: Analysis -->
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 border {% if run.status in ['succeeded', 'failed'] %}border-secondary/30 text-secondary{% elif run.status == 'running' %}border-primary text-primary animate-pulse{% else %}border-white/10 text-white/20{% endif %} flex items-center justify-center">
+                    <span class="material-symbols-outlined">insights</span>
+                </div>
+                <div>
+                    <div class="text-xs font-bold text-white uppercase tracking-tighter">Analysis</div>
+                    <div class="text-[10px] uppercase {% if run.status == 'running' %}text-primary{% else %}text-white/40{% endif %}">
+                        {% if run.status in ['succeeded', 'failed'] %}Complete{% elif run.status == 'running' %}In Progress{% else %}Pending{% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="flex-1 h-[1px] bg-white/5">
+                <div class="h-full bg-secondary {% if run.status == 'succeeded' %}w-full{% else %}w-0{% endif %} transition-all duration-1000"></div>
+            </div>
+            
+            <!-- Step 3: Synthesis -->
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 border {% if run.status == 'succeeded' %}border-primary text-primary shadow-[0_0_10px_rgba(167,165,255,0.3)]{% else %}border-white/10 text-white/20{% endif %} flex items-center justify-center">
+                    <span class="material-symbols-outlined">description</span>
+                </div>
+                <div>
+                    <div class="text-xs font-bold text-white uppercase tracking-tighter">Synthesis</div>
+                    <div class="text-[10px] uppercase {% if run.status == 'succeeded' %}text-primary{% else %}text-white/40{% endif %}">
+                        {% if run.status == 'succeeded' %}Ready{% else %}Locked{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-  <div class="grid-2">
-    <article class="card">
-      <h3>Timeline</h3>
-      <ul class="timeline">
-        <li>Queued: {{ run.queued_at }}</li>
-        <li>Started: {{ run.started_at }}</li>
-        <li>Finished: {{ run.finished_at }}</li>
-        <li>Duration: {{ run.duration }}</li>
-      </ul>
-    </article>
-    <article class="card">
-      <h3>Mode disclosure</h3>
-      <p>{{ mode_disclosure }}</p>
-      {% if docs_available %}
-      <a class="btn secondary" href="{{ docs_url }}">Open report markdown</a>
-      {% endif %}
-    </article>
-  </div>
-</section>
+<div class="grid grid-cols-12 gap-8">
+    <!-- Intel Grid (Bento Style) -->
+    <div class="col-span-12 lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+        {% set findings = findings or {} %}
+        
+        <!-- Card: Market Demand -->
+        <div class="group glass-panel p-8 hover:bg-white/[0.05] transition-all relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-4 font-mono text-[10px] text-white/10 uppercase">Metric_Dmd</div>
+            <div class="flex justify-between items-start mb-8">
+                <div>
+                    <h3 class="text-white/40 text-xs uppercase tracking-widest mb-2">Market Demand</h3>
+                    <div class="text-5xl font-light text-white group-hover:text-primary transition-colors">
+                        {% if findings['demand'] and findings['demand'].score is defined %}
+                            {{ (findings['demand'].score / 10)|round(1) }}<span class="text-xl text-white/20">/10</span>
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="text-primary">
+                    <span class="material-symbols-outlined text-4xl">trending_up</span>
+                </div>
+            </div>
+            <p class="text-sm text-white/60 leading-relaxed font-light">
+                {{ findings['demand'].summary if findings['demand'] else "Awaiting signal decomposition..." }}
+            </p>
+        </div>
 
-<section class="section">
-  <h2>Report Cards</h2>
-  {% if cards %}
-  <div class="grid-2">
-    {% for card in cards %}
-    <article class="card">
-      <h3>{{ card.type|title }}</h3>
-      <p>{{ card.summary }}</p>
-      {% if card.citation_urls %}
-      <button type="button" class="btn ghost citation-toggle" data-target="citations-{{ loop.index }}">Citations</button>
-      <ul id="citations-{{ loop.index }}" class="hidden">
-        {% for item in card.citation_urls %}
-        <li><a href="{{ item }}" target="_blank" rel="noopener">{{ item }}</a></li>
-        {% endfor %}
-      </ul>
-      {% endif %}
-    </article>
-    {% endfor %}
-  </div>
-  {% else %}
-    {% set message = "No report cards yet." %}
-    {% set cta_url = "" %}
-    {% set cta_label = "" %}
-    {% include "partials/empty_state.html" %}
-  {% endif %}
-</section>
+        <!-- Card: Competition -->
+        <div class="group glass-panel p-8 hover:bg-white/[0.05] transition-all relative">
+            <div class="absolute top-0 right-0 p-4 font-mono text-[10px] text-white/10 uppercase">Metric_Cmp</div>
+            <div class="flex justify-between items-start mb-8">
+                <div>
+                    <h3 class="text-white/40 text-xs uppercase tracking-widest mb-2">Competition</h3>
+                    <div class="text-5xl font-light text-white group-hover:text-secondary transition-colors text-nowrap">
+                        {{ findings['competition'].level if findings['competition'] else "Scanning..." }}
+                    </div>
+                </div>
+                <div class="text-secondary">
+                    <span class="material-symbols-outlined text-4xl">radar</span>
+                </div>
+            </div>
+            <p class="text-sm text-white/60 leading-relaxed font-light">
+                {{ findings['competition'].summary if findings['competition'] else "Map fragmented. Resolving incumbents..." }}
+            </p>
+        </div>
+
+        <!-- Card: SWOT/Risk -->
+        <div class="group glass-panel p-8 hover:bg-white/[0.05] transition-all relative">
+            <div class="absolute top-0 right-0 p-4 font-mono text-[10px] text-white/10 uppercase">Metric_Rsk</div>
+            <div class="flex justify-between items-start mb-8">
+                <div>
+                    <h3 class="text-white/40 text-xs uppercase tracking-widest mb-2">Integrity Risk</h3>
+                    <div class="text-5xl font-light text-white group-hover:text-error transition-colors">
+                        {% if findings['viability'] and findings['viability'].score is defined %}
+                            {{ (findings['viability'].score / 10)|round(1) }}<span class="text-xl text-white/20">/10</span>
+                        {% else %}
+                            —<span class="text-xl text-white/20">/10</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="text-error">
+                    <span class="material-symbols-outlined text-4xl">shield_with_heart</span>
+                </div>
+            </div>
+            <div class="p-4 bg-error/5 border border-error/10 rounded-sm mt-4">
+                <p class="text-[11px] text-error/80 font-mono uppercase">
+                    {{ findings['viability'].summary if findings['viability'] else "Analyzing market saturation and barrier to entry..." }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Card: Action Path -->
+        <div class="group bg-primary p-8 transition-all relative flex flex-col justify-between">
+            <div class="absolute top-0 right-0 p-4 font-mono text-[10px] text-black/40 tracking-widest uppercase">Path_Active</div>
+            <div>
+                <h3 class="text-black/60 text-xs uppercase tracking-widest mb-2 font-bold">Execution Path</h3>
+                <div class="text-3xl font-light text-black leading-tight uppercase">
+                    {% if run.status == 'succeeded' %}Strategy Report Ready{% elif run.status == 'failed' %}Analysis Terminal{% else %}Processing Concept...{% endif %}
+                </div>
+            </div>
+            {% if run.status == 'succeeded' %}
+                <a href="{{ docs_url }}" class="mt-8 w-full py-4 bg-primary text-black text-xs font-bold uppercase tracking-widest hover:bg-white transition-all flex items-center justify-center gap-2">
+                    View Final Report
+                    <span class="material-symbols-outlined text-sm">description</span>
+                </a>
+            {% elif run.status == 'failed' %}
+                <div class="mt-8 w-full py-4 bg-red-500/20 text-red-500 text-xs font-bold uppercase tracking-widest flex flex-col items-center justify-center gap-1 border border-red-500/50">
+                    <div class="flex items-center gap-2 uppercase">Analysis Failed <span class="material-symbols-outlined text-sm">error</span></div>
+                    <div class="text-[8px] opacity-60 font-mono uppercase">{{ run.error_code }}: {{ run.error_message }}</div>
+                </div>
+            {% else %}
+                <div class="mt-8 w-full py-4 bg-black text-white text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 border border-white/10">
+                    Sifting Signals...
+                    <span class="material-symbols-outlined text-sm animate-spin">refresh</span>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Signal Stream (Side Panel) -->
+    <div class="col-span-12 lg:col-span-4 flex flex-col gap-8">
+        <div class="glass-panel rounded-sm h-full flex flex-col border-white/5 font-mono">
+            <div class="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
+                <h3 class="text-xs font-bold uppercase tracking-widest text-white">Execution Intel</h3>
+                <span class="text-[10px] text-primary uppercase">Status: {{ run.status }}</span>
+            </div>
+            <div class="p-6 border-b border-white/5 space-y-4">
+                <div class="flex justify-between text-[10px] uppercase">
+                    <span class="text-white/40">Mode:</span>
+                    <span class="text-white">{{ run.mode_label }}</span>
+                </div>
+                <div class="flex justify-between text-[10px] uppercase">
+                    <span class="text-white/40">Duration:</span>
+                    <span class="text-secondary">{{ run.duration }}</span>
+                </div>
+                <div class="flex justify-between text-[10px] uppercase">
+                    <span class="text-white/40">Created:</span>
+                    <span class="text-white/60">{{ run.queued_at }}</span>
+                </div>
+            </div>
+            <div class="p-6 border-b border-white/5 flex justify-between items-center">
+                <h3 class="text-xs font-bold uppercase tracking-widest text-white">Signal Stream</h3>
+                <span class="text-[10px] text-primary {% if run.status in ['pending', 'running'] %}animate-pulse{% endif %} uppercase">Live_Archive</span>
+            </div>
+            <div class="flex-1 overflow-y-auto p-6 space-y-8">
+                {% if citations %}
+                    {% for citation in citations %}
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[10px] text-white/20 bg-white/5 px-2 py-1 uppercase">Source: {{ citation.source_id or "UNKN" }}</span>
+                            <span class="text-[10px] text-secondary">Match Confirmed</span>
+                        </div>
+                        <p class="text-xs text-white/60 leading-relaxed italic border-l border-primary/30 pl-4 py-1">
+                            "{{ citation.content[:150] }}..."
+                        </p>
+                        <a href="{{ citation.url }}" target="_blank" class="text-[9px] text-primary uppercase tracking-tighter hover:underline">
+                            Link: {{ citation.url[:30] }}...
+                        </a>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-xs text-white/20 uppercase tracking-widest text-center py-10 italic">
+                        {% if run.status in ['pending', 'running'] %}Intercepting signals...{% else %}No citations recorded.{% endif %}
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if run.status in ['pending', 'running'] %}
+<script>
+    // Auto-refresh script for active runs
+    setTimeout(() => {
+        window.location.reload();
+    }, 3000); // Polling every 3 seconds
+</script>
+{% endif %}
 {% endblock %}

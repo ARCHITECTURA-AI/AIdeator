@@ -9,7 +9,7 @@ from pathlib import Path
 from threading import Lock
 from uuid import UUID
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -46,7 +46,7 @@ from engine.evals import (
     evaluate_notes_actionability,
 )
 from engine.mode_guard import check as mode_guard_check
-from engine.orchestrator import start_run
+from engine.orchestrator import execute_run
 from engine.plugin_sandbox import assert_plugin_caps, enforce_plugin_policy
 from engine.plugins import (
     OPTIONAL_PLUGIN_HOOKS,
@@ -120,6 +120,9 @@ def _is_within_docs(path_value: str) -> bool:
 
 @app.on_event("startup")
 def _on_startup() -> None:
+    from infra.watchdog import cleanup_stale_runs
+    cleanup_stale_runs()
+    
     settings.app_docs_dir.mkdir(parents=True, exist_ok=True)
     LOGGER.info(
         "Application startup",
@@ -150,7 +153,7 @@ def post_ideas(payload: dict[str, str]) -> dict[str, str]:
 
 
 @app.post("/runs", status_code=202)
-def post_runs(payload: dict[str, str]) -> dict[str, str | bool]:
+def post_runs(payload: dict[str, str], background_tasks: BackgroundTasks) -> dict[str, str | bool]:
     idea_id = UUID(payload["idea_id"])
     tier = payload["tier"]
     mode = payload["mode"]
@@ -174,7 +177,7 @@ def post_runs(payload: dict[str, str]) -> dict[str, str | bool]:
             idempotency_key=idempotency_key,
         )
         if not reused:
-            start_run(run.run_id)
+            background_tasks.add_task(execute_run, run.run_id)
     else:
         run = Run(
             idea_id=idea_id,
@@ -182,7 +185,7 @@ def post_runs(payload: dict[str, str]) -> dict[str, str | bool]:
             mode=mode,  # type: ignore[arg-type]
         )
         save_run(run)
-        start_run(run.run_id)
+        background_tasks.add_task(execute_run, run.run_id)
 
     LOGGER.info(
         "Run created",
@@ -333,7 +336,7 @@ def test_hook_phb_config_reload() -> dict[str, object]:
 
 
 @app.post("/internal/test-hooks/phb/multi-run")
-def test_hook_phb_multi_run() -> dict[str, object]:
+def test_hook_phb_multi_run(background_tasks: BackgroundTasks) -> dict[str, object]:
     idea = save_idea(
         Idea(
             title="PH-B multi run",
@@ -346,14 +349,14 @@ def test_hook_phb_multi_run() -> dict[str, object]:
     run_b = Run(idea_id=idea.idea_id, tier="medium", mode="hybrid")
     save_run(run_a)
     save_run(run_b)
-    start_run(run_a.run_id)
-    start_run(run_b.run_id)
+    background_tasks.add_task(execute_run, run_a.run_id)
+    background_tasks.add_task(execute_run, run_b.run_id)
     history = list_runs_for_idea(idea.idea_id)
     return {"ok": True, "run_count": len(history), "idea_id": str(idea.idea_id)}
 
 
 @app.post("/internal/test-hooks/phb/rerun-stability")
-def test_hook_phb_rerun_stability() -> dict[str, object]:
+def test_hook_phb_rerun_stability(background_tasks: BackgroundTasks) -> dict[str, object]:
     idea = save_idea(
         Idea(
             title="PH-B rerun stability",
@@ -366,8 +369,8 @@ def test_hook_phb_rerun_stability() -> dict[str, object]:
     second = Run(idea_id=idea.idea_id, tier="low", mode="local-only")
     save_run(first)
     save_run(second)
-    start_run(first.run_id)
-    start_run(second.run_id)
+    background_tasks.add_task(execute_run, first.run_id)
+    background_tasks.add_task(execute_run, second.run_id)
     history = list_runs_for_idea(idea.idea_id)
     stable = len(history) >= 2 and first.mode == second.mode and first.tier == second.tier
     return {"ok": True, "stable": stable, "run_count": len(history)}
@@ -438,13 +441,13 @@ def test_hook_phb_contract_reddit_drift() -> dict[str, object]:
 
 
 @app.get("/internal/test-hooks/phb/e2e-multi-run-history")
-def test_hook_phb_e2e_multi_run_history() -> dict[str, object]:
-    result = test_hook_phb_multi_run()
+def test_hook_phb_e2e_multi_run_history(background_tasks: BackgroundTasks) -> dict[str, object]:
+    result = test_hook_phb_multi_run(background_tasks)
     return {"ok": True, "history_count": result["run_count"]}
 
 
 @app.get("/internal/test-hooks/phb/e2e-tier-upgrade")
-def test_hook_phb_e2e_tier_upgrade() -> dict[str, object]:
+def test_hook_phb_e2e_tier_upgrade(background_tasks: BackgroundTasks) -> dict[str, object]:
     idea = save_idea(
         Idea(
             title="PH-B tier upgrade",
@@ -457,13 +460,13 @@ def test_hook_phb_e2e_tier_upgrade() -> dict[str, object]:
     medium_run = Run(idea_id=idea.idea_id, tier="medium", mode="local-only")
     save_run(low_run)
     save_run(medium_run)
-    start_run(low_run.run_id)
-    start_run(medium_run.run_id)
+    background_tasks.add_task(execute_run, low_run.run_id)
+    background_tasks.add_task(execute_run, medium_run.run_id)
     return {"ok": True, "tiers": [low_run.tier, medium_run.tier]}
 
 
 @app.get("/internal/test-hooks/phb/e2e-error-recovery")
-def test_hook_phb_e2e_error_recovery() -> dict[str, object]:
+def test_hook_phb_e2e_error_recovery(background_tasks: BackgroundTasks) -> dict[str, object]:
     idea = save_idea(
         Idea(
             title="PH-B error recovery",
@@ -477,7 +480,7 @@ def test_hook_phb_e2e_error_recovery() -> dict[str, object]:
     save_run(failed)
     save_run(recovered)
     transition_run(failed.run_id, "failed", error_code="AE-DEP-001")
-    start_run(recovered.run_id)
+    background_tasks.add_task(execute_run, recovered.run_id)
     failed_run = get_run(failed.run_id)
     recovered_run = get_run(recovered.run_id)
     LOGGER.debug(
@@ -521,7 +524,7 @@ def test_hook_phb_security_path_traversal() -> dict[str, object]:
 
 
 @app.post("/internal/test-hooks/phb/security-concurrency-isolation")
-def test_hook_phb_security_concurrency_isolation() -> dict[str, object]:
+def test_hook_phb_security_concurrency_isolation(background_tasks: BackgroundTasks) -> dict[str, object]:
     idea_ids: list[str] = []
     run_ids: list[str] = []
     with _CONCURRENCY_GUARD:
@@ -536,7 +539,7 @@ def test_hook_phb_security_concurrency_isolation() -> dict[str, object]:
             )
             run = Run(idea_id=idea.idea_id, tier="low", mode="local-only")
             save_run(run)
-            start_run(run.run_id)
+            background_tasks.add_task(execute_run, run.run_id)
             idea_ids.append(str(idea.idea_id))
             run_ids.append(str(run.run_id))
 
@@ -853,7 +856,7 @@ def test_hook_phd_security_sandbox() -> dict[str, object]:
 
 
 @app.post("/internal/test-hooks/phd/e2e-export-import")
-def test_hook_phd_e2e_export_import() -> dict[str, object]:
+def test_hook_phd_e2e_export_import(background_tasks: BackgroundTasks) -> dict[str, object]:
     idea = save_idea(
         Idea(
             title="PH-D export/import",
@@ -863,7 +866,7 @@ def test_hook_phd_e2e_export_import() -> dict[str, object]:
         )
     )
     run = save_run(Run(idea_id=idea.idea_id, tier="low", mode="local-only"))
-    start_run(run.run_id)
+    background_tasks.add_task(execute_run, run.run_id)
 
     ideas_export = export_ideas_snapshot()
     runs_export = export_runs_snapshot()

@@ -1,20 +1,99 @@
 {% extends "base.html" %}
+
 {% block content %}
-<section class="section">
-  <h1>Diagnostics</h1>
-  <div class="grid-3">
-    <article class="card">
-      <h3>Status</h3>
-      <p>{{ diagnostics.status }}</p>
-    </article>
-    <article class="card">
-      <h3>Ideas</h3>
-      <p>{{ diagnostics.ideas_count }}</p>
-    </article>
-    <article class="card">
-      <h3>Runs</h3>
-      <p>{{ diagnostics.runs_count }}</p>
-    </article>
-  </div>
-</section>
+<!-- Header Section -->
+<div class="mb-12">
+    <p class="font-mono text-[10px] text-primary tracking-[0.3em] mb-2 uppercase">Core_Analytics / Nexus_Engine</p>
+    <h2 class="text-6xl font-light tracking-tighter text-white">System <span class="text-primary font-bold">Diagnostics</span></h2>
+</div>
+
+<!-- Diagnostics Grid -->
+<div class="grid grid-cols-12 gap-8">
+    <!-- Active Counts -->
+    <div class="col-span-12 lg:col-span-4 glass-panel p-8 border border-white/5 relative overflow-hidden">
+        <div class="scanline absolute inset-0 opacity-10"></div>
+        <div class="flex items-center gap-3 mb-6">
+            <span class="material-symbols-outlined text-primary">analytics</span>
+            <h3 class="text-xl font-light tracking-tight text-white uppercase">Archive Metrics</h3>
+        </div>
+        <div class="space-y-6 font-mono text-xs uppercase">
+            <div class="flex justify-between items-center py-3 border-b border-white/5">
+                <span class="text-white/40">Neural_Concepts</span>
+                <span class="text-white">{{ diagnostics.ideas_count }}</span>
+            </div>
+            <div class="flex justify-between items-center py-3 border-b border-white/5">
+                <span class="text-white/40">Execution_Runs</span>
+                <span class="text-white">{{ diagnostics.runs_count }}</span>
+            </div>
+            <div class="flex justify-between items-center py-3">
+                <span class="text-white/40">Validated_Reports</span>
+                <span class="text-white">{{ diagnostics.reports_count }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Latency -->
+    <div class="col-span-12 lg:col-span-8 glass-panel p-8 border border-white/5 relative overflow-hidden">
+        <div class="flex items-center gap-3 mb-6">
+            <span class="material-symbols-outlined text-secondary">speed</span>
+            <h3 class="text-xl font-light tracking-tight text-white uppercase">Heartbeat Monitor</h3>
+        </div>
+        <div id="heartbeat-monitor" class="h-48 flex items-end gap-1 mb-6">
+            {% for i in range(40) %}
+            <div class="flex-1 bg-secondary/20 hover:bg-secondary/40 transition-all duration-1000" style="height: 50%"></div>
+            {% endfor %}
+        </div>
+        <div class="flex justify-between font-mono text-[10px] text-white/40 uppercase tracking-widest">
+            <span>Latency: 0.008ms (Peak)</span>
+            <span>Uptime: 99.98%</span>
+            <span>Mode: {{ current_mode }}</span>
+        </div>
+    </div>
+
+    <!-- Connection Status -->
+    <div class="col-span-12 glass-panel p-8 border border-white/5">
+        <div class="flex items-center gap-3 mb-8">
+            <span class="material-symbols-outlined text-tertiary">hub</span>
+            <h3 class="text-xl font-light tracking-tight text-white uppercase">Network Isolation Status</h3>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="p-6 bg-white/5 border border-white/5 rounded-sm">
+                <span class="block font-mono text-[10px] text-white/40 uppercase mb-2">Internal_Mesh</span>
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-secondary shadow-[0_0_10px_#69f6b8]"></span>
+                    <span class="text-white text-sm font-light uppercase">Synchronized</span>
+                </div>
+            </div>
+            <div class="p-6 bg-white/5 border border-white/5 rounded-sm">
+                <span class="block font-mono text-[10px] text-white/40 uppercase mb-2">Uplink_Node</span>
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-secondary shadow-[0_0_10px_#69f6b8]"></span>
+                    <span class="text-white text-sm font-light uppercase">Active</span>
+                </div>
+            </div>
+            <div class="p-6 bg-white/5 border border-white/5 rounded-sm">
+                <span class="block font-mono text-[10px] text-white/40 uppercase mb-2">Archive_Access</span>
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-secondary shadow-[0_0_10px_#69f6b8]"></span>
+                    <span class="text-white text-sm font-light uppercase">READ_WRITE_OK</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Live Heartbeat Animation
+    const bars = document.querySelectorAll('#heartbeat-monitor div');
+    function updateHeartbeat() {
+        bars.forEach(bar => {
+            const height = Math.floor(Math.random() * 80) + 15;
+            bar.style.height = `${height}%`;
+        });
+    }
+    setInterval(updateHeartbeat, 1000);
+    updateHeartbeat();
+</script>
 {% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main class="flex -mt-8 -mx-8 h-[calc(100vh-4rem)]">
+    <!-- Archive Index (Sidebar-style list) -->
+    <nav class="w-96 bg-black border-r border-white/5 overflow-y-auto">
+        <div class="p-6 border-b border-white/5 space-y-4">
+            <div class="flex justify-between items-end">
+                <div>
+                    <div class="font-mono text-[10px] text-white/40 tracking-[0.2em] mb-1 uppercase">Archive_Index</div>
+                    <div class="text-xl font-light tracking-tight text-white uppercase">Reports_Vault</div>
+                </div>
+                <div class="font-mono text-[10px] text-primary bg-primary/10 px-2 py-1 uppercase">Total_{{ docs|length }}</div>
+            </div>
+            
+            <!-- Search Archive -->
+            <form action="/app/reports" method="GET" class="relative">
+                <input type="text" name="q" value="{{ query or '' }}" placeholder="SEARCH_VAULT..." 
+                       class="w-full bg-white/[0.03] border border-white/10 rounded px-4 py-2 font-mono text-[10px] text-white focus:outline-none focus:border-primary/50 transition-colors">
+                <button type="submit" class="absolute right-3 top-2 text-white/20 hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined text-sm">search</span>
+                </button>
+            </form>
+        </div>
+    
+    <div class="divide-y divide-white/5">
+        {% for report in docs %}
+        <a href="/app/reports/{{ report.idea_id }}" class="block p-6 group cursor-pointer transition-colors hover:bg-white/[0.02] {% if report.idea_id == selected_idea_id %}bg-white/[0.03]{% endif %}">
+            <div class="flex justify-between items-start mb-2">
+                <span class="font-mono text-[9px] text-primary tracking-widest uppercase">ID: {{ report.idea_id[:8] }}</span>
+                <span class="font-mono text-[9px] text-white/40 uppercase">{{ report.source }}</span>
+            </div>
+            <h3 class="text-sm font-medium mb-2 text-white/80 group-hover:text-primary transition-colors uppercase">{{ report.idea_title }}</h3>
+            <p class="text-xs text-white/40 line-clamp-2 leading-relaxed">
+                {{ report.artifact_path }}
+            </p>
+        </a>
+        {% endfor %}
+        
+        {% if not docs %}
+        <div class="p-12 text-center">
+            <p class="font-mono text-[10px] text-white/20 uppercase tracking-widest leading-relaxed">
+                Vault is currently empty.<br>
+                Synthesize reports from the Project Lab.
+            </p>
+        </div>
+        {% endif %}
+        </div>
+    </nav>
+
+    <!-- Content Preview / Placeholder -->
+    <section class="flex-1 flex flex-col p-12 bg-surface-container-lowest relative overflow-hidden">
+        <div class="scanline absolute inset-0 opacity-10"></div>
+        
+        {% if selected_doc_html %}
+        <div class="relative z-10 w-full max-w-4xl mx-auto overflow-y-auto pr-4 custom-scrollbar">
+            <div class="prose prose-invert prose-primary max-w-none">
+                {{ selected_doc_html | safe }}
+            </div>
+        </div>
+        {% else %}
+        <div class="flex-1 flex flex-col items-center justify-center text-center space-y-6 relative z-10 max-w-md mx-auto">
+            <span class="material-symbols-outlined text-6xl text-white/10">database</span>
+            <div class="space-y-2">
+                <h2 class="text-2xl font-light text-white uppercase tracking-tighter">Select a Document</h2>
+                <p class="text-xs font-mono text-white/20 uppercase tracking-widest">Awaiting interaction with the main archive index</p>
+            </div>
+            <div class="pt-8 flex justify-center">
+                 <div class="w-12 h-px bg-white/10"></div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Background Decoration -->
+        <div class="absolute bottom-10 right-10 opacity-[0.03] select-none pointer-events-none">
+            <span class="text-[12rem] font-bold text-white tracking-tighter leading-none">ROOT</span>
+        </div>
+    </section>
+</main>
+{% endblock %}

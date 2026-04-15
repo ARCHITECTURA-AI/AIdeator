@@ -1,50 +1,82 @@
 {% extends "base.html" %}
+
 {% block content %}
-<section class="section">
-  <div class="section-header">
-    <h1>Runs</h1>
-  </div>
-
-  <form method="get" class="form-inline">
-    <select name="status" class="input">
-      <option value="">All statuses</option>
-      {% for item in ["pending", "running", "succeeded", "failed"] %}
-      <option value="{{ item }}" {% if filters.status == item %}selected{% endif %}>{{ item }}</option>
-      {% endfor %}
-    </select>
-    <select name="mode" class="input">
-      <option value="">All modes</option>
-      {% for item in ["local-only", "hybrid", "cloud-enabled"] %}
-      <option value="{{ item }}" {% if filters.mode == item %}selected{% endif %}>{{ item }}</option>
-      {% endfor %}
-    </select>
-    <button class="btn secondary" type="submit">Filter</button>
-  </form>
-
-  {% if runs %}
-  <table class="table">
-    <thead>
-      <tr><th scope="col">Run</th><th scope="col">Idea</th><th scope="col">Status</th><th scope="col">Mode</th><th scope="col">Tier</th><th scope="col">Started</th></tr>
-    </thead>
-    <tbody>
-      {% for run in runs %}
-      <tr>
-        <td><a href="/app/runs/{{ run.id }}">#{{ run.id[:8] }}</a></td>
-        <td>{{ run.idea_title }}</td>
-        <td>{% set status = run.status %}{% include "partials/status_pill.html" %}</td>
-        <td>{% set mode = run.mode %}{% include "partials/mode_pill.html" %}</td>
-        <td>{{ run.tier }}</td>
-        <td>{{ run.created_at }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% include "partials/pagination.html" %}
-  {% else %}
-    {% set message = "No runs yet." %}
-    {% set cta_url = "/app/ideas" %}
-    {% set cta_label = "Create a run" %}
-    {% include "partials/empty_state.html" %}
-  {% endif %}
+<!-- Header Section -->
+<section class="mb-12 flex justify-between items-end">
+    <div>
+        <p class="font-mono text-[10px] text-primary tracking-[0.3em] mb-2 uppercase">Execution_Archive / Nexus_Engine</p>
+        <h2 class="text-6xl font-light tracking-tighter text-white">Execution <span class="text-primary font-bold">Logs</span></h2>
+    </div>
+    <div class="text-right">
+        <span class="font-mono text-[10px] text-white/40 block mb-1 uppercase">Total_Executions</span>
+        <span class="text-2xl font-mono text-white/80">{{ pagination.pages * 20 }}</span> {# Estimate #}
+    </div>
 </section>
+
+<!-- Filters -->
+<section class="mb-12 flex flex-wrap gap-4 px-2 font-mono">
+    <a href="/app/runs" class="px-4 py-2 text-[10px] tracking-widest border border-white/10 {% if not filters.status %}bg-primary/10 text-primary border-primary/20{% else %}text-white/40 hover:text-white{% endif %} uppercase">_VIEW_ALL</a>
+    <a href="/app/runs?status=succeeded" class="px-4 py-2 text-[10px] tracking-widest border border-white/10 {% if filters.status == 'succeeded' %}bg-secondary/10 text-secondary border-secondary/20{% else %}text-white/40 hover:text-white{% endif %} uppercase">_SUCCEEDED_ONLY</a>
+    <a href="/app/runs?status=failed" class="px-4 py-2 text-[10px] tracking-widest border border-white/10 {% if filters.status == 'failed' %}bg-error/10 text-error border-error/20{% else %}text-white/40 hover:text-white{% endif %} uppercase">_FAILED_ONLY</a>
+</section>
+
+<!-- List Grid -->
+<div class="space-y-4">
+    {% for run in runs %}
+    <a href="/app/runs/{{ run.id }}" class="block glass-panel p-6 border border-white/5 hover:border-primary/20 hover:bg-white/[0.02] transition-all group">
+        <div class="flex items-center gap-8">
+            <div class="w-12 h-12 bg-white/5 flex items-center justify-center border border-white/10">
+                <span class="material-symbols-outlined {% if run.status == 'succeeded' %}text-secondary{% elif run.status == 'failed' %}text-error{% else %}text-primary{% endif %}">
+                    {% if run.status == 'succeeded' %}check_circle{% elif run.status == 'failed' %}warning{% else %}orbit{% endif %}
+                </span>
+            </div>
+            
+            <div class="flex-1">
+                <div class="flex justify-between items-start mb-1">
+                    <h3 class="text-lg font-light text-white/90 uppercase tracking-tight">{{ run.idea_title }}</h3>
+                    <span class="font-mono text-[10px] text-white/20 uppercase tracking-widest">ID: {{ run.id[:8] }}</span>
+                </div>
+                <div class="flex items-center gap-6 font-mono text-[10px] uppercase">
+                    <span class="{% if run.status == 'succeeded' %}text-secondary{% elif run.status == 'failed' %}text-error{% else %}text-primary{% endif %}">{{ run.status }}</span>
+                    <span class="text-white/20">•</span>
+                    <span class="text-white/40">Mode: {{ run.mode }}</span>
+                    <span class="text-white/20">•</span>
+                    <span class="text-white/40">{{ run.created_at }}</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <span class="material-symbols-outlined text-white/10 group-hover:text-primary transition-colors">arrow_forward</span>
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+
+    {% if not runs %}
+    <div class="glass-panel p-20 text-center border-dashed border-white/5">
+        <p class="font-mono text-xs text-white/20 uppercase tracking-[0.2em]">No execution records found matching the active filters.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Pagination -->
+{% if pagination.pages > 1 %}
+<section class="mt-16 flex justify-center gap-4">
+    {% if pagination.has_prev %}
+    <a href="/app/runs?page={{ pagination.prev_page }}&status={{ filters.status }}&mode={{ filters.mode }}" class="p-4 glass-panel hover:bg-white/10 transition-colors text-white">
+        <span class="material-symbols-outlined text-white/40">arrow_back</span>
+    </a>
+    {% endif %}
+    
+    <div class="flex items-center px-8 glass-panel font-mono text-xs text-white/40 tracking-widest uppercase">
+        Page {{ pagination.page }} // {{ pagination.pages }}
+    </div>
+
+    {% if pagination.has_next %}
+    <a href="/app/runs?page={{ pagination.next_page }}&status={{ filters.status }}&mode={{ filters.mode }}" class="p-4 glass-panel hover:bg-white/10 transition-colors text-white">
+        <span class="material-symbols-outlined text-white/40">arrow_forward</span>
+    </a>
+    {% endif %}
+</section>
+{% endif %}
 {% endblock %}

@@ -1,28 +1,131 @@
 {% extends "base.html" %}
+
 {% block content %}
-<section class="section">
-  <h1>Settings</h1>
-  <form method="post" action="/app/settings" class="card form-grid">
-    <label for="default_mode">Default mode</label>
-    <select id="default_mode" name="default_mode" class="input">
-      {% for item in ["local-only", "hybrid", "cloud-enabled"] %}
-      <option value="{{ item }}" {% if settings.default_mode == item %}selected{% endif %}>{{ item }}</option>
-      {% endfor %}
-    </select>
+<!-- Header Section -->
+<div class="mb-12 flex justify-between items-end">
+    <div>
+        <span class="font-mono text-xs text-primary tracking-[0.3em] mb-2 block uppercase">System Nexus</span>
+        <h2 class="text-6xl font-headline font-extralight tracking-tighter text-white">Control <span class="text-primary font-bold">Center</span></h2>
+    </div>
+    <div class="text-right">
+        <span class="font-mono text-[10px] text-white/20 block uppercase mb-1">Node Status</span>
+        <span class="font-mono text-xs text-secondary uppercase tracking-widest">Synchronized // 0.02ms</span>
+    </div>
+</div>
 
-    <label for="allow_cloud">Allow cloud mode</label>
-    <select id="allow_cloud" name="allow_cloud" class="input">
-      <option value="false" {% if not settings.allow_cloud %}selected{% endif %}>No</option>
-      <option value="true" {% if settings.allow_cloud %}selected{% endif %}>Yes</option>
-    </select>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-8">
+    <!-- Integration Keys -->
+    <section class="col-span-12 lg:col-span-8 glass-panel p-8 rounded-sm relative overflow-hidden group">
+        <div class="absolute top-0 right-0 p-4 opacity-10">
+            <span class="material-symbols-outlined text-8xl">key</span>
+        </div>
+        <div class="flex items-center gap-3 mb-8">
+            <span class="material-symbols-outlined text-primary">api</span>
+            <h3 class="text-xl font-light tracking-tight text-white uppercase">Integration Keys</h3>
+        </div>
+        
+        <form action="/app/settings" method="POST" class="space-y-10">
+            <!-- Search Key -->
+            <div class="relative">
+                <label class="font-mono text-[10px] text-white/40 block uppercase tracking-widest mb-2">Search_Provider_API ({{ settings.search_provider }})</label>
+                <div class="flex items-center gap-4 border-b border-white/10 pb-2">
+                    <input name="search_api_key" class="flex-1 bg-transparent border-none text-white font-mono text-sm focus:ring-0 p-0 placeholder:text-white/20" type="password" value="{{ settings.search_api_key or '' }}" placeholder="REDACTED_PROTOCOL_KEY"/>
+                    <span class="material-symbols-outlined text-white/40 cursor-pointer hover:text-primary transition-colors text-lg" onclick="this.previousElementSibling.type = this.previousElementSibling.type === 'password' ? 'text' : 'password'">visibility</span>
+                </div>
+            </div>
 
-    <label for="telemetry_enabled">Telemetry</label>
-    <select id="telemetry_enabled" name="telemetry_enabled" class="input">
-      <option value="false" {% if not settings.telemetry_enabled %}selected{% endif %}>Disabled</option>
-      <option value="true" {% if settings.telemetry_enabled %}selected{% endif %}>Enabled</option>
-    </select>
+            <!-- LLM Key -->
+            <div class="relative">
+                <label class="font-mono text-[10px] text-white/40 block uppercase tracking-widest mb-2">Primary_LLM_Key ({{ settings.llm_provider }})</label>
+                <div class="flex items-center gap-4 border-b border-white/10 pb-2">
+                    <input name="llm_api_key" class="flex-1 bg-transparent border-none text-white font-mono text-sm focus:ring-0 p-0 placeholder:text-white/20" type="password" value="{{ settings.llm_api_key or '' }}" placeholder="REDACTED_PROTOCOL_KEY"/>
+                    <span class="material-symbols-outlined text-white/40 cursor-pointer hover:text-primary transition-colors text-lg" onclick="this.previousElementSibling.type = this.previousElementSibling.type === 'password' ? 'text' : 'password'">visibility</span>
+                </div>
+            </div>
 
-    <button class="btn primary" type="submit">Save settings</button>
-  </form>
-</section>
+            <div class="mt-12 flex justify-end">
+                <button type="submit" class="px-8 py-3 bg-primary text-on-primary font-mono text-[11px] font-bold tracking-widest hover:brightness-110 active:scale-95 transition-all uppercase">
+                    _UPDATE_SYSTEM_PROTOCOL
+                </button>
+            </div>
+        </form>
+    </section>
+
+    <!-- Sidebar Stats -->
+    <section class="col-span-12 lg:col-span-4 flex flex-col gap-8">
+        <div class="glass-panel p-8 rounded-sm flex-1 relative overflow-hidden">
+            <div class="scanline absolute inset-0 opacity-10"></div>
+            <div class="flex items-center gap-3 mb-6">
+                <span class="material-symbols-outlined text-tertiary">account_balance_wallet</span>
+                <h3 class="text-xl font-light tracking-tight text-white uppercase">Budget Sentinel</h3>
+            </div>
+            <div class="space-y-8 font-mono">
+                <div>
+                    <div class="flex justify-between items-end mb-2">
+                        <label class="text-[10px] text-white/40 uppercase tracking-widest">Efficiency Capacity</label>
+                        <span class="text-lg text-white">94.2%</span>
+                    </div>
+                    <div class="h-1 bg-white/5 w-full">
+                        <div class="h-full bg-primary w-[94.2%] shadow-[0_0_10px_rgba(167,165,255,0.5)]"></div>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between p-3 bg-white/5 border-l border-primary">
+                        <span class="text-[11px] text-white/60">Isolation_Level</span>
+                        <span class="text-[11px] text-primary">PH-D_MAX</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-6 bg-primary/5 border border-primary/10 flex items-center justify-between">
+            <div>
+                <span class="font-mono text-[10px] text-primary block uppercase">Core Uptime</span>
+                <span class="text-sm font-light text-white/80">99.98% / 142h</span>
+            </div>
+            <span class="material-symbols-outlined text-primary text-3xl">show_chart</span>
+        </div>
+    </section>
+
+    <!-- Matrix Mode Table -->
+    <section class="col-span-12 glass-panel rounded-sm relative overflow-hidden border border-white/5">
+        <div class="p-8 border-b border-white/5 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-secondary">security</span>
+                <h3 class="text-xl font-light tracking-tight text-white uppercase">Mode Isolation Matrix</h3>
+            </div>
+            <div class="font-mono text-[10px] text-white/40 tracking-widest flex items-center gap-4">
+                <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> SECURED</span>
+                <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-error"></span> UPLINK_REQUIRED</span>
+            </div>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left font-mono">
+                <thead>
+                    <tr class="border-b border-white/5 text-white/20 text-[10px] uppercase tracking-widest bg-white/5">
+                        <th class="p-6 font-medium">Protocol</th>
+                        <th class="p-6 font-medium">Data_Boundary</th>
+                        <th class="p-6 font-medium">Network_State</th>
+                        <th class="p-6 font-medium">Isolation_Status</th>
+                    </tr>
+                </thead>
+                <tbody class="text-xs text-white/60">
+                    <tr class="hover:bg-white/5 transition-colors">
+                        <td class="p-6"><span class="text-white">LOCAL_ONLY</span></td>
+                        <td class="p-6 text-secondary uppercase">Air-Gapped</td>
+                        <td class="p-6 uppercase">Offline</td>
+                        <td class="p-6"><span class="text-secondary">MAXIMUM</span></td>
+                    </tr>
+                    <tr class="hover:bg-white/5 transition-colors">
+                        <td class="p-6"><span class="text-white">HYBRID_MESH</span></td>
+                        <td class="p-6 text-white/80 uppercase">Tunnelled</td>
+                        <td class="p-6 uppercase">Encrypted_Uplink</td>
+                        <td class="p-6">STRATIFIED</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
 {% endblock %}

@@ -11,3 +11,4 @@ class Report:
     run_id: UUID
     cards: list[dict[str, object]]
     artifact_path: str
+    citations: list[dict[str, object]]

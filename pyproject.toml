@@ -5,6 +5,9 @@ build-backend = "hatchling.build"
 [project]
 name = "aideator"
 version = "0.9.0"
+authors = [
+  { name = "Richard Abishai", email = "richard@richardabish.ai" }
+]
 description = "Local-first FastAPI service for idea validation and markdown reports"
 readme = "README.md"
 requires-python = ">=3.10"

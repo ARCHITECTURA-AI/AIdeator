@@ -1,6 +1,6 @@
 """AIdeator package metadata."""
 
-__version__ = "0.9.0"
+__version__ = "0.9.4"
 
 from aideator.paths import (
     get_cache_dir,

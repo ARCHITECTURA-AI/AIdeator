@@ -10,20 +10,22 @@ The format follows Keep a Changelog and this project uses Semantic Versioning wh
 - `0.4.0` -> PH-D
 
 ## [Unreleased]
-
-### Added
-
-- Packaging CLI entrypoints (`aideator`, `aideator-serve`, `aideator-rebuild-docs`).
-- Containerized local stack (`Dockerfile`, `docker-compose.yml` with optional local LLM).
-- Release and ops docs (`docs/release-checklist.md`, `docs/architecture.md`, `docs/security-privacy.md`).
-
-### Changed
-
-- Runtime/readme docs now align with env-based config and make targets.
-- Version source is centralized in `aideator/__init__.py`.
-
-## [0.1.0] - 2026-03-31
-
+ 
++## [0.9.4] - 2026-04-16
++
++### Added
++
++- Packaging CLI entrypoints (`aideator`, `aideator-serve`, `aideator-rebuild-docs`).
++- Containerized local stack (`Dockerfile`, `docker-compose.yml` with optional local LLM).
++- Release and ops docs (`docs/release-checklist.md`, `docs/architecture.md`, `docs/security-privacy.md`).
++
++### Changed
++
++- Runtime/readme docs now align with env-based config and make targets.
++- Version source is centralized in `aideator/__init__.py`.
++
++## [0.1.0] - 2026-03-31
++
 ### Added
 
 - Initial PH-A baseline for idea/run/report flow (FR-001, ADR-001).

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+
 from aideator.llm.registry import get_provider
 from api.config import settings
 
@@ -74,7 +75,19 @@ Return ONLY a JSON object with this structure:
         LOGGER.error(f"Dimensional analysis failed: {e}", exc_info=True)
         # Fallback to empty structure
         return {
-            "demand": {"strengths": [], "weaknesses": [], "synthesis_preamble": "Analysis failed, defaulting to synthetic synthesis."},
-            "competition": {"strengths": [], "weaknesses": [], "synthesis_preamble": "Analysis failed."},
-            "viability": {"strengths": [], "weaknesses": [], "synthesis_preamble": "Analysis failed."}
+            "demand": {
+                "strengths": [], 
+                "weaknesses": [], 
+                "synthesis_preamble": "Analysis failed, defaulting to synthetic synthesis."
+            },
+            "competition": {
+                "strengths": [], 
+                "weaknesses": [], 
+                "synthesis_preamble": "Analysis failed."
+            },
+            "viability": {
+                "strengths": [], 
+                "weaknesses": [], 
+                "synthesis_preamble": "Analysis failed."
+            }
         }

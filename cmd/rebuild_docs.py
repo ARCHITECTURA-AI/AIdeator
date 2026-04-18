@@ -6,19 +6,20 @@ from pathlib import Path
 
 from db.reports import get_report
 from db.runs import list_runs
+from models.report import Card
 
 
-def _render_report_markdown(*, idea_id: str, cards: list[dict[str, object]]) -> str:
+def _render_report_markdown(*, idea_id: str, cards: list[Card]) -> str:
     lines: list[str] = [f"# Idea Report {idea_id}", ""]
 
     order = ["demand", "competition", "risk", "next_steps"]
     for card_type in order:
-        card = next((item for item in cards if str(item.get("type")) == card_type), None)
+        card = next((item for item in cards if item.type == card_type), None)
         if card is None:
             continue
         lines.append(f"## {card_type.replace('_', ' ').title()}")
-        lines.append(str(card.get("summary", "")))
-        citations = card.get("citation_urls", [])
+        lines.append(card.summary)
+        citations = card.meta.get("citation_urls", [])
         if isinstance(citations, list) and citations:
             lines.append("")
             lines.append("Citations:")

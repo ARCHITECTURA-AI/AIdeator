@@ -7,7 +7,7 @@ that all search implementations must follow.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
@@ -20,6 +20,7 @@ class ProviderStatus(Enum):
     TIMEOUT = "timeout"
     UNAVAILABLE = "unavailable"
     NOT_CONFIGURED = "not_configured"
+    RATELIMIT = "ratelimit"
 
 
 @dataclass(frozen=True)

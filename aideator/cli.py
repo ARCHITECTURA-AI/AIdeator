@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
 import os
 import sys
 import webbrowser
@@ -18,7 +19,11 @@ from aideator.paths import (
     resolve_path,
 )
 from aideator.rebuild_docs import rebuild_docs
+from aideator.search.registry import get_search_provider
 from api.config import load_settings, settings
+from db.ideas import Idea, save_idea
+from db.runs import Run, save_run
+from engine.orchestrator import execute_run
 
 
 def run_server(
@@ -129,7 +134,8 @@ def command_config_init(args: argparse.Namespace) -> None:
     if llm_provider != "ollama":
         print()
         print(f"For {llm_provider}, please provide:")
-        custom_base = input(f"  API Base URL [default: {llm_base or 'https://api.openai.com/v1'}]: ").strip()
+        prompt = f"  API Base URL [default: {llm_base or 'https://api.openai.com/v1'}]: "
+        custom_base = input(prompt).strip()
         if custom_base:
             llm_base = custom_base
         custom_model = input(f"  Model [default: {llm_model}]: ").strip()
@@ -137,7 +143,7 @@ def command_config_init(args: argparse.Namespace) -> None:
             llm_model = custom_model
         print()
         print("  Note: Store your API key in the environment variable LLM_API_KEY")
-        print(f"  Example: export LLM_API_KEY='your-key-here'")
+        print("  Example: export LLM_API_KEY='your-key-here'")
         print()
 
     # Prompt for search provider
@@ -241,8 +247,8 @@ def command_config_init(args: argparse.Namespace) -> None:
     print()
     print("Next steps:")
     print(f"  1. Review the config file at: {config_path}")
-    print(f"  2. Set any required API keys as environment variables")
-    print(f"  3. Run 'aideator serve' to start the server")
+    print("  2. Set any required API keys as environment variables")
+    print("  3. Run 'aideator serve' to start the server")
     print()
 
 
@@ -306,6 +312,29 @@ def command_config_show(args: argparse.Namespace) -> None:
             print(f"  {var}={display}")
         else:
             print(f"  {var}=(not set)")
+    print()
+
+    # Search Provider Health
+    print("Search Provider Status:")
+    print("-" * 40)
+    try:
+        from aideator.search.providers import ProviderStatus
+        provider = get_search_provider(settings)
+        print(f"  Selected: {provider.name}")
+        
+        # Run healthcheck
+        status = asyncio.run(provider.healthcheck())
+        status_display = {
+            ProviderStatus.OK: "[HEALTHY] ✓",
+            ProviderStatus.ERROR: "[ERROR] ✗",
+            ProviderStatus.UNAVAILABLE: "[UNAVAILABLE] ✗",
+            ProviderStatus.TIMEOUT: "[TIMEOUT] ⏳",
+            ProviderStatus.RATELIMIT: "[RATELIMITED] ⚠️",
+        }.get(status, f"[{status}]")
+        
+        print(f"  Status: {status_display}")
+    except Exception as e:
+        print(f"  Error: {e}")
     print()
 
 
@@ -392,20 +421,21 @@ api_key_env = "{api_key_env}"
     print()
     print(f"LLM provider configuration updated in: {config_path}")
     print()
-    print(f"Remember to set your API key:")
+    print("Remember to set your API key:")
     print(f"  export {api_key_env}='your-api-key-here'")
     print()
 
 
 def command_forge(args: argparse.Namespace) -> None:
     """Run `aideator forge <idea_id>` behavior."""
+    import sys
     from uuid import UUID
+
+    from aideator.paths import get_report_path_for_idea
     from db.ideas import get_idea
     from db.reports import get_report
     from db.runs import list_runs_for_idea
-    from aideator.paths import get_report_path_for_idea
     from engine.forge import forge_concept_file
-    import sys
 
     try:
         idea_id = UUID(args.idea_id)
@@ -433,7 +463,11 @@ def command_forge(args: argparse.Namespace) -> None:
         sys.exit(1)
 
     artifact_path = get_report_path_for_idea(idea_id)
-    content = artifact_path.read_text(encoding="utf-8") if artifact_path.exists() else "No synthesized content available."
+    content = (
+        artifact_path.read_text(encoding="utf-8") 
+        if artifact_path.exists() 
+        else "No synthesized content available."
+    )
 
     demand_score = "N/A"
     demand_summary = "Ready for initial development."
@@ -451,6 +485,62 @@ def command_forge(args: argparse.Namespace) -> None:
         root_dir="."
     )
     print(f"[v] Created: {abs_path}")
+
+
+def command_validate(args: argparse.Namespace) -> None:
+    """Run `aideator validate "<title>"` behavior."""
+    title = args.title
+    description = args.description or ""
+    mode = args.mode or settings.app_default_mode
+
+    print(f"🚀 Validating idea: {title}...")
+    print(f"📡 Mode: {mode}")
+
+    # 1. Create Idea
+    idea = save_idea(Idea(
+        title=title, 
+        description=description,
+        target_user="General", 
+        context="CLI run"
+    ))
+    
+    # 2. Create Run
+    run = save_run(Run(
+        idea_id=idea.idea_id, 
+        mode=mode,
+        tier="medium"
+    ))
+
+    # 3. Execute synchronously
+    try:
+        asyncio.run(execute_run(run.run_id))
+    except Exception as e:
+        print(f"❌ Validation failed: {e}")
+        sys.exit(1)
+
+    # 4. Display results
+    from db.reports import get_report
+    report = get_report(run.run_id)
+    
+    if not report:
+        print("❌ Error: Report not generated.")
+        sys.exit(1)
+
+    print("\n" + "=" * 40)
+    print("VALIDATION SUMMARY")
+    print("=" * 40)
+    for card in report.cards:
+        # Use card.model_dump() or direct attributes since it's Pydantic now
+        score = card.score
+        band = card.meta.get("band", "unknown")
+        print(f"[{card.type.upper()}] {card.title}")
+        print(f"   Score: {score}/100 ({band})")
+        print(f"   Summary: {card.summary}")
+        print()
+    
+    print(f"Full report saved to: {report.artifact_path}")
+    print(f"View in browser: http://127.0.0.1:8000/app/ideas/{idea.idea_id}")
+    print("=" * 40)
 
 
 def command_main(args: argparse.Namespace) -> None:
@@ -528,21 +618,20 @@ def build_parser() -> argparse.ArgumentParser:
         help="Configuration commands",
         description="Manage AIdeator configuration",
     )
-    config_subparsers = config_parser.add_subparsers(dest="config_command", metavar="<config-command>")
+    config_subparsers = config_parser.add_subparsers(
+        dest="config_command", 
+        metavar="<config-command>"
+    )
 
     # config init
     config_init_parser = config_subparsers.add_parser(
-        "init",
-        help="Initialize configuration file interactively",
-        description="Create a new aideator.toml config file with interactive prompts",
+        "init", help="Initialize or update local configuration"
     )
     config_init_parser.set_defaults(func=command_config_init)
 
     # config show
     config_show_parser = config_subparsers.add_parser(
-        "show",
-        help="Show effective configuration",
-        description="Display current effective configuration with paths and settings",
+        "show", help="Show current configuration and provider health"
     )
     config_show_parser.set_defaults(func=command_config_show)
 
@@ -558,13 +647,39 @@ def build_parser() -> argparse.ArgumentParser:
     forge_parser = subparsers.add_parser(
         "forge",
         help="Forge local concept files",
-        description="Create a concept.md file in the root directory with the latest intelligence and build prompts",
+        description=(
+            "Create a concept.md file in the root directory with the latest "
+            "intelligence and build prompts"
+        ),
     )
     forge_parser.add_argument(
         "idea_id",
         help="The UUID of the idea to forge assets for",
     )
     forge_parser.set_defaults(func=command_forge)
+
+    # validate command
+    validate_parser = subparsers.add_parser(
+        "validate",
+        help="Validate a new idea directly from CLI",
+        description="Trigger the full AIdeator validation pipeline for an idea.",
+    )
+    validate_parser.add_argument(
+        "title",
+        help="The title of the idea to validate",
+    )
+    validate_parser.add_argument(
+        "--description",
+        "-d",
+        help="Optional description for deeper analysis",
+    )
+    validate_parser.add_argument(
+        "--mode",
+        "-m",
+        choices=["local-only", "hybrid", "cloud-enabled"],
+        help="Run mode (overrides config default)",
+    )
+    validate_parser.set_defaults(func=command_validate)
 
     return parser
 

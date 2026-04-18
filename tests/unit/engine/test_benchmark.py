@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from engine.benchmark import (
     REFERENCE_CORPUS,
     compare_scores,
@@ -48,21 +46,21 @@ class TestCompareScores:
     """Tests for score comparison against corpus."""
 
     def test_returns_all_card_types(self) -> None:
-        scores = {"demand": 72, "competition": 55, "risk": 40}
+        scores = {"demand": 72, "competition": 55, "viability": 40}
         result = compare_scores(scores)
         assert "demand" in result
         assert "competition" in result
-        assert "risk" in result
+        assert "viability" in result
 
     def test_each_result_has_percentile(self) -> None:
-        scores = {"demand": 72, "competition": 55, "risk": 40}
+        scores = {"demand": 72, "competition": 55, "viability": 40}
         result = compare_scores(scores)
         for card_type, info in result.items():
             assert "percentile" in info
             assert 0 <= int(info["percentile"]) <= 100
 
     def test_each_result_has_score(self) -> None:
-        scores = {"demand": 72, "competition": 55, "risk": 40}
+        scores = {"demand": 72, "competition": 55, "viability": 40}
         result = compare_scores(scores)
         for card_type, info in result.items():
             assert info["score"] == scores[card_type]
@@ -82,7 +80,7 @@ class TestCompareScores:
     def test_no_external_calls(self) -> None:
         """Benchmark operates on local data only — no network."""
         # If this test completes without import errors or network calls, we're good
-        scores = {"demand": 50, "competition": 50, "risk": 50}
+        scores = {"demand": 50, "competition": 50, "viability": 50}
         result = compare_scores(scores)
         assert len(result) == 3
 
@@ -90,8 +88,9 @@ class TestCompareScores:
 class TestReferenceCorpus:
     """Tests for the reference corpus integrity."""
 
-    def test_corpus_not_empty(self) -> None:
-        assert len(REFERENCE_CORPUS) > 0
+    def test_corpus_expanded(self) -> None:
+        """Verify Phase 0 expansion to 50+ items."""
+        assert len(REFERENCE_CORPUS) >= 50
 
     def test_corpus_has_scores(self) -> None:
         for entry in REFERENCE_CORPUS:

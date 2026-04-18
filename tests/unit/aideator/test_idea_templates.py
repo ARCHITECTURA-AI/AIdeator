@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from aideator.idea_templates import TEMPLATES, get_template, list_templates
 
 
@@ -19,7 +17,7 @@ class TestIdeaTemplates:
 
     def test_all_fields_populated(self) -> None:
         for tpl in TEMPLATES:
-            assert tpl.id, f"Template missing id"
+            assert tpl.id, "Template missing id"
             assert tpl.label, f"Template {tpl.id} missing label"
             assert tpl.description, f"Template {tpl.id} missing description"
             assert tpl.target_user, f"Template {tpl.id} missing target_user"

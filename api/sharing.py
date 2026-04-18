@@ -2,22 +2,21 @@
 
 import hashlib
 import json
-from pathlib import Path
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from uuid import UUID
-from typing import Dict, Optional
 
 _STORAGE_PATH = Path("data/shares.json")
 
-def _get_shares() -> Dict[str, dict]:
+def _get_shares() -> dict[str, dict]:
     if not _STORAGE_PATH.exists():
         return {}
     try:
         return json.loads(_STORAGE_PATH.read_text(encoding="utf-8"))
-    except:
+    except (json.JSONDecodeError, OSError):
         return {}
 
-def _save_shares(shares: Dict[str, dict]):
+def _save_shares(shares: dict[str, dict]):
     _STORAGE_PATH.parent.mkdir(parents=True, exist_ok=True)
     _STORAGE_PATH.write_text(json.dumps(shares, indent=2), encoding="utf-8")
 
@@ -38,7 +37,7 @@ def generate_share_link(idea_id: UUID, expiry_days: int = 7) -> str:
     
     return share_hash
 
-def validate_share_hash(share_hash: str) -> Optional[UUID]:
+def validate_share_hash(share_hash: str) -> UUID | None:
     """Validate hash and return idea_id if still valid."""
     shares = _get_shares()
     share_data = shares.get(share_hash)

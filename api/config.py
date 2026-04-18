@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 
-import toml
+import toml  # type: ignore[import-untyped]
 
 from aideator.paths import (
     ensure_dir,

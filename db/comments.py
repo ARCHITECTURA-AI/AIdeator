@@ -1,15 +1,16 @@
 """In-memory comments repository."""
 
 from __future__ import annotations
-import json
+
 import logging
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Final, List
+from typing import Final
 from uuid import UUID, uuid4
-from dataclasses import dataclass, field
 
 from db.base import BaseJsonStorage
+
 
 @dataclass
 class Comment:
@@ -20,8 +21,8 @@ class Comment:
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 _STORAGE_PATH: Final[Path] = Path("data/comments.json")
-_COMMENTS: Final[List[Comment]] = []
-_STORAGE = BaseJsonStorage(_STORAGE_PATH, "db.comments")
+_COMMENTS: Final[list[Comment]] = []
+_STORAGE: BaseJsonStorage[list[dict[str, str]]] = BaseJsonStorage(_STORAGE_PATH, "db.comments")
 LOGGER = logging.getLogger("db.comments")
 
 def _flush():
@@ -35,7 +36,7 @@ def add_comment(comment: Comment) -> Comment:
     _flush()
     return comment
 
-def list_comments_for_idea(idea_id: UUID) -> List[Comment]:
+def list_comments_for_idea(idea_id: UUID) -> list[Comment]:
     return [c for c in _COMMENTS if c.idea_id == idea_id]
 
 def export_comments_snapshot() -> list[dict[str, str]]:

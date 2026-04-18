@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -14,7 +13,7 @@ from models.idea import Idea
 
 _STORAGE_PATH: Final[Path] = Path("data/ideas.json")
 _IDEAS: Final[dict[UUID, Idea]] = {}
-_STORAGE = BaseJsonStorage(_STORAGE_PATH, "db.ideas")
+_STORAGE: BaseJsonStorage[dict[str, object]] = BaseJsonStorage(_STORAGE_PATH, "db.ideas")
 LOGGER = logging.getLogger("db.ideas")
 
 

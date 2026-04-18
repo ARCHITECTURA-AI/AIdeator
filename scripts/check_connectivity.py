@@ -1,8 +1,6 @@
 import json
-import socket
-import sys
 import urllib.request
-from urllib.error import URLError, HTTPError
+
 
 def check_ollama():
     print("Checking Ollama connectivity...")
@@ -12,14 +10,14 @@ def check_ollama():
             if response.status == 200:
                 data = json.loads(response.read().decode())
                 models = [m['name'] for m in data.get('models', [])]
-                print(f"  [OK] Ollama is serving on 127.0.0.1:11434")
+                print("  [OK] Ollama is serving on 127.0.0.1:11434")
                 print(f"  [OK] Available models: {', '.join(models)}")
                 # Check for mistral with any tag
                 has_mistral = any("mistral" in m for m in models)
                 if has_mistral:
-                    print(f"  [OK] Mistral model found.")
+                    print("  [OK] Mistral model found.")
                 else:
-                    print(f"  [!] Mistral model not found in list. Please run 'ollama pull mistral'")
+                    print("  [!] Mistral model not found in list. Please run 'ollama pull mistral'")
                 return True
     except ConnectionRefusedError:
         print("  [FAIL] Connection refused. Is Ollama running?")

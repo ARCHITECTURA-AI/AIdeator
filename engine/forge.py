@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
-from typing import Any
-from uuid import UUID
 
-def generate_forge_content(idea_title: str, demand_score: str, demand_summary: str, report_content: str) -> str:
+
+def generate_forge_content(
+    idea_title: str, demand_score: str, demand_summary: str, report_content: str
+) -> str:
     """Generate a dynamic, high-fidelity Product Ignition Manifest."""
     return f"""# 🚀 PRODUCT_IGNITION_MANIFEST: {idea_title.upper()}
     
@@ -59,13 +59,19 @@ def generate_forge_content(idea_title: str, demand_score: str, demand_summary: s
 {report_content[:2000]}... (Truncated for readability)
 """
 
-def forge_concept_file(idea_title: str, demand_score: str, demand_summary: str, report_content: str, root_dir: Path | str = ".") -> str:
+
+def forge_concept_file(
+    idea_title: str, demand_score: str, demand_summary: str, 
+    report_content: str, root_dir: Path | str = "."
+) -> str:
     """Write the dynamic concept.md file to the specified root directory."""
     content = generate_forge_content(idea_title, demand_score, demand_summary, report_content)
     file_path = Path(root_dir) / "concept.md"
-    
-    with open(file_path, "w", encoding="utf-8") as f:
-        f.write(content)
-    
-    return str(file_path.absolute())
 
+    try:
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(content)
+    except OSError:
+        return ""
+
+    return str(file_path.absolute())

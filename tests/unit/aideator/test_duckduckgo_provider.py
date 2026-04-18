@@ -5,8 +5,6 @@ from __future__ import annotations
 import asyncio
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from aideator.search.providers import Document, ProviderStatus, SearchResult
 
 
@@ -133,7 +131,8 @@ class TestDuckDuckGoProvider:
         mock_ddgs_instance.__exit__ = MagicMock(return_value=False)
         mock_ddgs_instance.text.return_value = fake_results
 
-        with patch("aideator.search.duckduckgo.DuckDuckGoSearchProvider._search_sync") as mock_search:
+        patch_path = "aideator.search.duckduckgo.DuckDuckGoSearchProvider._search_sync"
+        with patch(patch_path) as mock_search:
             mock_search.return_value = fake_results
             result = DuckDuckGoSearchProvider._search_sync("python programming", 5)
 
@@ -142,11 +141,9 @@ class TestDuckDuckGoProvider:
 
     def test_search_sync_handles_import_error(self) -> None:
         """If ddgs is not installed, _search_sync returns []."""
-        from aideator.search.duckduckgo import DuckDuckGoSearchProvider
 
         with patch.dict("sys.modules", {"ddgs": None}):
             # Force re-import attempt inside the function
-            import importlib
             # The function catches ImportError internally
             # We can't easily force it in the static method,
             # so we test via the full flow instead
@@ -230,16 +227,16 @@ class TestDuckDuckGoRegistryIntegration:
     """Tests for DuckDuckGo provider via the registry."""
 
     def test_registry_returns_duckduckgo(self) -> None:
-        from aideator.search.registry import get_search_provider
         from aideator.search.duckduckgo import DuckDuckGoSearchProvider
+        from aideator.search.registry import get_search_provider
 
         provider = get_search_provider({"search_provider": "duckduckgo"})
         assert isinstance(provider, DuckDuckGoSearchProvider)
         assert provider.name == "duckduckgo"
 
     def test_registry_case_insensitive(self) -> None:
-        from aideator.search.registry import get_search_provider
         from aideator.search.duckduckgo import DuckDuckGoSearchProvider
+        from aideator.search.registry import get_search_provider
 
         provider = get_search_provider({"search_provider": "DuckDuckGo"})
         assert isinstance(provider, DuckDuckGoSearchProvider)

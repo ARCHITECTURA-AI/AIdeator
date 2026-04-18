@@ -16,12 +16,16 @@ from typing import Any
 
 import httpx
 
+try:
+    from ddgs import DDGS
+    HAS_DDGS = True
+except ImportError:
+    HAS_DDGS = False
+
+from aideator.search.builtin import _extract_title, _html_to_text
 from aideator.search.providers import Document, ProviderStatus, SearchProvider, SearchResult
 
 LOGGER = logging.getLogger("aideator.search.duckduckgo")
-
-# Re-use the builtin HTML helpers for fetch()
-from aideator.search.builtin import _extract_title, _html_to_text
 
 
 class DuckDuckGoSearchProvider(SearchProvider):
@@ -134,9 +138,7 @@ class DuckDuckGoSearchProvider(SearchProvider):
 
         Handles import errors and rate-limit exceptions gracefully.
         """
-        try:
-            from ddgs import DDGS
-        except ImportError:
+        if not HAS_DDGS:
             LOGGER.error(
                 "ddgs package not installed. Install with: pip install ddgs",
                 extra={"event": "ddg_import_error"},
@@ -149,12 +151,19 @@ class DuckDuckGoSearchProvider(SearchProvider):
             return results
         except Exception as exc:
             # Catch RatelimitException and any other ddgs errors
-            exc_name = type(exc).__name__
+            exc_str = str(exc)
+            if "Ratelimit" in exc_str or "402" in exc_str:
+                LOGGER.warning(
+                    "DuckDuckGo rate limit hit",
+                    extra={"event": "ddg_rate_limit"},
+                )
+                # Re-raise to let healthcheck know specifically
+                raise ValueError("RATELIMIT") from exc
+            
             LOGGER.warning(
                 "DuckDuckGo search error: %s: %s",
-                exc_name,
-                str(exc)[:200],
-                extra={"event": "ddg_rate_limit"},
+                type(exc).__name__,
+                exc_str[:200],
             )
             return []
 
@@ -194,6 +203,10 @@ class DuckDuckGoSearchProvider(SearchProvider):
             results = await asyncio.to_thread(self._search_sync, "test", 1)
             if results:
                 return ProviderStatus.OK
+            return ProviderStatus.ERROR
+        except ValueError as e:
+            if "RATELIMIT" in str(e):
+                return ProviderStatus.RATELIMIT
             return ProviderStatus.ERROR
         except Exception:
             return ProviderStatus.ERROR

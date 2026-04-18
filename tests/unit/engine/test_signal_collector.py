@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from unittest.mock import AsyncMock, patch, MagicMock
-
-import pytest
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from engine.signal_collector import (
     build_external_payload,

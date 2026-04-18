@@ -6,9 +6,10 @@ import json
 import logging
 import os
 import tempfile
+from collections.abc import Callable
 from pathlib import Path
 from threading import Lock
-from typing import Generic, TypeVar, Callable
+from typing import Generic, TypeVar
 
 T = TypeVar("T")
 
@@ -51,7 +52,7 @@ class BaseJsonStorage(Generic[T]):
             if not self._path.exists():
                 return
             try:
-                with open(self._path, "r", encoding="utf-8") as f:
+                with open(self._path, encoding="utf-8") as f:
                     raw_data = json.load(f)
                 import_func(raw_data)
                 self._logger.info(f"Loaded storage from {self._path}")

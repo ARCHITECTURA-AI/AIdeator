@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 from threading import Lock
 from uuid import UUID
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -69,7 +71,31 @@ from models.idea import Idea
 from models.report import Report
 from models.run import Run
 
-app = FastAPI(title="AIdeator", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    from infra.watchdog import cleanup_stale_runs
+    cleanup_stale_runs()
+    
+    settings.app_docs_dir.mkdir(parents=True, exist_ok=True)
+    LOGGER.info(
+        "Application startup",
+        extra={
+            "event": "app_startup",
+            "extra_fields": {
+                "env": settings.app_env,
+                "host": settings.app_host,
+                "port": settings.app_port,
+                "default_mode": settings.app_default_mode,
+                "db_url": settings.app_db_url,
+                "docs_dir": str(settings.app_docs_dir),
+            },
+        },
+    )
+    yield
+    LOGGER.info("Application shutdown", extra={"event": "app_shutdown"})
+
+app = FastAPI(title="AIdeator", version="0.1.0", lifespan=lifespan)
 _CONCURRENCY_GUARD = Lock()
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 _DEFAULT_BIND_HOST = settings.app_host
@@ -118,26 +144,6 @@ def _is_within_docs(path_value: str) -> bool:
     return docs_root in candidate.parents or candidate == docs_root
 
 
-@app.on_event("startup")
-def _on_startup() -> None:
-    from infra.watchdog import cleanup_stale_runs
-    cleanup_stale_runs()
-    
-    settings.app_docs_dir.mkdir(parents=True, exist_ok=True)
-    LOGGER.info(
-        "Application startup",
-        extra={
-            "event": "app_startup",
-            "extra_fields": {
-                "env": settings.app_env,
-                "host": settings.app_host,
-                "port": settings.app_port,
-                "default_mode": settings.app_default_mode,
-                "db_url": settings.app_db_url,
-                "docs_dir": str(settings.app_docs_dir),
-            },
-        },
-    )
 
 
 @app.post("/ideas", status_code=201)
@@ -392,8 +398,10 @@ def test_hook_phb_idempotency() -> dict[str, object]:
         "mode": "local-only",
         "idempotency_key": "phb-idempotency-key",
     }
-    first = post_runs(payload)
-    second = post_runs(payload)
+    from fastapi import BackgroundTasks
+    bg = BackgroundTasks()
+    first = post_runs(payload, background_tasks=bg)
+    second = post_runs(payload, background_tasks=bg)
     return {
         "ok": True,
         "first_run_id": first["run_id"],
@@ -524,7 +532,9 @@ def test_hook_phb_security_path_traversal() -> dict[str, object]:
 
 
 @app.post("/internal/test-hooks/phb/security-concurrency-isolation")
-def test_hook_phb_security_concurrency_isolation(background_tasks: BackgroundTasks) -> dict[str, object]:
+def test_hook_phb_security_concurrency_isolation(
+    background_tasks: BackgroundTasks
+) -> dict[str, object]:
     idea_ids: list[str] = []
     run_ids: list[str] = []
     with _CONCURRENCY_GUARD:
@@ -714,8 +724,10 @@ def test_hook_phc_migration_check() -> dict[str, object]:
             }
         ],
     }
+    from fastapi.encoders import jsonable_encoder
+
     # Simulate storage-engine migration through a stable serialized transfer format.
-    after = json.loads(json.dumps(before, sort_keys=True))
+    after = json.loads(json.dumps(jsonable_encoder(before), sort_keys=True))
     verification = verify_invariants_after_migration(before=before, after=after)
     return {"ok": bool(verification["ok"]), "verification": verification}
 
@@ -937,12 +949,12 @@ def test_hook_phd_e2e_export_import(background_tasks: BackgroundTasks) -> dict[s
 @app.post("/internal/test-hooks/phd/eval-demand")
 def test_hook_phd_eval_demand() -> dict[str, object]:
     cards = synthesize_default_cards()
-    demand_card = next(card for card in cards if card["type"] == "demand")
+    demand_card = next(card for card in cards if card.type == "demand")
     budget = check_eval_budget(evals_enabled=True, estimated_cost_usd=0.004, budget_usd=0.02)
     allowed = enforce_eval_budget(evals_enabled=True, estimated_cost_usd=0.004, budget_usd=0.02)
     score = evaluate_card_semantics(
-        summary=str(demand_card["summary"]),
-        citation_count=len(demand_card.get("citation_urls", [])),  # type: ignore[arg-type]
+        summary=str(demand_card.summary),
+        citation_count=len(demand_card.meta.get("citation_urls", [])),
         threshold=0.55,
     )
     ok = allowed and bool(score["pass"])
@@ -961,11 +973,11 @@ def test_hook_phd_eval_demand() -> dict[str, object]:
 @app.post("/internal/test-hooks/phd/eval-competition")
 def test_hook_phd_eval_competition() -> dict[str, object]:
     cards = synthesize_default_cards()
-    competition_card = next(card for card in cards if card["type"] == "competition")
+    competition_card = next(card for card in cards if card.type == "competition")
     allowed = enforce_eval_budget(evals_enabled=True, estimated_cost_usd=0.006, budget_usd=0.02)
     score = evaluate_card_semantics(
-        summary=str(competition_card["summary"]),
-        citation_count=len(competition_card.get("citation_urls", [])),  # type: ignore[arg-type]
+        summary=str(competition_card.summary),
+        citation_count=len(competition_card.meta.get("citation_urls", [])),
         threshold=0.55,
     )
     return {"ok": allowed and bool(score["pass"]), "score": score, "tc_id": "TC-Q-301"}

@@ -7,12 +7,11 @@ Provides concrete implementations for various LLM backends:
 
 from __future__ import annotations
 
-import json
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Protocol
+from typing import Any
 
 import httpx
 
@@ -226,19 +225,20 @@ class OllamaProvider(LLMProvider):
         client = await self._get_client()
         url = f"{self.config.api_base}{self.GENERATE_ENDPOINT}"
 
-        payload = {
+        payload: dict[str, Any] = {
             "model": self.config.model,
             "messages": messages,
             "stream": False,
         }
 
         # Add optional parameters
-        if "temperature" in kwargs:
-            payload["options"] = payload.get("options", {})
-            payload["options"]["temperature"] = kwargs["temperature"]
-        if "max_tokens" in kwargs:
-            payload["options"] = payload.get("options", {})
-            payload["options"]["num_predict"] = kwargs["max_tokens"]
+        if "temperature" in kwargs or "max_tokens" in kwargs:
+            options: dict[str, Any] = {}
+            if "temperature" in kwargs:
+                options["temperature"] = kwargs["temperature"]
+            if "max_tokens" in kwargs:
+                options["num_predict"] = kwargs["max_tokens"]
+            payload["options"] = options
 
         start_time = time.time()
 

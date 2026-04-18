@@ -74,8 +74,8 @@ async def collect_search_signals(
         return []
 
     try:
-        from api.config import settings
         from aideator.search.registry import get_search_provider
+        from api.config import settings
 
         provider = get_search_provider(settings)
 
@@ -101,16 +101,48 @@ async def collect_search_signals(
 
         results = await provider.search(query, limit=limit, mode="general")
 
-        LOGGER.info(
-            "Search signals collected",
-            extra={
-                "event": "search_signals_done",
-                "extra_fields": {
-                    "provider": provider.name,
-                    "results_count": len(results),
+        # --- CIRCUIT BREAKER / FAILOVER LOGIC ---
+        if not results and provider.name != "duckduckgo" and provider.name != "builtin":
+            LOGGER.info(
+                "Primary search provider returned no results, attempting failover",
+                extra={
+                    "event": "search_failover",
+                    "extra_fields": {
+                        "from_provider": provider.name,
+                        "to_provider": "duckduckgo",
+                    },
                 },
-            },
-        )
+            )
+            try:
+                # Fallback to duckduckgo
+                fallback_settings = {"search_provider": "duckduckgo"}
+                fallback_provider = get_search_provider(fallback_settings)
+                results = await fallback_provider.search(query, limit=limit, mode="general")
+                
+                LOGGER.info(
+                    "Search failover successful",
+                    extra={
+                        "event": "search_signals_done",
+                        "extra_fields": {
+                            "provider": "duckduckgo",
+                            "results_count": len(results),
+                            "is_fallback": True,
+                        },
+                    },
+                )
+            except Exception as e:
+                LOGGER.warning(f"Search failover to DuckDuckGo failed: {e}")
+        else:
+            LOGGER.info(
+                "Search signals collected",
+                extra={
+                    "event": "search_signals_done",
+                    "extra_fields": {
+                        "provider": provider.name,
+                        "results_count": len(results),
+                    },
+                },
+            )
 
         return results
 

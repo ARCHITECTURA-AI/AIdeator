@@ -6,9 +6,7 @@ import os
 from pathlib import Path
 from unittest import mock
 
-import pytest
-
-from aideator.paths import get_default_config_path, get_default_db_path, get_default_docs_dir
+from aideator.paths import get_default_db_path
 
 
 def preserve_home_env():
@@ -119,7 +117,8 @@ class TestLoadSettings:
                         cli_db_url="sqlite:///cli.db", cli_docs_dir="/cli/docs", load_env=False
                     )
                     assert "cli.db" in settings.app_db_url
-                    assert "/cli/docs" in str(settings.app_docs_dir) or "\\cli\\docs" in str(settings.app_docs_dir)
+                    docs_str = str(settings.app_docs_dir)
+                    assert "/cli/docs" in docs_str or "\\cli\\docs" in docs_str
 
     def test_config_file_values_used(self, tmp_path: Path):
         """Config file values should be used when no env override."""
@@ -177,7 +176,10 @@ model = "mistral:7b"
         with mock.patch("aideator.paths.get_default_config_path", return_value=nonexistent_config):
             with mock.patch.dict(os.environ, base_env, clear=True):
                 with mock.patch("pathlib.Path.mkdir"):
-                    settings = load_settings(cli_db_url="sqlite:///~/.aideator/test.db", load_env=False)
+                    settings = load_settings(
+                        cli_db_url="sqlite:///~/.aideator/test.db",
+                        load_env=False
+                    )
                     home = str(Path.home())
                     assert home in settings.app_db_url
 
@@ -337,9 +339,9 @@ class TestResolveDbUrl:
 
     def test_expands_relative_path(self, tmp_path: Path):
         """Should expand relative paths to absolute."""
-        from api.config import _resolve_db_url
-
         import os
+
+        from api.config import _resolve_db_url
         original_cwd = os.getcwd()
         try:
             os.chdir(tmp_path)

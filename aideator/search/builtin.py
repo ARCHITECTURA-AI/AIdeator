@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import re
 from html import unescape
-from typing import Any
 
 import httpx
 
@@ -121,7 +120,7 @@ class BuiltinSearchProvider(SearchProvider):
             response = await client.get(url)
             response.raise_for_status()
 
-            content_type = response.headers.get("content-type", "")
+
             raw_html = response.text
 
             # Limit content length

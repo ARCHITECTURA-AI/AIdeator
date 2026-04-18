@@ -8,7 +8,7 @@ Provides a unified interface for web search across multiple providers:
 - BuiltinSearchProvider: URL extraction only, no web search (offline fallback)
 """
 
-from aideator.search.providers import SearchProvider, SearchResult, ProviderStatus
+from aideator.search.providers import ProviderStatus, SearchProvider, SearchResult
 from aideator.search.registry import get_search_provider
 
 __all__ = [

@@ -6,11 +6,14 @@ Requires EXA_API_KEY environment variable.
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import httpx
 
 from aideator.search.providers import Document, ProviderStatus, SearchProvider, SearchResult
+
+LOGGER = logging.getLogger(__name__)
 
 EXA_API_URL = "https://api.exa.ai"
 
@@ -87,6 +90,10 @@ class ExaSearchProvider(SearchProvider):
 
         try:
             response = await client.post(f"{EXA_API_URL}/search", json=payload)
+            if response.status_code == 429:
+                LOGGER.warning("Exa rate limit hit", extra={"event": "exa_rate_limit"})
+                return []
+                
             response.raise_for_status()
             data = response.json()
 
@@ -161,6 +168,8 @@ class ExaSearchProvider(SearchProvider):
             )
             if response.status_code == 200:
                 return ProviderStatus.OK
+            if response.status_code == 429:
+                return ProviderStatus.RATELIMIT
             if response.status_code in (401, 403):
                 return ProviderStatus.NOT_CONFIGURED
             return ProviderStatus.ERROR

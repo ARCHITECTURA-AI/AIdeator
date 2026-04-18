@@ -84,7 +84,7 @@ def main() -> None:
         time.sleep(2.0)
 
     if status == "succeeded":
-        print(f"\n[SUCCESS] Pipeline completed.")
+        print("\n[SUCCESS] Pipeline completed.")
         # Rebuild docs to be sure
         _request_json("POST", f"{base_url}/internal/rebuild-docs", {})
         

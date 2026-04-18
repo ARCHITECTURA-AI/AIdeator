@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import json
 import logging
-from collections.abc import Iterable
 from pathlib import Path
 from typing import Final
 from uuid import UUID
@@ -14,7 +12,7 @@ from models.report import Report
 
 _STORAGE_PATH: Final[Path] = Path("data/reports.json")
 _REPORTS: Final[dict[UUID, Report]] = {}
-_STORAGE = BaseJsonStorage(_STORAGE_PATH, "db.reports")
+_STORAGE: BaseJsonStorage[dict[str, object]] = BaseJsonStorage(_STORAGE_PATH, "db.reports")
 LOGGER = logging.getLogger("db.reports")
 
 
@@ -43,15 +41,7 @@ def list_reports() -> list[Report]:
 
 
 def export_reports_snapshot() -> list[dict[str, object]]:
-    return [
-        {
-            "run_id": str(report.run_id),
-            "cards": report.cards,
-            "artifact_path": report.artifact_path,
-            "citations": report.citations,
-        }
-        for report in _REPORTS.values()
-    ]
+    return [report.model_dump(mode="json") for report in _REPORTS.values()]
 
 
 def import_reports_snapshot(rows: object) -> None:
@@ -62,15 +52,10 @@ def import_reports_snapshot(rows: object) -> None:
         if not isinstance(row, dict):
             continue
         try:
-            report = Report(
-                run_id=UUID(str(row["run_id"])),
-                cards=row["cards"],  # type: ignore[arg-type]
-                artifact_path=str(row["artifact_path"]),
-                citations=row.get("citations", []),  # type: ignore[arg-type]
-            )
+            report = Report.model_validate(row)
             _REPORTS[report.run_id] = report
-        except (KeyError, ValueError) as e:
-            LOGGER.error(f"Failed to import report row: {e}")
+        except Exception as e:
+            LOGGER.error(f"Failed to import report row {row.get('run_id', 'unknown')}: {e}")
 
 
 # Auto-initialize on import

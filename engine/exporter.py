@@ -1,16 +1,16 @@
 """PDF generation engine using ReportLab."""
 
 from __future__ import annotations
+
 import io
-from pathlib import Path
-from uuid import UUID
 from datetime import datetime
 
-from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
+from reportlab.platypus import PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
 
 class ReportExporter:
     def __init__(self):
@@ -58,22 +58,37 @@ class ReportExporter:
             textColor=colors.grey
         ))
 
-    def generate_pdf(self, idea_title: str, idea_description: str, report_content: str, cards: list, citations: list) -> bytes:
+    def generate_pdf(
+        self, idea_title: str, idea_description: str, report_content: str, 
+        cards: list, citations: list
+    ) -> bytes:
         """Generate a valid, premium-styled PDF binary stream."""
         buffer = io.BytesIO()
         try:
-            doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=50, leftMargin=50, topMargin=50, bottomMargin=50)
+            doc = SimpleDocTemplate(
+                buffer, pagesize=A4, rightMargin=50, leftMargin=50, topMargin=50, bottomMargin=50
+            )
             elements = []
 
             # Header
-            elements.append(Paragraph(f"AIdeator // Intelligence_Report", self.styles['NexusMetaData']))
-            elements.append(Paragraph(idea_title.upper() if idea_title else "UNTITLED_CONCEPT", self.styles['NexusHeader']))
-            elements.append(Paragraph(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M')}", self.styles['NexusMetaData']))
+            elements.append(Paragraph(
+                "AIdeator // Intelligence_Report", self.styles['NexusMetaData']
+            ))
+            elements.append(Paragraph(
+                idea_title.upper() if idea_title else "UNTITLED_CONCEPT", 
+                self.styles['NexusHeader']
+            ))
+            elements.append(Paragraph(
+                f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M')}", 
+                self.styles['NexusMetaData']
+            ))
             elements.append(Spacer(1, 0.2 * inch))
 
             # Description
             elements.append(Paragraph("CONCEPT_SUMMARY", self.styles['NexusCardTitle']))
-            elements.append(Paragraph(idea_description or "No description provided.", self.styles['Normal']))
+            elements.append(Paragraph(
+                idea_description or "No description provided.", self.styles['Normal']
+            ))
             elements.append(Spacer(1, 0.3 * inch))
 
             # Main Content (Synthesized intelligence)
@@ -118,9 +133,15 @@ class ReportExporter:
                 elements.append(PageBreak())
                 elements.append(Paragraph("SOURCE_CITATIONS", self.styles['NexusCardTitle']))
                 for i, citation in enumerate(citations, 1):
-                    elements.append(Paragraph(f"[{i}] {citation.get('title', 'Unknown Source')}", self.styles['Normal']))
+                    elements.append(Paragraph(
+                        f"[{i}] {citation.get('title', 'Unknown Source')}", 
+                        self.styles['Normal']
+                    ))
                     elements.append(Paragraph(citation.get('url', ''), self.styles['NexusLink']))
-                    elements.append(Paragraph(f"Context: {citation.get('snippet', 'No snippet available.')}", self.styles['NexusItalic']))
+                    elements.append(Paragraph(
+                        f"Context: {citation.get('snippet', 'No snippet available.')}", 
+                        self.styles['NexusItalic']
+                    ))
                     elements.append(Spacer(1, 0.1 * inch))
 
             doc.build(elements)
@@ -129,7 +150,8 @@ class ReportExporter:
             buffer.seek(0)
             buffer.truncate(0)
             fallback_doc = SimpleDocTemplate(buffer, pagesize=A4)
-            fallback_doc.build([Paragraph(f"Critical Rendering Error: {str(e)}", self.styles['Normal'])])
+            err_msg = f"Critical Rendering Error: {str(e)}"
+            fallback_doc.build([Paragraph(err_msg, self.styles['Normal'])])
         
         pdf_bytes = buffer.getvalue()
         buffer.close()

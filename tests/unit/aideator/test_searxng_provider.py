@@ -3,12 +3,9 @@
 from __future__ import annotations
 
 import asyncio
-import json
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
-import pytest
-
-from aideator.search.providers import Document, ProviderStatus, SearchResult
+from aideator.search.providers import ProviderStatus, SearchResult
 
 
 class TestSearXNGProvider:
@@ -214,12 +211,13 @@ class TestSearXNGRegistryIntegration:
         from aideator.search.registry import get_search_provider
         from aideator.search.searxng import SearXNGSearchProvider
 
-        provider = get_search_provider({"search_provider": "searxng"})
+        provider = get_search_provider({"search_provider": "searxng", "searxng_instance_url": "http://localhost:8080"})
         assert isinstance(provider, SearXNGSearchProvider)
         assert provider.name == "searxng"
 
     def test_registry_custom_url_via_dict(self) -> None:
         import os
+
         from aideator.search.registry import get_search_provider
 
         with patch.dict(os.environ, {"SEARXNG_URL": "http://custom:9999"}):

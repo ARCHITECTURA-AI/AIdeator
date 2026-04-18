@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from collections.abc import Iterable
 from datetime import datetime
@@ -17,7 +16,7 @@ _STORAGE_PATH: Final[Path] = Path("data/runs.json")
 _RUNS: Final[dict[UUID, Run]] = {}
 _RUN_HISTORY: Final[dict[UUID, list[UUID]]] = {}
 _IDEMPOTENCY_INDEX: Final[dict[tuple[UUID, str], UUID]] = {}
-_STORAGE = BaseJsonStorage(_STORAGE_PATH, "db.runs")
+_STORAGE: BaseJsonStorage[dict[str, object]] = BaseJsonStorage(_STORAGE_PATH, "db.runs")
 LOGGER = logging.getLogger("db.runs")
 
 

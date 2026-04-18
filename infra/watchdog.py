@@ -1,7 +1,8 @@
 """Watchdog service for system health monitoring."""
 
 import logging
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
+
 from db.runs import list_runs, transition_run
 
 LOGGER = logging.getLogger("infra.watchdog")

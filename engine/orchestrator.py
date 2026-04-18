@@ -6,10 +6,10 @@ import logging
 import time
 from uuid import UUID
 
+from api.config import settings
 from db.ideas import get_idea
 from db.reports import save_report
 from db.runs import get_run, transition_run
-from api.config import settings
 from engine.analyst import analyze_dimensions
 from engine.signal_collector import collect_search_signals
 from engine.synthesizer import build_markdown_artifact, synthesize_intelligence

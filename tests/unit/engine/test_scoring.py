@@ -11,6 +11,7 @@ from engine.synthesizer import (
     validate_cards,
     validate_cards_v1,
 )
+from models.report import Card
 
 
 class TestScoreToBand:
@@ -60,6 +61,8 @@ class TestNormalizeScore:
         assert normalize_score(-10) == 0
 
 
+
+
 class TestValidateCardsV1:
     """Tests for V1 card validation with scores and bands."""
 
@@ -70,35 +73,59 @@ class TestValidateCardsV1:
     def test_score_in_range(self) -> None:
         cards = synthesize_default_cards()
         for card in cards:
-            score = card.get("score")
+            score = card.score
             if score is not None:
                 assert 0 <= int(score) <= 100
 
     def test_band_matches_score(self) -> None:
         cards = synthesize_default_cards()
         for card in cards:
-            score = card.get("score")
-            band = card.get("band")
-            if score is not None and band is not None:
-                expected = score_to_band(normalize_score(score))
-                assert band == expected, f"{card['type']}: score={score} -> expected {expected}, got {band}"
+            score = card.score
+            band = card.meta.get("band")
+            expected = score_to_band(normalize_score(score))
+            err_msg = f"{card.type}: score={score} -> expected {expected}, got {band}"
+            assert band == expected, err_msg
 
     def test_invalid_band_raises(self) -> None:
         cards = [
-            {"type": "demand", "score": 50, "band": "extreme", "summary": "s", "citation_urls": ["u"]},
-            {"type": "competition", "score": 50, "band": "medium", "summary": "s", "citation_urls": ["u"]},
-            {"type": "viability", "score": 50, "band": "medium", "summary": "s", "citation_urls": ["u"]},
-            {"type": "next_steps", "score": 50, "band": "medium", "summary": "s", "citation_urls": []},
+            Card(
+                type="demand", title="T", summary="s", score=50,
+                meta={"band": "extreme", "citation_urls": ["u"]}
+            ),
+            Card(
+                type="competition", title="T", summary="s", score=50,
+                meta={"band": "medium", "citation_urls": ["u"]}
+            ),
+            Card(
+                type="viability", title="T", summary="s", score=50,
+                meta={"band": "medium", "citation_urls": ["u"]}
+            ),
+            Card(
+                type="next_steps", title="T", summary="s", score=50,
+                meta={"band": "medium", "citation_urls": []}
+            ),
         ]
         with pytest.raises(ValueError, match="Invalid band"):
             validate_cards_v1(cards)
 
     def test_mismatched_band_raises(self) -> None:
         cards = [
-            {"type": "demand", "score": 80, "band": "low", "summary": "s", "citation_urls": ["u"]},
-            {"type": "competition", "score": 50, "band": "medium", "summary": "s", "citation_urls": ["u"]},
-            {"type": "viability", "score": 50, "band": "medium", "summary": "s", "citation_urls": ["u"]},
-            {"type": "next_steps", "score": 50, "band": "medium", "summary": "s", "citation_urls": []},
+            Card(
+                type="demand", title="T", summary="s", score=80,
+                meta={"band": "low", "citation_urls": ["u"]}
+            ),
+            Card(
+                type="competition", title="T", summary="s", score=50,
+                meta={"band": "medium", "citation_urls": ["u"]}
+            ),
+            Card(
+                type="viability", title="T", summary="s", score=50,
+                meta={"band": "medium", "citation_urls": ["u"]}
+            ),
+            Card(
+                type="next_steps", title="T", summary="s", score=50,
+                meta={"band": "medium", "citation_urls": []}
+            ),
         ]
         with pytest.raises(ValueError, match="Band mismatch"):
             validate_cards_v1(cards)
@@ -109,19 +136,19 @@ class TestSynthesizeDefaultCards:
 
     def test_all_required_types_present(self) -> None:
         cards = synthesize_default_cards()
-        types = {str(c["type"]) for c in cards}
+        types = {str(c.type) for c in cards}
         assert types == {"demand", "competition", "viability", "next_steps"}
 
     def test_all_cards_have_scores(self) -> None:
         cards = synthesize_default_cards()
         for card in cards:
-            assert "score" in card
-            assert "band" in card
+            assert hasattr(card, "score")
+            assert "band" in card.meta
 
     def test_scores_are_integers(self) -> None:
         cards = synthesize_default_cards()
         for card in cards:
-            assert isinstance(card["score"], int)
+            assert isinstance(card.score, int)
 
     def test_backward_compatible_validation(self) -> None:
         """Legacy validate_cards still works with new format."""

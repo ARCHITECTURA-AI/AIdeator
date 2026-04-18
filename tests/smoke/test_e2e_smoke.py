@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from uuid import UUID
-
 from fastapi.testclient import TestClient
 
 from api.app import app
@@ -102,13 +100,12 @@ class TestCreateIdeaFlow:
         run_id = run_url.split("/")[-1]
 
         # Check run status via poll
-        poll_resp = client.get(f"/api/runs/{run_id}/poll")
+        poll_resp = client.get(f"/runs/{run_id}/status")
         assert poll_resp.status_code == 200
         poll_data = poll_resp.json()
         assert poll_data["status"] == "succeeded"
-        assert poll_data["is_terminal"] is True
 
-        # Check report HTML
-        report_resp = client.get(f"/app/runs/{run_id}/report")
+        # Check generated report
+        report_resp = client.get(f"/runs/{run_id}/report")
         assert report_resp.status_code == 200
-        assert "score-card" in report_resp.text
+        assert "cards" in report_resp.json()

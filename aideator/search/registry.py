@@ -6,7 +6,7 @@ Maps provider names to provider classes and handles configuration.
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, Type
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from api.config import Settings
@@ -50,12 +50,21 @@ def get_search_provider(settings: Settings | dict[str, str]) -> SearchProvider:
         from aideator.search.searxng import SearXNGSearchProvider
 
         # Get instance URL from settings or env
+        instance_url = None
         if hasattr(settings, "searxng_instance_url"):
             instance_url = settings.searxng_instance_url
-        else:
-            instance_url = os.getenv(
-                "SEARXNG_URL",
-                settings.get("searxng_instance_url", "http://localhost:8888"),
+        
+        if not instance_url:
+            instance_url = os.getenv("SEARXNG_URL")
+            
+        if not instance_url and isinstance(settings, dict):
+            instance_url = settings.get("searxng_instance_url")
+
+        if not instance_url:
+            raise ValueError(
+                "SearXNG search provider requires an instance URL. "
+                "Set SEARXNG_URL environment variable or configure "
+                "searxng_instance_url in your config file."
             )
         return SearXNGSearchProvider(instance_url=instance_url)
 

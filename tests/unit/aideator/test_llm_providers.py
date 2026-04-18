@@ -5,7 +5,6 @@ from __future__ import annotations
 import pytest
 
 from aideator.llm.providers import (
-    LLMProvider,
     LLMResponse,
     ProviderConfig,
     ProviderStatus,

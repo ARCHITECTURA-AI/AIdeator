@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import asyncio
-from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from aideator.search.providers import Document, ProviderStatus, SearchProvider, SearchResult
+from aideator.search.providers import Document, ProviderStatus, SearchResult
 
 
 class TestSearchResult:

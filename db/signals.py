@@ -1,13 +1,15 @@
-import json
 import logging
 from pathlib import Path
 from typing import Final
 from uuid import UUID
+
 from db.base import BaseJsonStorage
 
 _STORAGE_PATH: Final[Path] = Path("data/signals.json")
 _SIGNALS: Final[dict[UUID, list[dict[str, str]]]] = {}
-_STORAGE = BaseJsonStorage(_STORAGE_PATH, "db.signals")
+_STORAGE: BaseJsonStorage[dict[str, list[dict[str, str]]]] = BaseJsonStorage(
+    _STORAGE_PATH, "db.signals"
+)
 LOGGER = logging.getLogger("db.signals")
 
 

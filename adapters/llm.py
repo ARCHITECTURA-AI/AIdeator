@@ -9,7 +9,7 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
-from aideator.llm.providers import LLMResponse, ProviderConfig
+from aideator.llm.providers import LLMResponse
 from aideator.llm.registry import get_provider
 from api.config import settings
 

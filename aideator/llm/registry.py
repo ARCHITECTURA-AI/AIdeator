@@ -5,7 +5,7 @@ Maps provider names to provider classes and handles configuration.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Type
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from api.config import Settings
@@ -20,7 +20,7 @@ from aideator.llm.providers import (
 )
 
 # Registry mapping provider names to classes
-PROVIDER_REGISTRY: dict[str, Type[LLMProvider]] = {
+PROVIDER_REGISTRY: dict[str, type[LLMProvider]] = {
     "ollama": OllamaProvider,
     "openai-compatible": OpenAICompatibleProvider,
     "openai": OpenAICompatibleProvider,
@@ -46,16 +46,17 @@ def get_provider(settings: Settings | dict[str, str]) -> LLMProvider:
         ValueError: If provider is not registered
     """
     # Handle both Settings object and dict
-    if hasattr(settings, "llm_provider"):
-        provider_name = settings.llm_provider
-        model = settings.llm_model
-        api_base = settings.llm_api_base
-        api_key = settings.llm_api_key
-    else:
+    if isinstance(settings, dict):
         provider_name = settings.get("llm_provider", "ollama")
         model = settings.get("llm_model", "mistral:7b")
         api_base = settings.get("llm_api_base", "")
         api_key = settings.get("llm_api_key", "")
+    else:
+        # It's a Settings object
+        provider_name = settings.llm_provider
+        model = settings.llm_model
+        api_base = settings.llm_api_base
+        api_key = settings.llm_api_key
 
     provider_class = PROVIDER_REGISTRY.get(provider_name)
     if provider_class is None:
@@ -102,7 +103,7 @@ def list_available_providers() -> list[dict[str, str | bool]]:
     return providers
 
 
-def register_provider(name: str, provider_class: Type[LLMProvider]) -> None:
+def register_provider(name: str, provider_class: type[LLMProvider]) -> None:
     """Register a custom provider.
 
     Args:

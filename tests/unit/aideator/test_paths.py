@@ -3,17 +3,13 @@
 from __future__ import annotations
 
 import os
-import platform
 from pathlib import Path
 from unittest.mock import patch
-
-import pytest
 
 from aideator.paths import (
     APP_NAME,
     ensure_dir,
     get_all_paths,
-    get_cache_dir,
     get_default_config_path,
     get_default_db_path,
     get_default_docs_dir,
@@ -105,7 +101,10 @@ class TestGetAllPaths:
 
     def test_returns_all_keys(self) -> None:
         paths = get_all_paths()
-        expected_keys = {"user_data_dir", "db_path", "docs_dir", "config_path", "migrations_dir", "logs_dir", "cache_dir"}
+        expected_keys = {
+            "user_data_dir", "db_path", "docs_dir", "config_path",
+            "migrations_dir", "logs_dir", "cache_dir"
+        }
         assert expected_keys == set(paths.keys())
 
     def test_all_values_are_paths(self) -> None:

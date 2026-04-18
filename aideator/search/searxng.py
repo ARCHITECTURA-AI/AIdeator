@@ -17,10 +17,9 @@ from typing import Any
 
 import httpx
 
-from aideator.search.providers import Document, ProviderStatus, SearchProvider, SearchResult
-
 # Re-use the builtin HTML helpers for fetch()
 from aideator.search.builtin import _extract_title, _html_to_text
+from aideator.search.providers import Document, ProviderStatus, SearchProvider, SearchResult
 
 LOGGER = logging.getLogger("aideator.search.searxng")
 

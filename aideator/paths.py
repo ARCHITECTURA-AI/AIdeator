@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 import platform
+import typing
 from pathlib import Path
 
 APP_NAME = "aideator"
@@ -157,7 +158,7 @@ def get_all_paths() -> dict[str, Path]:
     }
 
 
-def get_report_path_for_idea(idea_id: Any, docs_dir: Path | None = None) -> Path:
+def get_report_path_for_idea(idea_id: typing.Any, docs_dir: Path | None = None) -> Path:
     """Return the markdown report path for a specific idea."""
     from api.config import settings
     base = docs_dir or settings.app_docs_dir

@@ -3,10 +3,7 @@
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
-from unittest.mock import patch, MagicMock
-
-import pytest
+from unittest.mock import patch
 
 
 class TestCommandServe:
@@ -17,8 +14,9 @@ class TestCommandServe:
         assert callable(run_server)
 
     def test_serve_defaults(self) -> None:
-        from aideator.cli import run_server
         import inspect
+
+        from aideator.cli import run_server
         sig = inspect.signature(run_server)
         params = sig.parameters
         assert params["host"].default == "127.0.0.1"

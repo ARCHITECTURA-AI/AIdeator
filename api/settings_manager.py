@@ -3,11 +3,12 @@
 import logging
 from pathlib import Path
 from typing import Any
-from db.base import BaseJsonStorage
+
 from api.config import settings as app_settings
+from db.base import BaseJsonStorage
 
 _STORAGE_PATH = Path("data/settings.json")
-_STORAGE = BaseJsonStorage(_STORAGE_PATH, "api.settings")
+_STORAGE: BaseJsonStorage[dict[str, Any]] = BaseJsonStorage(_STORAGE_PATH, "api.settings")
 LOGGER = logging.getLogger("api.settings")
 
 # Initial defaults from app config

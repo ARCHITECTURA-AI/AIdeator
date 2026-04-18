@@ -2,30 +2,34 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict
-from html import escape
-import os
+from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import TypeVar, Any, Optional
+from typing import Any, TypeVar
 from uuid import UUID
-from pydantic import BaseModel
 
-from fastapi import APIRouter, Form, HTTPException, Query, Request, BackgroundTasks, Response, Body
+from fastapi import APIRouter, BackgroundTasks, Body, Form, HTTPException, Query, Request, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from datetime import datetime, timezone, timedelta
-from markupsafe import Markup
+from pydantic import BaseModel
 
-from aideator.paths import ensure_dir, get_all_paths, get_report_path_for_idea
+from aideator.paths import get_report_path_for_idea
 from api.config import settings
+from api.settings_manager import (
+    get_settings as get_persistent_settings,
+)
+from api.settings_manager import (
+    update_settings as update_persistent_settings,
+)
+from api.sharing import generate_share_link, validate_share_hash
+from db.comments import Comment, add_comment, list_comments_for_idea
 from db.ideas import get_idea, list_ideas, save_idea
 from db.reports import get_report, list_reports
-from engine.orchestrator import execute_run
+from db.runs import get_run, list_runs, list_runs_for_idea, save_run
 from engine.exporter import ReportExporter
 from engine.forge import forge_concept_file
-from db.comments import list_comments_for_idea, add_comment, Comment
-from api.sharing import generate_share_link, validate_share_hash
-from db.runs import get_run, list_runs, list_runs_for_idea, save_run
+from engine.og_generator import generate_og_image
+from engine.orchestrator import execute_run
 from models.idea import Idea
 from models.run import Run, RunMode, RunTier
 
@@ -35,10 +39,7 @@ _ROOT = Path(__file__).resolve().parents[1]
 templates = Jinja2Templates(directory=str(_ROOT / "templates"))
 _DOCS_DIR = settings.app_docs_dir
 
-from api.settings_manager import (
-    get_settings as get_persistent_settings,
-    update_settings as update_persistent_settings,
-)
+
 
 
 class ForgeRequest(BaseModel):
@@ -99,7 +100,7 @@ def _paginate(items: list[T], page: int, per_page: int) -> tuple[list[T], Pagina
 
 
 def _render_markdown(markdown_text: str) -> str:
-    import markdown
+    import markdown  # type: ignore[import-untyped]
     # Use standard extensions for better formatting
     return markdown.markdown(markdown_text, extensions=["extra", "nl2br", "sane_lists"])
 
@@ -479,7 +480,10 @@ def run_detail_page(request: Request, run_id: UUID) -> HTMLResponse:
                 ),
                 "duration": duration_str,
                 "error_code": run.error_code,
-                "error_message": "Internal processing error or provider timeout." if run.error_code else "",
+                "error_message": (
+                    "Internal processing error or provider timeout." 
+                    if run.error_code else ""
+                ),
                 "confidence_score": confidence_score,
             },
             "findings": findings,
@@ -490,6 +494,33 @@ def run_detail_page(request: Request, run_id: UUID) -> HTMLResponse:
         }
     )
     return templates.TemplateResponse(request=request, name="run_detail.html", context=context)
+
+
+@router.get("/app/compare", response_class=HTMLResponse)
+def compare_page(request: Request, ids: str = Query("")) -> HTMLResponse:
+    idea_ids = [UUID(i.strip()) for i in ids.split(",") if i.strip()]
+    
+    comparisons = []
+    for idea_id in idea_ids:
+        idea = get_idea(idea_id)
+        if not idea:
+            continue
+            
+        runs = list_runs_for_idea(idea_id)
+        success_runs = [r for r in runs if r.status == "succeeded"]
+        latest_run = max(success_runs, key=lambda r: r.updated_at, default=None)
+        
+        report = get_report(latest_run.run_id) if latest_run else None
+        
+        comparisons.append({
+            "idea": idea,
+            "report": report,
+            "success": report is not None
+        })
+
+    context = _base_context(request, "Compare Ideas")
+    context.update({"comparisons": comparisons})
+    return templates.TemplateResponse(request=request, name="compare.html", context=context)
 
 
 @router.get("/app/reports", response_class=HTMLResponse)
@@ -545,16 +576,19 @@ def reports_for_idea_page(request: Request, idea_id: UUID) -> HTMLResponse:
         report = get_report(latest_run.run_id)
         if report:
             for card in report.cards:
-                if card.get("type") == "demand":
-                    launcher_data["demand_score"] = str(card.get("score", "N/A"))
-                    launcher_data["demand_summary"] = card.get("summary", launcher_data["demand_summary"])
+                if card.type == "demand":
+                    launcher_data["demand_score"] = str(card.score)
+                    launcher_data["demand_summary"] = card.summary
 
     # Construct a rich report object for report_detail.html
     report_ui = {
         "id": str(idea_id),
         "title": idea.title if idea else "Unknown Idea",
         "created_at": _fmt_ts(latest_run.updated_at) if latest_run else "RECENT_SYNC",
-        "summary": "Intelligence synthesis complete. Nexus engine provides high-confidence analysis.",
+        "summary": (
+            "Intelligence synthesis complete. Nexus engine provides "
+            "high-confidence analysis."
+        ),
         "content": _render_markdown(doc_payload["markdown"])
     }
     
@@ -589,7 +623,11 @@ def export_report_pdf(idea_id: UUID) -> Response:
 
     # Read markdown from artifact path
     artifact_path = get_report_path_for_idea(idea_id)
-    content = artifact_path.read_text(encoding="utf-8") if artifact_path.exists() else "No synthesized content available."
+    content = (
+        artifact_path.read_text(encoding="utf-8") 
+        if artifact_path.exists() 
+        else "No synthesized content available."
+    )
     
     exporter = ReportExporter()
     pdf_bytes = exporter.generate_pdf(
@@ -608,8 +646,38 @@ def export_report_pdf(idea_id: UUID) -> Response:
     )
 
 
+@router.get("/app/reports/{idea_id}/og")
+def get_report_og_image(idea_id: UUID) -> Response:
+    idea = get_idea(idea_id)
+    if not idea:
+        raise HTTPException(status_code=404, detail="Idea not found")
+    
+    runs = list_runs_for_idea(idea_id)
+    success_runs = [r for r in runs if r.status == "succeeded"]
+    latest_run = max(success_runs, key=lambda r: r.updated_at, default=None)
+    
+    scores = {}
+    if latest_run:
+        report = get_report(latest_run.run_id)
+        if report:
+            for card in report.cards:
+                scores[card.title] = card.score
+
+    # Limit to top 3 scores
+    limited_scores = dict(list(scores.items())[:3])
+    if not limited_scores:
+        limited_scores = {"Market": 0, "Moat": 0, "Viability": 0}
+
+    img_bytes = generate_og_image(idea.title, limited_scores)
+    return Response(content=img_bytes, media_type="image/png")
+
+
 @router.post("/app/reports/{idea_id}/comments")
-def post_comment(idea_id: UUID, content: str = Form(...), author: str = Form("System_User")) -> RedirectResponse:
+def post_comment(
+    idea_id: UUID, 
+    content: str = Form(...), 
+    author: str = Form("System_User")
+) -> RedirectResponse:
     add_comment(Comment(idea_id=idea_id, author=author, content=content))
     return RedirectResponse(f"/app/reports/{idea_id}", status_code=303)
 
@@ -622,7 +690,7 @@ def create_share(idea_id: UUID) -> dict[str, str]:
 
 @router.post("/api/forge")
 @router.post("/app/reports/{idea_id}/forge")
-def forge_local(idea_id: Optional[UUID] = None, body: dict = Body(None)) -> dict[str, Any]:
+def forge_local(idea_id: UUID | None = None, body: dict = Body(None)) -> dict[str, Any]:
     # Extract idea_id from path or body
     raw_id = idea_id or (body.get("idea_id") if body else None)
     
@@ -653,14 +721,18 @@ def forge_local(idea_id: Optional[UUID] = None, body: dict = Body(None)) -> dict
 
     # Read markdown from artifact path
     artifact_path = get_report_path_for_idea(effective_id)
-    content = artifact_path.read_text(encoding="utf-8") if artifact_path.exists() else "No synthesized content available."
+    content = (
+        artifact_path.read_text(encoding="utf-8") 
+        if artifact_path.exists() 
+        else "No synthesized content available."
+    )
     
     demand_score = "N/A"
     demand_summary = "Ready for initial development."
     for card in report.cards:
-        if card.get("type") == "demand":
-            demand_score = str(card.get("score", "N/A"))
-            demand_summary = card.get("summary", demand_summary)
+        if card.type == "demand":
+            demand_score = str(card.score)
+            demand_summary = card.summary
 
     abs_path = forge_concept_file(
         idea_title=idea.title,

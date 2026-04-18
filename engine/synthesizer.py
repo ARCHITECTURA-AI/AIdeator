@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import json
 import logging
+
 from aideator.llm.registry import get_provider
 from api.config import settings
+from models.report import Card
 
 LOGGER = logging.getLogger("engine.synthesizer")
 
@@ -48,26 +50,18 @@ def normalize_score(score: int | float) -> int:
     return max(0, min(100, int(score)))
 
 
-def validate_cards(cards: list[dict[str, object]]) -> None:
-    present = {str(card.get("type")) for card in cards}
+def validate_cards(cards: list[Card]) -> None:
+    present = {card.type for card in cards}
     missing = REQUIRED_CARD_TYPES - present
     if missing:
         raise ValueError(f"Missing card types: {sorted(missing)}")
 
-    for card in cards:
-        card_type = str(card.get("type"))
-        citations = card.get("citation_urls", [])
-        if card_type in REQUIRES_CITATIONS and (
-            not isinstance(citations, list) or len(citations) == 0
-        ):
-            raise ValueError(f"Missing citations for card type: {card_type}")
 
-
-def validate_cards_v1(cards: list[dict[str, object]]) -> None:
+def validate_cards_v1(cards: list[Card]) -> None:
     """V1-enhanced validation: checks score range and band presence.
 
     Args:
-        cards: List of card dicts
+        cards: List of Card objects
 
     Raises:
         ValueError: On validation failures
@@ -75,64 +69,59 @@ def validate_cards_v1(cards: list[dict[str, object]]) -> None:
     validate_cards(cards)
 
     for card in cards:
-        score = card.get("score")
-        if score is not None:
-            normalized = normalize_score(score)
-            if not (0 <= normalized <= 100):
-                raise ValueError(
-                    f"Score out of range for {card.get('type')}: {score}"
-                )
-
-        band = card.get("band")
-        if band is not None and band not in ("high", "medium", "low"):
+        score = card.score
+        normalized = normalize_score(score)
+        if not (0 <= normalized <= 100):
             raise ValueError(
-                f"Invalid band for {card.get('type')}: {band}. "
-                "Must be 'high', 'medium', or 'low'."
+                f"Score out of range for {card.type}: {score}"
             )
 
-        # If score present but band missing, that's OK — we auto-compute
-        # But if band is present, it must match the score
-        if score is not None and band is not None:
-            expected_band = score_to_band(normalize_score(score))
+        band = card.meta.get("band")
+        if band is not None:
+            if band not in ("high", "medium", "low"):
+                raise ValueError(
+                    f"Invalid band for {card.type}: {band}. "
+                    "Must be 'high', 'medium', or 'low'."
+                )
+            expected_band = score_to_band(normalized)
             if band != expected_band:
                 raise ValueError(
-                    f"Band mismatch for {card.get('type')}: "
-                    f"score {score} should be '{expected_band}', got '{band}'"
+                    f"Band mismatch for {card.type}: score {normalized} expects "
+                    f"{expected_band}, got {band}"
                 )
 
 
-def synthesize_default_cards() -> list[dict[str, object]]:
+def synthesize_default_cards() -> list[Card]:
     """Generate default validation cards (fallback)."""
-    cards: list[dict[str, object]] = [
-        {
-            "type": "demand",
-            "score": 62,
-            "band": "medium",
-            "summary": "Early demand is plausible but needs focused validation.",
-            "citation_urls": ["https://example.com/demand"],
-        },
-        {
-            "type": "competition",
-            "score": 54,
-            "level": "Moderate",
-            "band": "medium",
-            "summary": "Market has competitors with room for differentiated execution.",
-            "citation_urls": ["https://example.com/competition"],
-        },
-        {
-            "type": "viability",
-            "score": 48,
-            "band": "medium",
-            "summary": "Execution risk is moderate due to acquisition and retention uncertainty.",
-            "citation_urls": ["https://example.com/risk"],
-        },
-        {
-            "type": "next_steps",
-            "score": 66,
-            "band": "medium",
-            "summary": "Run user interviews and ship a constrained pilot in two weeks.",
-            "citation_urls": ["https://example.com/next-steps"],
-        },
+    cards = [
+        Card(
+            type="demand",
+            title="Market Demand",
+            summary="Early demand is plausible but needs focused validation.",
+            score=62,
+            meta={"band": "medium", "citation_urls": ["https://example.com/demand"]}
+        ),
+        Card(
+            type="competition",
+            title="Competitive Landscape",
+            summary="Market has competitors with room for differentiated execution.",
+            score=54,
+            meta={"band": "medium", "citation_urls": ["https://example.com/competition"]}
+        ),
+        Card(
+            type="viability",
+            title="Technical Viability",
+            summary="Execution risk is moderate due to acquisition and retention uncertainty.",
+            score=48,
+            meta={"band": "medium", "citation_urls": ["https://example.com/risk"]}
+        ),
+        Card(
+            type="next_steps",
+            title="Strategic Roadmap",
+            summary="Run user interviews and ship a constrained pilot in two weeks.",
+            score=66,
+            meta={"band": "medium", "citation_urls": ["https://example.com/next-steps"]}
+        ),
     ]
     validate_cards_v1(cards)
     return cards
@@ -144,7 +133,7 @@ async def synthesize_intelligence(
     description: str,
     citations: list[dict[str, str]],
     analysis: dict[str, object] | None = None,
-) -> list[dict[str, object]]:
+) -> list[Card]:
     """Synthesize intelligence cards using LLM.
 
     This is 'Node 3' of the research graph. It takes the structured analysis
@@ -190,7 +179,8 @@ Return ONLY a JSON object with this exact structure:
       "type": "demand",
       "score": <int 0-100>,
       "summary": "<1-2 sentence executive summary>",
-      "detailed_context": "<A detailed 3-5 sentence analysis of the metric, referencing specific signals and market nuances.>",
+      "detailed_context": "<A detailed 3-5 sentence analysis of the metric, "
+                          "referencing specific signals and market nuances.>",
       "citation_urls": [<list of URLs actually referenced>]
     }},
     {{
@@ -205,7 +195,8 @@ Return ONLY a JSON object with this exact structure:
       "type": "viability",
       "score": <int 0-100>,
       "summary": "<1-2 sentence executive summary>",
-      "detailed_context": "<A detailed 3-5 sentence analysis of technical/regulatory/market feasibility.>",
+      "detailed_context": "<A detailed 3-5 sentence analysis of "
+                          "technical/regulatory/market feasibility.>",
       "citation_urls": [<list of URLs actually referenced>]
     }},
     {{
@@ -229,14 +220,27 @@ Return ONLY a JSON object with this exact structure:
              content = content.split("```")[1].split("```")[0].strip()
         
         data = json.loads(content)
-        cards = data.get("cards", [])
+        raw_cards = data.get("cards", [])
         
-        # Post-process: Add bands if missing
-        for card in cards:
-            if "score" in card and "band" not in card:
-                card["band"] = score_to_band(normalize_score(card["score"]))
+        cards: list[Card] = []
+        for rc in raw_cards:
+            score = normalize_score(rc.get("score", 0))
+            band = score_to_band(score)
+            
+            cards.append(Card(
+                type=rc.get("type", "unknown"),
+                title=rc.get("title", rc.get("type", "").replace("_", " ").title()),
+                summary=rc.get("summary", ""),
+                score=score,
+                details=rc.get("details", [rc.get("detailed_context", "")]),
+                meta={
+                    "citation_urls": rc.get("citation_urls", []),
+                    "band": band,
+                    "level": rc.get("level")
+                }
+            ))
         
-        validate_cards_v1(cards)
+        validate_cards(cards)
         return cards
         
     except Exception as e:
@@ -244,16 +248,15 @@ Return ONLY a JSON object with this exact structure:
         return synthesize_default_cards()
 
 
-def render_markdown_report(*, idea_id: str, cards: list[dict[str, object]]) -> str:
+def render_markdown_report(*, idea_id: str, cards: list[Card]) -> str:
     lines: list[str] = [f"# Idea Report {idea_id}", ""]
 
     for card in cards:
-        card_type = str(card.get("type", "unknown"))
-        score = card.get("score")
-        band = card.get("band")
+        score = card.score
+        band = card.meta.get("band")
 
         # Section header with score
-        header = f"## {card_type.replace('_', ' ').title()}"
+        header = f"## {card.title}"
         if score is not None:
             normalized = normalize_score(score)
             band_label = band or score_to_band(normalized)
@@ -261,17 +264,17 @@ def render_markdown_report(*, idea_id: str, cards: list[dict[str, object]]) -> s
         lines.append(header)
 
         # Brief summary for quick scanning
-        lines.append(f"**Executive Summary:** {card.get('summary', '')}")
+        lines.append(f"**Executive Summary:** {card.summary}")
         lines.append("")
         
         # Detailed context for depth
-        detailed = card.get("detailed_context")
-        if detailed:
+        if card.details:
             lines.append("### Deep_Dive_Context")
-            lines.append(str(detailed))
+            for detail in card.details:
+                lines.append(str(detail))
             lines.append("")
 
-        citations = card.get("citation_urls", [])
+        citations = card.meta.get("citation_urls", [])
         if isinstance(citations, list) and citations:
             lines.append("")
             lines.append("Citations:")
@@ -289,7 +292,7 @@ def render_markdown_report(*, idea_id: str, cards: list[dict[str, object]]) -> s
 
 
 def _append_benchmark_section(
-    lines: list[str], cards: list[dict[str, object]]
+    lines: list[str], cards: list[Card]
 ) -> None:
     """Add benchmark comparison section to report lines."""
     try:
@@ -298,10 +301,8 @@ def _append_benchmark_section(
         # Extract scores for benchmarkable card types
         current_scores: dict[str, int] = {}
         for card in cards:
-            card_type = str(card.get("type", ""))
-            score = card.get("score")
-            if card_type in ("demand", "competition", "viability") and score is not None:
-                current_scores[card_type] = normalize_score(score)
+            if card.type in ("demand", "competition", "viability"):
+                current_scores[card.type] = normalize_score(card.score)
 
         if current_scores:
             comparison = compare_scores(current_scores)
@@ -315,6 +316,6 @@ def _append_benchmark_section(
         pass
 
 
-def build_markdown_artifact(*, idea_id: str, cards: list[dict[str, object]]) -> str:
+def build_markdown_artifact(*, idea_id: str, cards: list[Card]) -> str:
     validate_cards(cards)
     return render_markdown_report(idea_id=idea_id, cards=cards)

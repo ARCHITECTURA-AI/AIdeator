@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-12">
+    <div>
+        <h1 class="text-4xl font-neural font-bold text-gradient mb-2 uppercase tracking-tight">Idea Comparison</h1>
+        <p class="text-on-surface-variant font-mono text-sm uppercase tracking-widest">Cross-dimensional intelligence synthesis</p>
+    </div>
+    <div class="flex gap-4">
+        <a href="/app/ideas/new" class="glass-panel px-6 py-2 flex items-center gap-2 hover:bg-primary/20 transition-all">
+            <span class="material-symbols-outlined text-primary">add</span>
+            <span class="font-mono text-xs uppercase tracking-widest">New Concept</span>
+        </a>
+    </div>
+</div>
+
+<div class="overflow-x-auto pb-8">
+    <div class="flex gap-6 min-w-max">
+        {% for comp in comparisons %}
+        <div class="w-96 flex-shrink-0 flex flex-col gap-6">
+            <!-- Header Card -->
+            <div class="glass-panel p-6 border-t-2 border-t-primary/40">
+                <div class="flex justify-between items-start mb-4">
+                    <span class="font-mono text-[10px] text-primary bg-primary/10 px-2 py-1 uppercase tracking-widest">
+                        {{ comp.idea.tier or "BRONZE" }}
+                    </span>
+                    <a href="/app/ideas/{{ comp.idea.idea_id }}" class="text-white/40 hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined text-sm">open_in_new</span>
+                    </a>
+                </div>
+                <h2 class="text-xl font-neural font-bold mb-2">{{ comp.idea.title }}</h2>
+                <p class="text-xs text-on-surface-variant line-clamp-3 font-body leading-relaxed mb-6 h-12">
+                    {{ comp.idea.description }}
+                </p>
+                
+                <div class="flex items-center gap-2 text-[10px] font-mono text-white/40 uppercase tracking-widest">
+                    <span class="material-symbols-outlined text-xs">calendar_today</span>
+                    {{ comp.idea.created_at.strftime('%Y-%m-%d') }}
+                </div>
+            </div>
+
+            {% if comp.success %}
+                <!-- Metrics Card -->
+                <div class="glass-panel p-6 flex flex-col gap-6">
+                    <h3 class="font-mono text-[10px] text-on-surface-variant uppercase tracking-widest border-b border-white/5 pb-2">Validation Metrics</h3>
+                    
+                    <div class="grid grid-cols-1 gap-4">
+                        {% for card in comp.report.cards %}
+                        <div class="flex flex-col gap-2">
+                            <div class="flex justify-between items-center text-[10px] font-mono uppercase tracking-widest">
+                                <span class="text-white/60">{{ card.title }}</span>
+                                <span class="text-primary font-bold">{{ card.score }}%</span>
+                            </div>
+                            <div class="w-full bg-white/5 h-1 rounded-full overflow-hidden">
+                                <div class="h-full bg-primary" style="width: {{ card.score }}%"></div>
+                            </div>
+                            <p class="text-[11px] text-on-surface-variant line-clamp-2 leading-relaxed italic">
+                                "{{ card.summary }}"
+                            </p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Strategic Summary -->
+                <div class="glass-panel p-6 bg-primary/5">
+                    <h3 class="font-mono text-[10px] text-primary uppercase tracking-widest mb-4">Strategic Recommendation</h3>
+                    <p class="text-sm font-body leading-relaxed text-white/80">
+                        {{ comp.report.cards[0].summary if comp.report.cards else "Synthesis complete. No outliers detected." }}
+                    </p>
+                </div>
+
+                <a href="/app/reports/{{ comp.idea.idea_id }}" class="glass-panel p-4 text-center group hover:bg-primary/20 transition-all">
+                    <span class="font-mono text-xs uppercase tracking-widest text-primary group-hover:text-white transition-colors">View Full Dossier</span>
+                </a>
+            {% else %}
+                <div class="glass-panel p-12 flex flex-col items-center justify-center gap-4 border-dashed">
+                    <span class="material-symbols-outlined text-4xl text-white/10 animate-pulse">analytics</span>
+                    <p class="text-[10px] font-mono text-on-surface-variant uppercase tracking-widest text-center">
+                        Validation Pending or Failed
+                    </p>
+                    <form action="/app/runs/create" method="POST">
+                        <input type="hidden" name="idea_id" value="{{ comp.idea.idea_id }}">
+                        <input type="hidden" name="mode" value="hybrid">
+                        <input type="hidden" name="tier" value="bronze">
+                        <button type="submit" class="text-primary hover:text-white transition-colors">
+                            <span class="material-symbols-outlined">play_circle</span>
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <!-- Empty State / Add Multi -->
+        <div class="w-96 flex-shrink-0">
+             <a href="/app/ideas" class="glass-panel p-12 flex flex-col items-center justify-center gap-4 border-dashed h-full hover:border-primary/40 group transition-all">
+                <span class="material-symbols-outlined text-4xl text-white/5 group-hover:text-primary/40 transition-colors">add_circle</span>
+                <p class="text-[10px] font-mono text-on-surface-variant uppercase tracking-widest">Add idea to comparison</p>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

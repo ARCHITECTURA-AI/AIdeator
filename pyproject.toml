@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "aideator"
-version = "0.9.6"
+version = "0.9.6.1"
 authors = [
   { name = "Richard Abishai", email = "richard@richardabish.ai" }
 ]
@@ -23,6 +23,7 @@ dependencies = [
   "ddgs>=7.0.0",
   "pillow>=10.0.0",
   "reportlab>=4.0.0",
+  "markdown>=3.5.0",
 ]
 
 [project.urls]

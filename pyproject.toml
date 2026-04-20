@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "aideator"
-version = "0.9.5"
+version = "0.9.6"
 authors = [
   { name = "Richard Abishai", email = "richard@richardabish.ai" }
 ]
@@ -22,6 +22,7 @@ dependencies = [
   "httpx>=0.28.0",
   "ddgs>=7.0.0",
   "pillow>=10.0.0",
+  "reportlab>=4.0.0",
 ]
 
 [project.urls]
@@ -41,6 +42,7 @@ dev = [
   "httpx",
   "ruff>=0.12.0",
   "mypy>=1.11.0",
+  "pytest-asyncio>=0.23.0",
 ]
 
 [tool.hatch.build.targets.wheel]

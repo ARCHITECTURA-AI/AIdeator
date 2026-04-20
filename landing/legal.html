@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Legal Core | AIdeator</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700&amp;family=JetBrains+Mono:wght@300;400;700&amp;family=Space+Grotesk:wght@300;400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link rel="icon" type="image/png" href="../logo.png">
+<link rel="apple-touch-icon" href="../logo.png">
+<meta name="description" content="AIdeator Legal Governance: Privacy protocols, system terms, and security core specifications for the kinetic monolith framework.">
+<meta property="og:title" content="AIdeator | Legal_Governance">
+<meta property="og:image" content="../logo.png">
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 200, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+        }
+        .nexus-grid {
+            background-image: 
+                linear-gradient(to right, rgba(72, 72, 72, 0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(72, 72, 72, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        .scanline {
+            background: linear-gradient(
+                to bottom,
+                transparent 50%,
+                rgba(167, 165, 255, 0.02) 50%
+            );
+            background-size: 100% 4px;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-surface": "#ffffff",
+                      "secondary-container": "#006c49",
+                      "error": "#ff6e84",
+                      "surface-container": "#191919",
+                      "surface": "#0e0e0e",
+                      "error-dim": "#d73357",
+                      "outline": "#757575",
+                      "surface-tint": "#a7a5ff",
+                      "primary": "#a7a5ff",
+                      "secondary": "#69f6b8",
+                      "surface-container-lowest": "#000000",
+                      "on-background": "#ffffff",
+                      "on-secondary-container": "#e1ffec",
+                      "primary-fixed-dim": "#8885ff",
+                      "secondary-fixed-dim": "#58e7ab",
+                      "secondary-fixed": "#69f6b8",
+                      "surface-variant": "#262626",
+                      "tertiary-dim": "#e79400",
+                      "on-tertiary-fixed": "#2a1700",
+                      "tertiary": "#ffb148",
+                      "on-tertiary": "#573500",
+                      "primary-container": "#9795ff",
+                      "on-tertiary-fixed-variant": "#563400",
+                      "on-primary-fixed-variant": "#1a0099",
+                      "tertiary-fixed-dim": "#e79400",
+                      "on-error-container": "#ffb2b9",
+                      "primary-dim": "#645efb",
+                      "on-primary": "#1c00a0",
+                      "on-secondary": "#005a3c",
+                      "error-container": "#a70138",
+                      "inverse-surface": "#f9f9f9",
+                      "surface-container-highest": "#262626",
+                      "outline-variant": "#484848",
+                      "secondary-dim": "#58e7ab",
+                      "on-tertiary-container": "#4a2c00",
+                      "inverse-on-surface": "#555555",
+                      "surface-bright": "#2c2c2c",
+                      "on-primary-fixed": "#000000",
+                      "surface-dim": "#0e0e0e",
+                      "surface-container-low": "#131313",
+                      "on-error": "#490013",
+                      "on-secondary-fixed-variant": "#006544",
+                      "inverse-primary": "#4e45e4",
+                      "primary-fixed": "#9795ff",
+                      "background": "#0e0e0e",
+                      "on-secondary-fixed": "#00452d",
+                      "on-primary-container": "#14007e",
+                      "tertiary-fixed": "#f8a010",
+                      "surface-container-high": "#1f1f1f",
+                      "tertiary-container": "#f8a010",
+                      "on-surface-variant": "#ababab"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "fontFamily": {
+                      "headline": ["Inter"],
+                      "body": ["Inter"],
+                      "label": ["Space Grotesk"]
+              }
+            },
+          }
+        }
+      </script>
+</head>
+<body class="bg-surface-container-lowest text-on-surface font-body selection:bg-primary/30">
+<div class="fixed inset-0 nexus-grid pointer-events-none opacity-20"></div>
+<nav class="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-2xl border-b border-white/5 shadow-[0_8px_32px_rgba(167,165,255,0.08)]">
+<div class="flex justify-between items-center px-8 h-20 max-w-[1920px] mx-auto">
+<a href="index.html" class="flex items-center gap-3 text-2xl font-light tracking-tighter text-white uppercase font-headline">
+            <img src="../logo.png" alt="AIdeator Logo" class="w-16 h-16 object-contain">
+            AIdeator
+        </a>
+<div class="hidden md:flex items-center gap-10">
+<a class="text-white/60 hover:text-white transition-colors font-headline font-light tracking-tight text-sm hover:scale-105 duration-300 ease-in-out" href="index.html">Home</a>
+<a class="text-white/60 hover:text-white transition-colors font-headline font-light tracking-tight text-sm hover:scale-105 duration-300 ease-in-out" href="docs.html">Documentation</a>
+<a class="text-white/60 hover:text-white transition-colors font-headline font-light tracking-tight text-sm hover:scale-105 duration-300 ease-in-out" href="blog.html">Blog</a>
+<a class="text-white/60 hover:text-white transition-colors font-headline font-light tracking-tight text-sm hover:scale-105 duration-300 ease-in-out" href="changelog.html">Changelog</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-white/40 hover:text-primary transition-all active:scale-95" data-icon="sensors">sensors</button>
+<button class="material-symbols-outlined text-white/40 hover:text-primary transition-all active:scale-95" data-icon="terminal">terminal</button>
+<a href="https://pypi.org/project/aideator/" target="_blank" class="bg-primary text-on-primary px-6 py-2 rounded-sm font-label text-xs tracking-widest uppercase hover:scale-105 active:scale-95 transition-all no-underline">_RUN_ENGINE</a>
+</div>
+</div>
+</nav>
+<main class="pt-40 pb-20 px-8 max-w-[1400px] mx-auto relative z-10">
+<header class="mb-32 flex flex-col md:flex-row md:items-end justify-between gap-8 border-l-2 border-primary/20 pl-8">
+<div class="max-w-3xl">
+<div class="font-label text-[10px] uppercase tracking-[0.4em] text-primary mb-4">ID: CORE-LGL-001</div>
+<h1 class="text-6xl md:text-8xl font-headline font-extralight tracking-tighter text-white leading-[0.9]">
+                    Legal<br/><span class="text-primary/40 italic">Governance</span>
+</h1>
+<p class="mt-8 text-on-surface-variant max-w-md font-body leading-relaxed opacity-80">
+                    The kinetic framework governing data telemetry, identity encryption, and neural node interactions within the AIdeator ecosystem.
+                </p>
+</div>
+<div class="font-label text-[10px] text-white/20 text-right uppercase tracking-widest hidden md:block">
+                SYSTEM_STATUS: SECURE<br/>
+                LAST_REVISION: 2026.11.02<br/>
+                KINETIC_MONOLITH_v1.0
+            </div>
+</header>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-12">
+<aside class="md:col-span-3 space-y-12">
+<nav class="sticky top-32">
+<ul class="space-y-6">
+<li>
+<a class="group flex items-center gap-4 font-label text-[11px] uppercase tracking-widest text-primary" href="#privacy">
+<span class="h-[1px] w-8 bg-primary"></span>
+                                PRIVACY_PROTOCOL
+                            </a>
+</li>
+<li>
+<a class="group flex items-center gap-4 font-label text-[11px] uppercase tracking-widest text-white/40 hover:text-white transition-all" href="#terms">
+<span class="h-[1px] w-4 bg-white/10 group-hover:w-8 group-hover:bg-white transition-all"></span>
+                                SYSTEM_TERMS
+                            </a>
+</li>
+<li>
+<a class="group flex items-center gap-4 font-label text-[11px] uppercase tracking-widest text-white/40 hover:text-white transition-all" href="#telemetry">
+<span class="h-[1px] w-4 bg-white/10 group-hover:w-8 group-hover:bg-white transition-all"></span>
+                                DATA_TELEMETRY
+                            </a>
+</li>
+<li>
+<a class="group flex items-center gap-4 font-label text-[11px] uppercase tracking-widest text-white/40 hover:text-white transition-all" href="#security">
+<span class="h-[1px] w-4 bg-white/10 group-hover:w-8 group-hover:bg-white transition-all"></span>
+                                SECURITY_CORE
+                            </a>
+</li>
+</ul>
+</nav>
+</aside>
+<section class="md:col-span-9 space-y-24">
+<div class="space-y-12" id="privacy">
+<div class="glass-panel p-12 border-l border-white/5 relative overflow-hidden">
+<div class="absolute top-0 right-0 w-32 h-32 opacity-10">
+<span class="material-symbols-outlined text-[120px] text-primary" data-icon="shield">shield</span>
+</div>
+<h2 class="text-4xl font-headline font-light tracking-tight text-white mb-8">Privacy Protocol</h2>
+<div class="space-y-6 text-on-surface-variant font-body leading-relaxed text-sm">
+<p>We treat every bit of data as a sovereign entity. Within the <span class="text-white">AIdeator</span> engine, privacy is not a feature but a physical law of our architecture.</p>
+<p>Data processing occurs within localized clusters, ensuring that your neural outputs remain disconnected from public-facing identifiers unless explicitly authorized through the _ACCESS_KEY protocol.</p>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-1 px-4">
+<div class="p-6 bg-surface-container-low border-l border-primary/30">
+<div class="font-label text-[9px] text-primary uppercase mb-2">TELEMETRY_SOURCE</div>
+<div class="text-white text-sm font-light">End-to-End Neural Encryption</div>
+</div>
+<div class="p-6 bg-surface-container-low border-l border-white/10">
+<div class="font-label text-[9px] text-white/30 uppercase mb-2">RETENTION_PERIOD</div>
+<div class="text-white text-sm font-light">Volatile Memory (Session Based)</div>
+</div>
+</div>
+</div>
+<div class="space-y-12" id="telemetry">
+<h3 class="font-label text-xs tracking-widest text-primary uppercase flex items-center gap-4">
+<span class="material-symbols-outlined text-sm" data-icon="database">database</span>
+                        TELEMETRY_STORAGE_SPECIFICATIONS
+                    </h3>
+<div class="overflow-x-auto">
+<table class="w-full font-label text-[10px] text-left">
+<thead>
+<tr class="text-white/40 border-b border-white/10">
+<th class="py-4 px-6 font-normal">DATA_KEY</th>
+<th class="py-4 px-6 font-normal">CLASSIFICATION</th>
+<th class="py-4 px-6 font-normal">ENCRYPTION</th>
+<th class="py-4 px-6 font-normal">AUDIT_LOG</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5">
+<tr class="hover:bg-white/5 transition-colors">
+<td class="py-4 px-6 text-white">USER_ID_HEX</td>
+<td class="py-4 px-6 text-on-surface-variant">ANONYMIZED_UUID</td>
+<td class="py-4 px-6"><span class="text-secondary">AES-256-GCM</span></td>
+<td class="py-4 px-6 text-white/30">ID: 991-LX</td>
+</tr>
+<tr class="hover:bg-white/5 transition-colors">
+<td class="py-4 px-6 text-white">PROMPT_VECTOR</td>
+<td class="py-4 px-6 text-on-surface-variant">EPHEMERAL_STREAM</td>
+<td class="py-4 px-6"><span class="text-secondary">RSA-4096</span></td>
+<td class="py-4 px-6 text-white/30">ID: 882-9X</td>
+</tr>
+<tr class="hover:bg-white/5 transition-colors">
+<td class="py-4 px-6 text-white">GEOLOC_STAMP</td>
+<td class="py-4 px-6 text-on-surface-variant">REGION_ONLY</td>
+<td class="py-4 px-6"><span class="text-white/30">NULL</span></td>
+<td class="py-4 px-6 text-white/30">ID: 002-TR</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="space-y-12" id="terms">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="p-8 bg-surface-container border border-white/5 group hover:border-primary/40 transition-all duration-500">
+<div class="flex justify-between items-start mb-12">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="token">token</span>
+<div class="font-label text-[9px] text-white/20">RULE_01</div>
+</div>
+<h4 class="text-xl font-headline font-light text-white mb-4">Neural Usage</h4>
+<p class="text-on-surface-variant text-sm leading-relaxed font-body">Users maintain full ownership of all kinetic outputs generated through the engine. Commercial rights are granted upon node activation.</p>
+</div>
+<div class="p-8 bg-surface-container border border-white/5 group hover:border-primary/40 transition-all duration-500">
+<div class="flex justify-between items-start mb-12">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="bolt">bolt</span>
+<div class="font-label text-[9px] text-white/20">RULE_02</div>
+</div>
+<h4 class="text-xl font-headline font-light text-white mb-4">Stream Limits</h4>
+<p class="text-on-surface-variant text-sm leading-relaxed font-body">Engine bandwidth is allocated based on tier proximity. Automated scraping of node infrastructure is strictly prohibited.</p>
+</div>
+</div>
+<div class="space-y-12" id="security">
+<div class="glass-panel p-12 border-l border-primary/40 relative overflow-hidden">
+<div class="absolute top-0 right-0 w-32 h-32 opacity-10">
+<span class="material-symbols-outlined text-[120px] text-primary" data-icon="lock">lock</span>
+</div>
+<h2 class="text-4xl font-headline font-light tracking-tight text-white mb-8">Security Core</h2>
+<div class="space-y-6 text-on-surface-variant font-body leading-relaxed text-sm">
+<p>The AIdeator Security Core employs a multi-tiered defense architecture, utilizing AES-256 for data-at-rest and TLS 1.3 for all telemetry in transit.</p>
+<p>Our infrastructure is hardened against adversarial input through continuous neural fuzzing and isolated execution environments, ensuring that logic injection is neutralized at the gateway level.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="pt-20 border-t border-white/5 flex flex-col md:flex-row gap-12">
+<div class="flex-1">
+<div class="font-label text-[10px] text-primary uppercase mb-6 tracking-widest">_CONTACT_CORE</div>
+<h5 class="text-2xl font-headline font-light text-white mb-4">Questions?</h5>
+<p class="text-on-surface-variant text-sm font-body mb-8">Connect with our compliance team for deep-dive technical audits.</p>
+<button class="bg-white/5 border border-white/10 px-8 py-3 font-label text-[10px] uppercase tracking-widest hover:bg-white/10 hover:scale-105 transition-all">LEGAL@AIDEATOR.SYS</button>
+</div>
+<div class="w-full md:w-64 aspect-video overflow-hidden grayscale opacity-50 group hover:opacity-100 transition-opacity">
+<img class="w-full h-full object-cover" data-alt="abstract close-up of server room lights and cables in a dark room with blue and white glowing indicators" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBziActfaenCLkDWJsQr0XQ6JCX2kvkQVGnI927htopxDr-BdtdVondMCbQ9o6d2AWS7ONSatEpZW2NGDOj9D9LQxM6XaFZjKkhM9CQMrMC20GhfHLQsUtdCwPnF3xcD_WxQEq_Kv58EZG0fKtWbbbMRCGA-tnyWWZlnClTSDHVG0wdZZACLDEshLM-qmrKsyhu5QJewHrCp-rpAnJoE4qgl3uSvym8nepgETtX9ssYg2xpoiNu1gMDMhFW0WEUVjfjz4YQBoxYFmc"/>
+</div>
+</div>
+</section>
+</div>
+</main>
+<footer class="w-full py-12 px-8 bg-black border-t border-white/5">
+<div class="flex flex-col md:flex-row justify-between items-center max-w-[1920px] mx-auto gap-4">
+<div class="font-label text-[9px] text-white/30 uppercase tracking-[0.2em]">©2026 AIDEATOR_SYSTEMS [KINETIC_MONOLITH]</div>
+<div class="flex gap-8">
+<a class="font-label text-[9px] text-white/30 uppercase hover:text-primary transition-colors tracking-widest" href="#privacy">Privacy</a>
+<a class="font-label text-[9px] text-white/30 uppercase hover:text-primary transition-colors tracking-widest" href="#terms">Terms</a>
+<a class="font-label text-[9px] text-white/30 uppercase hover:text-primary transition-colors tracking-widest" href="#security">Security</a>
+<a class="font-label text-[9px] text-white/30 uppercase hover:text-primary transition-colors tracking-widest" href="status.html">Status</a>
+</div>
+<div class="font-label text-[9px] text-white/20 uppercase">LOC: GRID-CORE-1</div>
+</div>
+</footer>
+<div class="fixed bottom-8 right-8 z-50 md:hidden">
+<button class="w-14 h-14 bg-primary rounded-full shadow-2xl flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+</div>
+</body></html>

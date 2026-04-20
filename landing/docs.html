@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AIdeator | Cinematic Documentation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;700&amp;family=JetBrains+Mono:wght@300;400;700&amp;family=Space+Grotesk:wght@300;400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link rel="icon" type="image/png" href="../logo.png">
+<link rel="apple-touch-icon" href="../logo.png">
+<meta name="description" content="AIdeator Documentation: Cinematic guides for system synthesis, neural nodes, and kinetic framework integration.">
+<meta property="og:title" content="AIdeator | Cinematic Documentation">
+<meta property="og:image" content="../logo.png">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-surface": "#ffffff",
+                    "secondary-container": "#006c49",
+                    "error": "#ff6e84",
+                    "surface-container": "#191919",
+                    "surface": "#0e0e0e",
+                    "error-dim": "#d73357",
+                    "outline": "#757575",
+                    "surface-tint": "#a7a5ff",
+                    "primary": "#a7a5ff",
+                    "secondary": "#69f6b8",
+                    "surface-container-lowest": "#000000",
+                    "on-background": "#ffffff",
+                    "on-secondary-container": "#e1ffec",
+                    "primary-fixed-dim": "#8885ff",
+                    "secondary-fixed-dim": "#58e7ab",
+                    "secondary-fixed": "#69f6b8",
+                    "surface-variant": "#262626",
+                    "tertiary-dim": "#e79400",
+                    "on-tertiary-fixed": "#2a1700",
+                    "tertiary": "#ffb148",
+                    "on-tertiary": "#573500",
+                    "primary-container": "#9795ff",
+                    "on-tertiary-fixed-variant": "#563400",
+                    "on-primary-fixed-variant": "#1a0099",
+                    "tertiary-fixed-dim": "#e79400",
+                    "on-error-container": "#ffb2b9",
+                    "primary-dim": "#645efb",
+                    "on-primary": "#1c00a0",
+                    "on-secondary": "#005a3c",
+                    "error-container": "#a70138",
+                    "inverse-surface": "#f9f9f9",
+                    "surface-container-highest": "#262626",
+                    "outline-variant": "#484848",
+                    "secondary-dim": "#58e7ab",
+                    "on-tertiary-container": "#4a2c00",
+                    "inverse-on-surface": "#555555",
+                    "surface-bright": "#2c2c2c",
+                    "on-primary-fixed": "#000000",
+                    "surface-dim": "#0e0e0e",
+                    "surface-container-low": "#131313",
+                    "on-error": "#490013",
+                    "on-secondary-fixed-variant": "#006544",
+                    "inverse-primary": "#4e45e4",
+                    "primary-fixed": "#9795ff",
+                    "background": "#0e0e0e",
+                    "on-secondary-fixed": "#00452d",
+                    "on-primary-container": "#14007e",
+                    "tertiary-fixed": "#f8a010",
+                    "surface-container-high": "#1f1f1f",
+                    "tertiary-container": "#f8a010",
+                    "on-surface-variant": "#ababab"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Space Grotesk"],
+                    "mono": ["JetBrains Mono"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+        }
+        .nexus-grid {
+            background-image: 
+                linear-gradient(to right, rgba(72, 72, 72, 0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(72, 72, 72, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 200, 'GRAD' 0, 'opsz' 24;
+        }
+        .scanline {
+            width: 100%;
+            height: 100px;
+            z-index: 10;
+            background: linear-gradient(0deg, rgba(167, 165, 255, 0) 0%, rgba(167, 165, 255, 0.02) 50%, rgba(167, 165, 255, 0) 100%);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-surface-container-lowest selection:bg-primary selection:text-on-primary">
+<!-- PERSISTENT GRID -->
+<div class="fixed inset-0 nexus-grid pointer-events-none z-0"></div>
+<!-- TOP NAVIGATION -->
+<nav class="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-2xl border-b border-white/5 shadow-[0_8px_32px_rgba(167,165,255,0.08)]">
+<div class="flex justify-between items-center px-8 h-20 max-w-[1920px] mx-auto">
+<a href="index.html" class="flex items-center gap-3 text-2xl font-light tracking-tighter text-white uppercase font-headline">
+            <img src="../logo.png" alt="AIdeator Logo" class="w-16 h-16 object-contain">
+            AIdeator
+        </a>
+<div class="hidden md:flex items-center gap-8">
+<a class="font-headline font-light tracking-tight text-white/60 hover:text-white transition-colors" href="index.html">Home</a>
+<a class="font-headline font-light tracking-tight text-primary border-b border-primary pb-1" href="docs.html">Documentation</a>
+<a class="font-headline font-light tracking-tight text-white/60 hover:text-white transition-colors" href="blog.html">Blog</a>
+<a class="font-headline font-light tracking-tight text-white/60 hover:text-white transition-colors" href="changelog.html">Changelog</a>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex gap-4 text-white/60">
+<span class="material-symbols-outlined hover:text-primary transition-colors cursor-pointer text-sm">sensors</span>
+<span class="material-symbols-outlined hover:text-primary transition-colors cursor-pointer text-sm">terminal</span>
+</div>
+<a href="https://pypi.org/project/aideator/" target="_blank" class="font-label text-primary hover:scale-105 active:scale-95 transition-all duration-300 ease-in-out px-4 py-2 border border-primary/20 bg-primary/5 text-[10px] tracking-widest no-underline flex items-center">
+                _RUN_ENGINE
+            </a>
+</div>
+</div>
+</nav>
+<!-- SIDE NAVIGATION -->
+<aside class="fixed left-0 top-20 h-[calc(100vh-5rem)] w-64 z-40 bg-[#0e0e0e]/95 backdrop-blur-xl border-r border-white/5 flex flex-col p-6 gap-8 overflow-y-auto">
+<div class="space-y-1">
+<div class="font-bold text-white font-mono text-[12px] tracking-widest">NEXUS_v1.0</div>
+<div class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest text-white/40">ID: 882-9X</div>
+</div>
+<div class="flex flex-col gap-2 sidebar-nav">
+<a class="sidebar-link flex items-center gap-3 p-3 font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest bg-white/5 text-primary border-l-2 border-primary transition-all cursor-pointer" onclick="switchView('overview', this)">
+<span class="material-symbols-outlined text-sm">grid_view</span> Overview
+            </a>
+<a class="sidebar-link flex items-center gap-3 p-3 font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest text-white/40 hover:bg-white/5 hover:text-white transition-all cursor-pointer" onclick="switchView('install', this)">
+<span class="material-symbols-outlined text-sm">terminal</span> Installation
+            </a>
+<a class="sidebar-link flex items-center gap-3 p-3 font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest text-white/40 hover:bg-white/5 hover:text-white transition-all cursor-pointer" onclick="switchView('concepts', this)">
+<span class="material-symbols-outlined text-sm">hub</span> Concepts
+            </a>
+<a class="sidebar-link flex items-center gap-3 p-3 font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest text-white/40 hover:bg-white/5 hover:text-white transition-all cursor-pointer" onclick="switchView('api', this)">
+<span class="material-symbols-outlined text-sm">api</span> API_Ref
+            </a>
+<a class="sidebar-link flex items-center gap-3 p-3 font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest text-white/40 hover:bg-white/5 hover:text-white transition-all cursor-pointer" href="index.html">
+<span class="material-symbols-outlined text-sm">home</span> Home
+            </a>
+</div>
+<button class="mt-auto border border-white/10 p-3 font-mono text-[10px] tracking-widest text-white/60 hover:text-primary hover:border-primary transition-all uppercase">
+            _CONNECT_SYSTEM
+        </button>
+<div class="pt-4 border-t border-white/5 space-y-2">
+<a class="flex items-center gap-3 text-[9px] font-mono text-white/30 hover:text-white transition-colors uppercase" href="legal.html">
+<span class="material-symbols-outlined text-xs">gavel</span> Privacy
+            </a>
+<a class="flex items-center gap-3 text-[9px] font-mono text-white/30 hover:text-white transition-colors uppercase" href="legal.html">
+<span class="material-symbols-outlined text-xs">description</span> Terms
+            </a>
+</div>
+</aside>
+<!-- MAIN CONTENT CANVAS -->
+<main class="ml-64 pt-32 pb-24 px-12 relative z-10">
+<div class="max-w-5xl mx-auto space-y-24">
+<!-- VIEW: OVERVIEW -->
+<div id="view-overview" class="view-content active-view">
+<!-- HERO SECTION -->
+<section class="relative space-y-6">
+<div class="flex items-center gap-4 text-primary font-mono text-[10px] tracking-widest uppercase">
+<span class="w-12 h-[1px] bg-primary"></span>
+                    SYSTEM_DOCUMENTATION / PROTOCOL_01
+                </div>
+<h1 class="text-[5rem] leading-[0.9] font-headline font-light tracking-tighter text-white">
+                    Neural <br/> <span class="text-white/40">Architecture</span>
+</h1>
+<p class="max-w-2xl text-on-surface-variant font-body text-lg leading-relaxed font-light">
+                    The Architecture of Intent. AIdeator is a cinematic engine for idea validation, leveraging multi-modal kinetic synthesis to transform abstract concepts into verifiable system manifests. 
+                    <br/><br/>
+<code class="bg-primary/10 text-primary px-2 py-1 rounded font-mono text-sm border border-primary/20">pip install aideator</code>
+</p>
+<div class="flex gap-4 pt-4">
+<div class="h-12 w-[1px] bg-outline-variant/20"></div>
+<div class="flex flex-col justify-center">
+<span class="font-mono text-[10px] text-white/30 uppercase">Latency Status</span>
+<span class="font-mono text-[12px] text-secondary uppercase">Active_0.04ms</span>
+</div>
+</div>
+</section>
+<!-- TECHNICAL SPECS TABLE (ASYMMETRIC) -->
+<section class="space-y-12">
+<div class="flex items-end justify-between">
+<div class="space-y-4">
+<h2 class="text-4xl font-headline font-light tracking-tight">System Specifications</h2>
+<p class="text-on-surface-variant max-w-sm text-sm">Hard-coded limitations and performance thresholds for the current version of the kinetic monolith.</p>
+</div>
+<div class="text-right">
+<span class="font-mono text-[9px] text-white/20 uppercase tracking-[0.2em]">Hardware Requirements</span>
+</div>
+</div>
+<div class="border-t border-white/5">
+<div class="grid grid-cols-12 py-8 group hover:bg-white/[0.02] transition-all px-4 cursor-crosshair">
+<div class="col-span-4 font-mono text-[10px] text-primary uppercase tracking-widest flex items-center">Memory_Allocation</div>
+<div class="col-span-4 font-body text-sm text-white/80">Dynamic Neural Cache</div>
+<div class="col-span-4 font-mono text-[10px] text-white/40 text-right uppercase tracking-widest">128GB L3 Buffer</div>
+</div>
+<div class="grid grid-cols-12 py-8 group hover:bg-white/[0.02] transition-all px-4 cursor-crosshair border-t border-white/5">
+<div class="col-span-4 font-mono text-[10px] text-primary uppercase tracking-widest flex items-center">Compute_Core</div>
+<div class="col-span-4 font-body text-sm text-white/80">TPU Cluster v4.2</div>
+<div class="col-span-4 font-mono text-[10px] text-white/40 text-right uppercase tracking-widest">64x Parallel Nodes</div>
+</div>
+<div class="grid grid-cols-12 py-8 group hover:bg-white/[0.02] transition-all px-4 cursor-crosshair border-t border-white/5">
+<div class="col-span-4 font-mono text-[10px] text-primary uppercase tracking-widest flex items-center">Security_Protocol</div>
+<div class="col-span-4 font-body text-sm text-white/80">Quantum-Resistant Ledger</div>
+<div class="col-span-4 font-mono text-[10px] text-white/40 text-right uppercase tracking-widest">AES-512 Lattice</div>
+</div>
+</div>
+</section>
+</div>
+
+<!-- VIEW: INSTALLATION -->
+<div id="view-install" class="view-content hidden">
+<section id="installation" class="space-y-12 pt-12">
+<div class="flex items-center gap-4 text-primary font-mono text-[10px] tracking-widest uppercase">
+<span class="w-12 h-[1px] bg-primary"></span>
+        GETTING_STARTED / 01
+    </div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+<div class="space-y-6">
+<h2 class="text-4xl font-headline font-light tracking-tight text-white">Initialize System</h2>
+<p class="text-on-surface-variant font-light leading-relaxed">To begin synthesizing architectural intent, initialize the AIdeator CLI. This will establish a connection to the Nexus Core and configure your local environment.</p>
+<div class="glass-panel p-6 rounded border border-primary/10 bg-surface-container-low/50 font-mono text-sm text-primary/90">
+<div class="flex items-center gap-2 mb-2 opacity-40">
+<div class="w-2 h-2 rounded-full bg-primary/40"></div>
+<span class="text-[9px] uppercase tracking-widest">Local Session</span>
+</div>
+                $ aideator init --key YOUR_NEXUS_KEY
+            </div>
+</div>
+<div class="bg-surface-container p-8 rounded-sm space-y-4">
+<h4 class="font-mono text-[10px] text-primary uppercase tracking-[0.2em]">Required_Entropy</h4>
+<ul class="space-y-3">
+<li class="flex items-center gap-3 text-sm text-white/70">
+<span class="material-symbols-outlined text-sm text-primary">check_circle</span>
+                    Python 3.10 or higher
+                </li>
+<li class="flex items-center gap-3 text-sm text-white/70">
+<span class="material-symbols-outlined text-sm text-primary">check_circle</span>
+                    Active Internet Link (Nexus Sync)
+                </li>
+<li class="flex items-center gap-3 text-sm text-white/70">
+<span class="material-symbols-outlined text-sm text-primary">check_circle</span>
+                    12GB+ Unified Memory
+                </li>
+</ul>
+</div>
+</div>
+</section>
+</div>
+
+<!-- VIEW: CONCEPTS -->
+<div id="view-concepts" class="view-content hidden">
+<section class="space-y-12 pt-12">
+<div class="flex items-center gap-4 text-primary font-mono text-[10px] tracking-widest uppercase">
+<span class="w-12 h-[1px] bg-primary"></span>
+        ARCHITECTURAL_PILLARS / 03
+    </div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<div class="glass-panel p-8 space-y-4">
+<span class="material-symbols-outlined text-primary text-3xl">bolt</span>
+<h3 class="text-lg font-headline text-white">The Forge</h3>
+<p class="text-xs text-on-surface-variant leading-relaxed">The computational engine where intent is processed through neural lattices to generate structural schemas.</p>
+</div>
+<div class="glass-panel p-8 space-y-4">
+<span class="material-symbols-outlined text-primary text-3xl">token</span>
+<h3 class="text-lg font-headline text-white">Manifests</h3>
+<p class="text-xs text-on-surface-variant leading-relaxed">Immutable system definitions exported in PDF, JSON, or React scaffolds. The bridge between thought and code.</p>
+</div>
+<div class="glass-panel p-8 space-y-4">
+<span class="material-symbols-outlined text-primary text-3xl">shield</span>
+<h3 class="text-lg font-headline text-white">Nexus Core</h3>
+<p class="text-xs text-on-surface-variant leading-relaxed">Centralized telemetry and refinement loop that ensures every generated idea meets the cinematic quality standard.</p>
+</div>
+</div>
+</section>
+</div>
+
+<!-- VIEW: API_REF -->
+<div id="view-api" class="view-content hidden">
+<!-- API CORE REFERENCE -->
+<section id="api" class="space-y-12 pt-12">
+<div class="flex items-center gap-4 text-primary font-mono text-[10px] tracking-widest uppercase">
+<span class="w-12 h-[1px] bg-primary"></span>
+        CORE_API_REFERENCE / 02
+    </div>
+<div class="space-y-8">
+<div class="glass-panel p-8 rounded-sm">
+<h3 class="text-xl font-headline font-light text-white mb-4">.forge()</h3>
+<p class="text-on-surface-variant text-sm mb-6 max-w-2xl">The primary orchestration method. Forge takes a raw intent manifest and executes a multi-step synthesis process: research, logic mapping, and manifest generation.</p>
+<div class="bg-black/40 p-4 font-mono text-xs rounded border border-white/5 space-y-2">
+<div class="text-secondary"><span class="text-white">nexus</span>.<span class="text-secondary-fixed">forge</span>({</div>
+<div class="pl-4 text-white/70">intent: <span class="text-tertiary">"A dog walking SaaS with premium glassmorphic UI"</span>,</div>
+<div class="pl-4 text-white/70">depth: <span class="text-tertiary">"EXHAUSTIVE"</span>,</div>
+<div class="pl-4 text-white/70">outputs: [<span class="text-tertiary">"PITCH_DECK"</span>, <span class="text-tertiary">"TECH_SPEC"</span>]</div>
+<div class="text-secondary">});</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="p-8 border border-white/5 bg-white/[0.02] space-y-4">
+<h4 class="font-mono text-[10px] text-primary uppercase tracking-widest">.stream()</h4>
+<p class="text-xs text-white/50 leading-relaxed">Establish a real-time bilateral telemetry link between your local environment and the AIdeator engine.</p>
+</div>
+<div class="p-8 border border-white/5 bg-white/[0.02] space-y-4">
+<h4 class="font-mono text-[10px] text-primary uppercase tracking-widest">.map()</h4>
+<p class="text-xs text-white/50 leading-relaxed">Transform unstructured intent datasets into visual node-based dependency trees for architectural review.</p>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<!-- FOOTER -->
+<footer class="w-full py-12 px-8 bg-black border-t border-white/5 relative z-10">
+<div class="flex flex-col md:flex-row justify-between items-center max-w-[1920px] mx-auto gap-4">
+<div class="font-['JetBrains_Mono'] text-[9px] text-white/30 uppercase">
+                ©2026 AIDEATOR_SYSTEMS [KINETIC_MONOLITH]
+            </div>
+<div class="flex gap-8">
+<a class="font-['JetBrains_Mono'] text-[9px] text-white/30 uppercase hover:text-primary transition-colors" href="legal.html#privacy">Privacy</a>
+<a class="font-['JetBrains_Mono'] text-[9px] text-white/30 uppercase hover:text-primary transition-colors" href="legal.html#terms">Terms</a>
+<a class="font-['JetBrains_Mono'] text-[9px] text-white/30 uppercase hover:text-primary transition-colors" href="legal.html#security">Security</a>
+<a class="font-['JetBrains_Mono'] text-[9px] text-white/30 uppercase hover:text-primary transition-colors" href="status.html">Status</a>
+</div>
+<div class="flex items-center gap-4 text-white/20">
+<span class="material-symbols-outlined text-sm">terminal</span>
+<span class="font-mono text-[9px] uppercase tracking-widest">BUILD: 0.9.12-BETA</span>
+</div>
+</div>
+</footer>
+<script>
+    function switchView(viewId, element) {
+        // Hide all views
+        document.querySelectorAll('.view-content').forEach(view => {
+            view.classList.add('hidden');
+            view.classList.remove('active-view');
+        });
+        
+        // Show target view
+        const targetView = document.getElementById('view-' + viewId);
+        if (targetView) {
+            targetView.classList.remove('hidden');
+            setTimeout(() => targetView.classList.add('active-view'), 10);
+        }
+        
+        // Update sidebar links
+        document.querySelectorAll('.sidebar-link').forEach(link => {
+            link.classList.remove('bg-white/5', 'text-primary', 'border-l-2', 'border-primary');
+            link.classList.add('text-white/40');
+        });
+        
+        if (element) {
+            element.classList.add('bg-white/5', 'text-primary', 'border-l-2', 'border-primary');
+            element.classList.remove('text-white/40');
+        }
+
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+</script>
+
+<style>
+    .view-content {
+        transition: opacity 0.5s ease-in-out, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    .view-content.active-view {
+        opacity: 1;
+        transform: translateY(0);
+        display: block !important;
+    }
+    .view-content.hidden {
+        display: none;
+    }
+</style>
+</body></html>

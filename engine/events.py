@@ -36,7 +36,7 @@ class EventBus:
 
     async def subscribe(self, run_id: UUID) -> AsyncIterator[dict[str, Any]]:
         """Subscribe to events for a specific run."""
-        queue = asyncio.Queue()
+        queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
         if run_id not in self._subscribers:
             self._subscribers[run_id] = []
         

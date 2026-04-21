@@ -1,6 +1,6 @@
-import pytest
 from engine.synthesizer import render_markdown_report
 from models.report import Card
+
 
 def test_render_markdown_polish_hooks():
     """TC-W-001: Verify that the synthesizer includes animation hooks in the output."""

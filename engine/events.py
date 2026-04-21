@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
-from typing import Any, AsyncIterator, Dict, List
+from collections.abc import AsyncIterator
+from typing import Any
 from uuid import UUID
 
 LOGGER = logging.getLogger("engine.events")
@@ -13,9 +13,11 @@ LOGGER = logging.getLogger("engine.events")
 class EventBus:
     def __init__(self) -> None:
         # Map run_id -> List of queues (one per subscriber)
-        self._subscribers: Dict[UUID, List[asyncio.Queue]] = {}
+        self._subscribers: dict[UUID, list[asyncio.Queue]] = {}
 
-    async def publish(self, run_id: UUID, event_type: str, data: Dict[str, Any] | None = None) -> None:
+    async def publish(
+        self, run_id: UUID, event_type: str, data: dict[str, Any] | None = None
+    ) -> None:
         """Broadcast an event to all subscribers for a specific run."""
         if run_id not in self._subscribers:
             return
@@ -32,7 +34,7 @@ class EventBus:
             
         LOGGER.debug(f"Published event {event_type} for run {run_id}")
 
-    async def subscribe(self, run_id: UUID) -> AsyncIterator[Dict[str, Any]]:
+    async def subscribe(self, run_id: UUID) -> AsyncIterator[dict[str, Any]]:
         """Subscribe to events for a specific run."""
         queue = asyncio.Queue()
         if run_id not in self._subscribers:
@@ -53,9 +55,9 @@ class EventBus:
 # Global instance for app-wide use
 bus = EventBus()
 
-async def publish_event(run_id: UUID, event_type: str, data: Dict[str, Any] | None = None) -> None:
+async def publish_event(run_id: UUID, event_type: str, data: dict[str, Any] | None = None) -> None:
     await bus.publish(run_id, event_type, data)
 
-async def subscribe_run(run_id: UUID) -> AsyncIterator[Dict[str, Any]]:
+async def subscribe_run(run_id: UUID) -> AsyncIterator[dict[str, Any]]:
     async for event in bus.subscribe(run_id):
         yield event

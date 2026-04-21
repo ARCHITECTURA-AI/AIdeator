@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
-import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
+
+import pytest
+
 from engine.orchestrator import execute_run
+
 
 @pytest.mark.asyncio
 async def test_execute_run_broadcasts_events() -> None:
@@ -18,9 +21,17 @@ async def test_execute_run_broadcasts_events() -> None:
     with patch("engine.orchestrator.get_run", return_value=mock_run), \
          patch("engine.orchestrator.get_idea", return_value=MagicMock()), \
          patch("engine.orchestrator.transition_run"), \
-         patch("engine.orchestrator.collect_search_signals", new_callable=AsyncMock, return_value=[]), \
+         patch(
+             "engine.orchestrator.collect_search_signals",
+             new_callable=AsyncMock,
+             return_value=[],
+         ), \
          patch("engine.orchestrator.analyze_dimensions", new_callable=AsyncMock), \
-         patch("engine.orchestrator.synthesize_intelligence", new_callable=AsyncMock, return_value=[]), \
+         patch(
+             "engine.orchestrator.synthesize_intelligence",
+             new_callable=AsyncMock,
+             return_value=[],
+         ), \
          patch("engine.orchestrator.save_report"), \
          patch("engine.orchestrator.settings"), \
          patch("pathlib.Path.write_text"), \

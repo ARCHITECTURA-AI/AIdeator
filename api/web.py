@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -41,6 +42,7 @@ router = APIRouter(tags=["web"])
 _ROOT = Path(__file__).resolve().parents[1]
 templates = Jinja2Templates(directory=str(_ROOT / "templates"))
 _DOCS_DIR = settings.app_docs_dir
+LOGGER = logging.getLogger(__name__)
 
 
 

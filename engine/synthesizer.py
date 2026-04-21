@@ -253,14 +253,17 @@ def render_markdown_report(*, idea_id: str, cards: list[Card]) -> str:
 
     for card in cards:
         score = card.score
-        band = card.meta.get("band")
 
         # Section header with score
         header = f"## {card.title}"
         if score is not None:
             normalized = normalize_score(score)
             # Add animation hooks for the "Wow" moment
-            header += f' — <span class="score-display animate-score" data-target="{normalized}">0</span>/100'
+            score_span = (
+                f'<span class="score-display animate-score" '
+                f'data-target="{normalized}">0</span>'
+            )
+            header += f" — {score_span}/100"
         
         # Add reveal wrapper start
         lines.append('<div class="reveal">')

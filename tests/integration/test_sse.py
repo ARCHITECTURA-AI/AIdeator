@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import asyncio
-import pytest
 from unittest.mock import patch
-from fastapi.testclient import TestClient
 from uuid import uuid4
+
+import pytest
+from fastapi.testclient import TestClient
+
 from api.app import app
 from engine.events import publish_event
 
@@ -14,10 +16,11 @@ client = TestClient(app)
 
 @pytest.mark.asyncio
 async def test_sse_endpoint_streams_events() -> None:
-    from db.runs import save_run
-    from models.run import Run
-    from engine.events import bus
     from uuid import uuid4
+
+    from db.runs import save_run
+    from engine.events import bus
+    from models.run import Run
     
     run_id = uuid4()
     save_run(Run(run_id=run_id, idea_id=uuid4(), status="pending", mode="local-only", tier="high"))
@@ -46,7 +49,7 @@ async def test_sse_endpoint_streams_events() -> None:
 @pytest.mark.asyncio
 async def test_sse_subscription_logic() -> None:
     """Test the subscriber logic directly to ensure events are captured."""
-    from engine.events import subscribe_run, bus
+    from engine.events import bus, subscribe_run
     run_id = uuid4()
     
     # Start subscription and run it for one event

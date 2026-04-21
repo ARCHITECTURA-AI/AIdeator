@@ -96,7 +96,9 @@ async def execute_run(run_id: UUID) -> None:
         duration_ms = int((time.perf_counter() - started_at) * 1000)
         run.duration_ms = duration_ms
         transition_run(run_id, "succeeded")
-        await publish_event(run_id, "completed", {"status": "succeeded", "duration_ms": duration_ms})
+        await publish_event(
+            run_id, "completed", {"status": "succeeded", "duration_ms": duration_ms}
+        )
         LOGGER.info(
             "Run succeeded",
             extra={

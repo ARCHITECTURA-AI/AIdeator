@@ -259,8 +259,11 @@ def render_markdown_report(*, idea_id: str, cards: list[Card]) -> str:
         header = f"## {card.title}"
         if score is not None:
             normalized = normalize_score(score)
-            band_label = band or score_to_band(normalized)
-            header += f" — {normalized}/100 ({band_label})"
+            # Add animation hooks for the "Wow" moment
+            header += f' — <span class="score-display animate-score" data-target="{normalized}">0</span>/100'
+        
+        # Add reveal wrapper start
+        lines.append('<div class="reveal">')
         lines.append(header)
 
         # Brief summary for quick scanning
@@ -280,6 +283,9 @@ def render_markdown_report(*, idea_id: str, cards: list[Card]) -> str:
             lines.append("Citations:")
             for url in citations:
                 lines.append(f"- {url}")
+        
+        # Add reveal wrapper end
+        lines.append("</div> <!-- end reveal -->")
         lines.append("")
 
     # Benchmark comparison section

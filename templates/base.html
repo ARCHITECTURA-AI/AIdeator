@@ -224,13 +224,78 @@
     <!-- Contextual Floating Indicator -->
     <div class="fixed bottom-8 right-8 z-50 flex items-center gap-4">
         <div class="glass-panel px-4 py-2 flex items-center gap-3">
-            <span class="w-2 h-2 bg-secondary rounded-full animate-pulse"></span>
-            <span class="font-mono text-[10px] tracking-widest text-white/60">ENGINE_STABLE</span>
+            <span class="w-1.5 h-1.5 bg-secondary rounded-full animate-pulse"></span>
+            <span class="font-mono text-[9px] tracking-[0.2em] text-white/60">SYS_V1.0_STABLE</span>
+        </div>
+        <button @click="$dispatch('open-palette')" class="glass-panel px-4 py-2 text-white/40 hover:text-primary hover:border-primary/50 transition-all font-mono text-[9px] tracking-widest">
+            CMD+K
+        </button>
+    </div>
+
+    <!-- Command Palette Modal -->
+    <div x-data="window.AIdeatorPalette" 
+         x-show="isOpen" 
+         @open-palette.window="toggle()"
+         class="fixed inset-0 z-[100] flex items-start justify-center pt-32 px-4 bg-black/80 backdrop-blur-sm"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         @click.self="close()"
+         style="display: none;">
+        
+        <div class="w-full max-w-2xl glass-panel shadow-[0_0_100px_rgba(0,0,0,0.5)] border-white/10 overflow-hidden">
+            <div class="p-4 border-b border-white/5 flex items-center gap-4 bg-white/5">
+                <span class="material-symbols-outlined text-white/20">search</span>
+                <input id="palette-input" 
+                       type="text" 
+                       x-model="query" 
+                       @keydown.arrow-down.prevent="selectedIndex = (selectedIndex + 1) % filteredCommands.length"
+                       @keydown.arrow-up.prevent="selectedIndex = (selectedIndex - 1 + filteredCommands.length) % filteredCommands.length"
+                       @keydown.enter="navigate()"
+                       placeholder="EXECUTE_COMMAND..." 
+                       class="flex-1 bg-transparent border-none text-white font-mono text-xs focus:ring-0 placeholder:text-white/10 uppercase tracking-widest">
+            </div>
+            
+            <div class="max-h-96 overflow-y-auto p-2 space-y-1">
+                <template x-for="(cmd, index) in filteredCommands" :key="cmd.id">
+                    <div @click="window.location.href = cmd.path"
+                         @mouseenter="selectedIndex = index"
+                         :class="selectedIndex === index ? 'bg-primary/10 border-primary/20 text-white' : 'border-transparent text-white/40'"
+                         class="group flex items-center gap-4 p-4 cursor-pointer border transition-all rounded-sm">
+                        <span class="material-symbols-outlined text-lg" :class="selectedIndex === index ? 'text-primary' : 'text-white/10'" x-text="cmd.icon"></span>
+                        <div class="flex-1">
+                            <div class="text-[10px] font-bold uppercase tracking-wider" x-text="cmd.title"></div>
+                            <div class="text-[9px] font-mono opacity-50" x-text="cmd.description"></div>
+                        </div>
+                        <div x-show="selectedIndex === index" class="text-[9px] font-mono text-primary flex items-center gap-1">
+                            EXEC <span class="material-symbols-outlined text-sm">keyboard_return</span>
+                        </div>
+                    </div>
+                </template>
+                
+                <div x-show="filteredCommands.length === 0" class="p-12 text-center text-white/10 font-mono text-[10px] uppercase tracking-[0.3em]">
+                    No terminal matches found
+                </div>
+            </div>
+            
+            <div class="p-3 border-t border-white/5 bg-black/40 flex justify-between items-center font-mono text-[8px] text-white/20 uppercase tracking-widest">
+                <div class="flex gap-4">
+                    <span>↑↓ Navigate</span>
+                    <span>↵ Execute</span>
+                </div>
+                <span>ESC to Close</span>
+            </div>
         </div>
     </div>
 
     <!-- Scripts -->
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="{{ url_for('static', path='/js/polish.js') }}"></script>
+    <script src="{{ url_for('static', path='/js/palette.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/app.css') }}">
     {% block scripts %}{% endblock %}
 </body>
 </html>

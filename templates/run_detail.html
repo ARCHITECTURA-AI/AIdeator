@@ -14,8 +14,8 @@
     </div>
     <div class="text-right font-mono">
         <div class="text-white/40 text-[10px] uppercase tracking-widest mb-1">Intelligence Confidence</div>
-        <div class="text-4xl font-light text-secondary">
-            {% if run.status == 'succeeded' %}{{ run.confidence_score }}%{% else %}—{% endif %}
+        <div class="text-4xl font-light text-secondary {% if run.status == 'succeeded' %}animate-score{% endif %}" data-target="{{ run.confidence_score }}">
+            {% if run.status == 'succeeded' %}0%{% else %}—{% endif %}
         </div>
     </div>
 </header>
@@ -27,42 +27,42 @@
         <div class="flex items-center gap-12 w-full">
             <!-- Step 1: Collection -->
             <div class="flex items-center gap-4">
-                <div class="w-10 h-10 border {% if run.status in ['running', 'succeeded', 'failed'] %}border-secondary/30 text-secondary{% else %}border-white/10 text-white/20{% endif %} flex items-center justify-center">
+                <div id="step-collection-icon" class="w-10 h-10 border {% if run.status in ['running', 'succeeded', 'failed'] %}border-secondary/30 text-secondary{% else %}border-white/10 text-white/20{% endif %} flex items-center justify-center">
                     <span class="material-symbols-outlined">check_circle</span>
                 </div>
                 <div>
                     <div class="text-xs font-bold text-white uppercase tracking-tighter">Collection</div>
-                    <div class="text-[10px] text-white/40 uppercase">{% if run.status in ['running', 'succeeded', 'failed'] %}Complete{% else %}Queued{% endif %}</div>
+                    <div id="step-collection-label" class="text-[10px] text-white/40 uppercase">{% if run.status in ['running', 'succeeded', 'failed'] %}Complete{% else %}Queued{% endif %}</div>
                 </div>
             </div>
             <div class="flex-1 h-[1px] bg-white/5">
-                <div class="h-full bg-secondary {% if run.status in ['running', 'succeeded', 'failed'] %}w-full{% else %}w-0{% endif %} transition-all duration-1000"></div>
+                <div id="bar-collection" class="h-full bg-secondary {% if run.status in ['running', 'succeeded', 'failed'] %}w-full{% else %}w-0{% endif %} transition-all duration-1000"></div>
             </div>
             
             <!-- Step 2: Analysis -->
             <div class="flex items-center gap-4">
-                <div class="w-10 h-10 border {% if run.status in ['succeeded', 'failed'] %}border-secondary/30 text-secondary{% elif run.status == 'running' %}border-primary text-primary animate-pulse{% else %}border-white/10 text-white/20{% endif %} flex items-center justify-center">
+                <div id="step-analysis-icon" class="w-10 h-10 border {% if run.status in ['succeeded', 'failed'] %}border-secondary/30 text-secondary{% elif run.status == 'running' %}border-primary text-primary animate-pulse{% else %}border-white/10 text-white/20{% endif %} flex items-center justify-center">
                     <span class="material-symbols-outlined">insights</span>
                 </div>
                 <div>
                     <div class="text-xs font-bold text-white uppercase tracking-tighter">Analysis</div>
-                    <div class="text-[10px] uppercase {% if run.status == 'running' %}text-primary{% else %}text-white/40{% endif %}">
+                    <div id="step-analysis-label" class="text-[10px] uppercase {% if run.status == 'running' %}text-primary{% else %}text-white/40{% endif %}">
                         {% if run.status in ['succeeded', 'failed'] %}Complete{% elif run.status == 'running' %}In Progress{% else %}Pending{% endif %}
                     </div>
                 </div>
             </div>
             <div class="flex-1 h-[1px] bg-white/5">
-                <div class="h-full bg-secondary {% if run.status == 'succeeded' %}w-full{% else %}w-0{% endif %} transition-all duration-1000"></div>
+                <div id="bar-analysis" class="h-full bg-secondary {% if run.status == 'succeeded' %}w-full{% else %}w-0{% endif %} transition-all duration-1000"></div>
             </div>
             
             <!-- Step 3: Synthesis -->
             <div class="flex items-center gap-4">
-                <div class="w-10 h-10 border {% if run.status == 'succeeded' %}border-primary text-primary shadow-[0_0_10px_rgba(167,165,255,0.3)]{% else %}border-white/10 text-white/20{% endif %} flex items-center justify-center">
+                <div id="step-synthesis-icon" class="w-10 h-10 border {% if run.status == 'succeeded' %}border-primary text-primary shadow-[0_0_10px_rgba(167,165,255,0.3)]{% else %}border-white/10 text-white/20{% endif %} flex items-center justify-center">
                     <span class="material-symbols-outlined">description</span>
                 </div>
                 <div>
                     <div class="text-xs font-bold text-white uppercase tracking-tighter">Synthesis</div>
-                    <div class="text-[10px] uppercase {% if run.status == 'succeeded' %}text-primary{% else %}text-white/40{% endif %}">
+                    <div id="step-synthesis-label" class="text-[10px] uppercase {% if run.status == 'succeeded' %}text-primary{% else %}text-white/40{% endif %}">
                         {% if run.status == 'succeeded' %}Ready{% else %}Locked{% endif %}
                     </div>
                 </div>
@@ -77,14 +77,14 @@
         {% set findings = findings or {} %}
         
         <!-- Card: Market Demand -->
-        <div class="group glass-panel p-8 hover:bg-white/[0.05] transition-all relative overflow-hidden">
+        <div class="group glass-panel p-8 hover:bg-white/[0.05] transition-all relative overflow-hidden reveal">
             <div class="absolute top-0 right-0 p-4 font-mono text-[10px] text-white/10 uppercase">Metric_Dmd</div>
             <div class="flex justify-between items-start mb-8">
                 <div>
                     <h3 class="text-white/40 text-xs uppercase tracking-widest mb-2">Market Demand</h3>
                     <div class="text-5xl font-light text-white group-hover:text-primary transition-colors">
                         {% if findings['demand'] and findings['demand'].score is defined %}
-                            {{ (findings['demand'].score / 10)|round(1) }}<span class="text-xl text-white/20">/10</span>
+                            <span class="animate-score" data-target="{{ (findings['demand'].score / 10)|round(1) }}">0</span><span class="text-xl text-white/20">/10</span>
                         {% else %}
                             N/A
                         {% endif %}
@@ -100,7 +100,7 @@
         </div>
 
         <!-- Card: Competition -->
-        <div class="group glass-panel p-8 hover:bg-white/[0.05] transition-all relative">
+        <div class="group glass-panel p-8 hover:bg-white/[0.05] transition-all relative reveal">
             <div class="absolute top-0 right-0 p-4 font-mono text-[10px] text-white/10 uppercase">Metric_Cmp</div>
             <div class="flex justify-between items-start mb-8">
                 <div>
@@ -119,14 +119,14 @@
         </div>
 
         <!-- Card: SWOT/Risk -->
-        <div class="group glass-panel p-8 hover:bg-white/[0.05] transition-all relative">
+        <div class="group glass-panel p-8 hover:bg-white/[0.05] transition-all relative reveal">
             <div class="absolute top-0 right-0 p-4 font-mono text-[10px] text-white/10 uppercase">Metric_Rsk</div>
             <div class="flex justify-between items-start mb-8">
                 <div>
                     <h3 class="text-white/40 text-xs uppercase tracking-widest mb-2">Integrity Risk</h3>
                     <div class="text-5xl font-light text-white group-hover:text-error transition-colors">
                         {% if findings['viability'] and findings['viability'].score is defined %}
-                            {{ (findings['viability'].score / 10)|round(1) }}<span class="text-xl text-white/20">/10</span>
+                            <span class="animate-score" data-target="{{ (findings['viability'].score / 10)|round(1) }}">0</span><span class="text-xl text-white/20">/10</span>
                         {% else %}
                             —<span class="text-xl text-white/20">/10</span>
                         {% endif %}
@@ -143,31 +143,32 @@
             </div>
         </div>
 
-        <!-- Card: Action Path -->
-        <div class="group bg-primary p-8 transition-all relative flex flex-col justify-between">
-            <div class="absolute top-0 right-0 p-4 font-mono text-[10px] text-black/40 tracking-widest uppercase">Path_Active</div>
+        <div id="action-panel" class="group {% if run.status == 'succeeded' %}bg-primary{% else %}bg-black border border-white/10{% endif %} p-8 transition-all relative flex flex-col justify-between">
+            <div class="absolute top-0 right-0 p-4 font-mono text-[10px] {% if run.status == 'succeeded' %}text-black/40{% else %}text-white/20{% endif %} tracking-widest uppercase">Path_Active</div>
             <div>
-                <h3 class="text-black/60 text-xs uppercase tracking-widest mb-2 font-bold">Execution Path</h3>
-                <div class="text-3xl font-light text-black leading-tight uppercase">
+                <h3 class="{% if run.status == 'succeeded' %}text-black/60{% else %}text-white/40{% endif %} text-xs uppercase tracking-widest mb-2 font-bold">Execution Path</h3>
+                <div id="action-title" class="text-3xl font-light {% if run.status == 'succeeded' %}text-black{% else %}text-white{% endif %} leading-tight uppercase">
                     {% if run.status == 'succeeded' %}Strategy Report Ready{% elif run.status == 'failed' %}Analysis Terminal{% else %}Processing Concept...{% endif %}
                 </div>
             </div>
-            {% if run.status == 'succeeded' %}
-                <a href="{{ docs_url }}" class="mt-8 w-full py-4 bg-primary text-black text-xs font-bold uppercase tracking-widest hover:bg-white transition-all flex items-center justify-center gap-2">
-                    View Final Report
-                    <span class="material-symbols-outlined text-sm">description</span>
-                </a>
-            {% elif run.status == 'failed' %}
-                <div class="mt-8 w-full py-4 bg-red-500/20 text-red-500 text-xs font-bold uppercase tracking-widest flex flex-col items-center justify-center gap-1 border border-red-500/50">
-                    <div class="flex items-center gap-2 uppercase">Analysis Failed <span class="material-symbols-outlined text-sm">error</span></div>
-                    <div class="text-[8px] opacity-60 font-mono uppercase">{{ run.error_code }}: {{ run.error_message }}</div>
-                </div>
-            {% else %}
-                <div class="mt-8 w-full py-4 bg-black text-white text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 border border-white/10">
-                    Sifting Signals...
-                    <span class="material-symbols-outlined text-sm animate-spin">refresh</span>
-                </div>
-            {% endif %}
+            <div id="action-button-container">
+                {% if run.status == 'succeeded' %}
+                    <a href="{{ docs_url }}" class="mt-8 w-full py-4 bg-primary text-black text-xs font-bold uppercase tracking-widest hover:bg-white transition-all flex items-center justify-center gap-2">
+                        View Final Report
+                        <span class="material-symbols-outlined text-sm">description</span>
+                    </a>
+                {% elif run.status == 'failed' %}
+                    <div class="mt-8 w-full py-4 bg-red-500/20 text-red-500 text-xs font-bold uppercase tracking-widest flex flex-col items-center justify-center gap-1 border border-red-500/50">
+                        <div class="flex items-center gap-2 uppercase">Analysis Failed <span class="material-symbols-outlined text-sm">error</span></div>
+                        <div class="text-[8px] opacity-60 font-mono uppercase">{{ run.error_code }}: {{ run.error_message }}</div>
+                    </div>
+                {% else %}
+                    <div class="mt-8 w-full py-4 bg-black text-white text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 border border-white/10">
+                        Sifting Signals...
+                        <span class="material-symbols-outlined text-sm animate-spin">refresh</span>
+                    </div>
+                {% endif %}
+            </div>
         </div>
     </div>
 
@@ -176,7 +177,7 @@
         <div class="glass-panel rounded-sm h-full flex flex-col border-white/5 font-mono">
             <div class="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
                 <h3 class="text-xs font-bold uppercase tracking-widest text-white">Execution Intel</h3>
-                <span class="text-[10px] text-primary uppercase">Status: {{ run.status }}</span>
+                <span id="run-status-badge" class="text-[10px] text-primary uppercase">Status: {{ run.status }}</span>
             </div>
             <div class="p-6 border-b border-white/5 space-y-4">
                 <div class="flex justify-between text-[10px] uppercase">
@@ -194,9 +195,9 @@
             </div>
             <div class="p-6 border-b border-white/5 flex justify-between items-center">
                 <h3 class="text-xs font-bold uppercase tracking-widest text-white">Signal Stream</h3>
-                <span class="text-[10px] text-primary {% if run.status in ['pending', 'running'] %}animate-pulse{% endif %} uppercase">Live_Archive</span>
+                <span id="signal-stream-badge" class="text-[10px] text-primary {% if run.status in ['pending', 'running'] %}animate-pulse{% endif %} uppercase">Live_Archive</span>
             </div>
-            <div class="flex-1 overflow-y-auto p-6 space-y-8">
+            <div id="signal-stream-container" class="flex-1 overflow-y-auto p-6 space-y-8">
                 {% if citations %}
                     {% for citation in citations %}
                     <div class="space-y-3">
@@ -224,10 +225,122 @@
 
 {% if run.status in ['pending', 'running'] %}
 <script>
-    // Auto-refresh script for active runs
-    setTimeout(() => {
-        window.location.reload();
-    }, 3000); // Polling every 3 seconds
+    const runId = "{{ run.id }}";
+    const eventSource = new EventSource(`/api/runs/${runId}/events`);
+
+    const collectionIcon = document.getElementById('step-collection-icon');
+    const collectionLabel = document.getElementById('step-collection-label');
+    const collectionBar = document.getElementById('bar-collection');
+    
+    const analysisIcon = document.getElementById('step-analysis-icon');
+    const analysisLabel = document.getElementById('step-analysis-label');
+    const analysisBar = document.getElementById('bar-analysis');
+    
+    const synthesisIcon = document.getElementById('step-synthesis-icon');
+    const synthesisLabel = document.getElementById('step-synthesis-label');
+
+    const statusBadge = document.getElementById('run-status-badge');
+    const streamBadge = document.getElementById('signal-stream-badge');
+    const streamContainer = document.getElementById('signal-stream-container');
+    
+    const actionPanel = document.getElementById('action-panel');
+    const actionTitle = document.getElementById('action-title');
+    const actionBtnContainer = document.getElementById('action-button-container');
+
+    eventSource.onmessage = function(e) {
+        const event = JSON.parse(e.data);
+        const { type, data } = event;
+
+        if (type === 'started') {
+            statusBadge.innerText = 'Status: running';
+        }
+
+        if (type === 'collecting_signals') {
+            collectionIcon.classList.remove('border-white/10', 'text-white/20');
+            collectionIcon.classList.add('border-secondary/30', 'text-secondary');
+            collectionLabel.innerText = 'Complete';
+            collectionBar.classList.remove('w-0');
+            collectionBar.classList.add('w-full');
+            
+            analysisIcon.classList.remove('border-white/10', 'text-white/20');
+            analysisIcon.classList.add('border-primary', 'text-primary', 'animate-pulse');
+            analysisLabel.innerText = 'In Progress';
+            analysisLabel.classList.add('text-primary');
+        }
+
+        if (type === 'analyzing') {
+            // Already in progress from previous step or just started
+            analysisIcon.classList.add('border-primary', 'text-primary', 'animate-pulse');
+            analysisLabel.innerText = data.label || 'Analyzing';
+        }
+
+        if (type === 'synthesizing') {
+            analysisIcon.classList.remove('animate-pulse', 'border-primary', 'text-primary');
+            analysisIcon.classList.add('border-secondary/30', 'text-secondary');
+            analysisLabel.innerText = 'Complete';
+            analysisLabel.classList.remove('text-primary');
+            analysisBar.classList.remove('w-0');
+            analysisBar.classList.add('w-full');
+
+            synthesisIcon.classList.remove('border-white/10', 'text-white/20');
+            synthesisIcon.classList.add('border-primary', 'text-primary', 'animate-pulse');
+            synthesisLabel.innerText = data.label || 'Synthesizing';
+            synthesisLabel.classList.add('text-primary');
+        }
+
+        if (type === 'completed') {
+            synthesisIcon.classList.remove('animate-pulse', 'border-primary', 'text-primary');
+            synthesisIcon.classList.add('border-primary', 'text-primary', 'shadow-[0_0_10px_rgba(167,165,255,0.3)]');
+            synthesisLabel.innerText = 'Ready';
+            
+            statusBadge.innerText = 'Status: succeeded';
+            streamBadge.classList.remove('animate-pulse');
+            
+            actionPanel.classList.remove('bg-black', 'border-white/10');
+            actionPanel.classList.add('bg-primary');
+            actionTitle.innerText = 'Strategy Report Ready';
+            actionTitle.classList.remove('text-white');
+            actionTitle.classList.add('text-black');
+            
+            actionBtnContainer.innerHTML = `
+                <a href="/app/reports/{{ run.idea_id }}" class="mt-8 w-full py-4 bg-primary text-black text-xs font-bold uppercase tracking-widest hover:bg-white transition-all flex items-center justify-center gap-2">
+                    View Final Report
+                    <span class="material-symbols-outlined text-sm">description</span>
+                </a>
+            `;
+            
+            // Trigger counting animations
+            if (window.AIdeatorPolish) {
+                window.AIdeatorPolish.initReportAnimations();
+            }
+
+            // Reload page after a delay to get the full static content (only if not already there)
+            if (document.querySelectorAll('.reveal').length === 0) {
+                 setTimeout(() => window.location.reload(), 3000);
+            }
+            eventSource.close();
+        }
+
+        if (type === 'failed') {
+            statusBadge.innerText = 'Status: failed';
+            statusBadge.classList.remove('text-primary');
+            statusBadge.classList.add('text-error');
+            
+            actionTitle.innerText = 'Analysis Terminal';
+            actionBtnContainer.innerHTML = `
+                <div class="mt-8 w-full py-4 bg-red-500/20 text-red-500 text-xs font-bold uppercase tracking-widest flex flex-col items-center justify-center gap-1 border border-red-500/50">
+                    <div class="flex items-center gap-2 uppercase">Analysis Failed <span class="material-symbols-outlined text-sm">error</span></div>
+                    <div class="text-[8px] opacity-60 font-mono uppercase">${data.error_code || 'ERROR'}: ${data.error || 'Unknown error'}</div>
+                </div>
+            `;
+            eventSource.close();
+        }
+    };
+
+    eventSource.onerror = function() {
+        console.error("SSE connection lost.");
+        eventSource.close();
+    };
 </script>
 {% endif %}
 {% endblock %}

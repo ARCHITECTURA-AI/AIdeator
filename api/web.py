@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+import json
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -9,7 +11,7 @@ from typing import Any, TypeVar
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Body, Form, HTTPException, Query, Request, Response
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
@@ -26,6 +28,7 @@ from db.comments import Comment, add_comment, list_comments_for_idea
 from db.ideas import get_idea, list_ideas, save_idea
 from db.reports import get_report, list_reports
 from db.runs import get_run, list_runs, list_runs_for_idea, save_run
+from engine.events import subscribe_run
 from engine.exporter import ReportExporter
 from engine.forge import forge_concept_file
 from engine.og_generator import generate_og_image
@@ -271,6 +274,32 @@ def get_run_detail(run_id: UUID) -> dict[str, object]:
         "cards": report.cards if report else [],
         "artifact_path": report.artifact_path if report else f"docs/idea-{run.idea_id}.md",
     }
+
+
+@router.get("/api/runs/{run_id}/events")
+async def stream_run_events(run_id: UUID) -> StreamingResponse:
+    """Stream real-time progress events for a run."""
+    run = get_run(run_id)
+    if run is None:
+        raise HTTPException(status_code=404, detail="Run not found")
+
+    async def event_generator():
+        try:
+            async for event in subscribe_run(run_id):
+                yield f"data: {json.dumps(event)}\n\n"
+        except asyncio.CancelledError:
+            # Handle client disconnect
+            pass
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",  # Disable proxy buffering (Nginx, etc.)
+        },
+    )
 
 
 @router.get("/report-docs")
@@ -551,6 +580,49 @@ def reports_page(request: Request, q: str = Query(default="")) -> HTMLResponse:
         }
     )
     return templates.TemplateResponse(request=request, name="reports_list.html", context=context)
+
+
+@router.get("/api/reports/{idea_id}/export")
+async def export_report_html(idea_id: UUID):
+    try:
+        report_doc = get_report_doc(idea_id)
+        if not report_doc:
+            raise HTTPException(status_code=404, detail="Report not found")
+        
+        idea = get_idea(idea_id)
+        title = idea.title if idea else "AIdeator Intelligence Report"
+        
+        # Load assets for inlining
+        css_path = _ROOT / "static" / "css" / "app.css"
+        js_path = _ROOT / "static" / "js" / "polish.js"
+        
+        css_content = css_path.read_text(encoding="utf-8") if css_path.exists() else ""
+        js_content = js_path.read_text(encoding="utf-8") if js_path.exists() else ""
+        
+        # Render markdown to HTML
+        html_content = _render_markdown(report_doc["markdown"])
+        
+        # Prepare context for the export template
+        context = {
+            "title": title,
+            "css": css_content,
+            "js": js_content,
+            "content": html_content,
+            "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        
+        # Generate the standalone HTML
+        rendered_html = templates.get_template("export_report.html").render(context)
+        
+        filename = f"AIdeator_Report_{idea_id.hex[:8]}.html"
+        return Response(
+            content=rendered_html,
+            media_type="text/html",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+    except Exception as e:
+        LOGGER.error(f"Export failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Export failed: {str(e)}")
 
 
 @router.get("/app/reports/{idea_id}", response_class=HTMLResponse)

@@ -11,6 +11,7 @@ from db.ideas import get_idea
 from db.reports import save_report
 from db.runs import get_run, transition_run
 from engine.analyst import analyze_dimensions
+from engine.events import publish_event
 from engine.signal_collector import collect_search_signals
 from engine.synthesizer import build_markdown_artifact, synthesize_intelligence
 from models.report import Report
@@ -35,6 +36,7 @@ async def execute_run(run_id: UUID) -> None:
 
     try:
         transition_run(run_id, "running")
+        await publish_event(run_id, "started", {"status": "running"})
         
         # Collect search signals based on mode
         idea = get_idea(run.idea_id)
@@ -46,15 +48,10 @@ async def execute_run(run_id: UUID) -> None:
                 description=idea.description,
                 limit=5,
             )
-            LOGGER.info(
-                "Search signals collected",
-                extra={
-                    "event": "search_signals_collected",
-                    "extra_fields": {
-                        "run_id": str(run_id),
-                        "results_count": len(search_results),
-                    },
-                },
+            await publish_event(
+                run_id, 
+                "collecting_signals", 
+                {"results_count": len(search_results)}
             )
 
         citations = [
@@ -66,14 +63,14 @@ async def execute_run(run_id: UUID) -> None:
             for i, res in enumerate(search_results, 1)
         ]
         
-        # Dimensional sifting (Node 2)
+        await publish_event(run_id, "analyzing", {"label": "Dimensional sifting"})
         analysis = await analyze_dimensions(
             title=idea.title if idea else "Unknown",
             description=idea.description if idea else "",
             citations=citations
         )
         
-        # Real intelligence synthesis using LLM (Node 3)
+        await publish_event(run_id, "synthesizing", {"label": "Intelligence synthesis"})
         cards = await synthesize_intelligence(
             title=idea.title if idea else "Unknown",
             description=idea.description if idea else "",
@@ -99,6 +96,7 @@ async def execute_run(run_id: UUID) -> None:
         duration_ms = int((time.perf_counter() - started_at) * 1000)
         run.duration_ms = duration_ms
         transition_run(run_id, "succeeded")
+        await publish_event(run_id, "completed", {"status": "succeeded", "duration_ms": duration_ms})
         LOGGER.info(
             "Run succeeded",
             extra={
@@ -115,6 +113,7 @@ async def execute_run(run_id: UUID) -> None:
         duration_ms = int((time.perf_counter() - started_at) * 1000)
         run.duration_ms = duration_ms
         transition_run(run_id, "failed", error_code="AE-ENGINE-001")
+        await publish_event(run_id, "failed", {"error": str(e), "error_code": "AE-ENGINE-001"})
         LOGGER.error(
             f"Run execution failed: {e}",
             extra={

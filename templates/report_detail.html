@@ -37,7 +37,8 @@
 
 
     <!-- Main Report Canvas -->
-    <article class="w-full max-w-4xl glass-panel p-16 relative overflow-hidden group shadow-[0_0_100px_rgba(167,165,255,0.05)] border-white/10">
+    <article class="report-container w-full max-w-4xl glass-panel p-16 relative overflow-hidden group shadow-[0_0_100px_rgba(167,165,255,0.05)] border-white/10"
+             x-init="setTimeout(() => window.AIdeatorPolish.initReportAnimations(), 500)">
         <!-- Floating Scanline -->
         <div class="scanning-line opacity-20"></div>
         

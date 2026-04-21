@@ -378,6 +378,19 @@ Rules:
 - Simulate: run starts but engine never updates status
 - Expect: after 2× NFR-001, `status=failed`, `error_code=AE-RESOURCE-001`
 - Runtime Signal: `metric:run_stuck_count`, `log:run_status_changed`
+### Real-time Progress (Phase 1)
+**TC-U-060 — Orchestrator broadcasts progress events**
+- Source: FR-SSE-001
+- Target: `engine/orchestrator.py`
+- Given: a run execution
+- Expect: events are published to a subscriber for each major step
+- Runtime Signal: `log:run_progress_event`
+**TC-I-060 — SSE endpoint streams events for a specific run**
+- Source: FR-SSE-001
+- Target: `api/web.py`
+- Call: `GET /api/runs/{id}/events`
+- Expect: `text/event-stream` response; events match the run's progress
+- Runtime Signal: `log:sse_stream_started`
 ---
 ### PH-A Contract Tests (TC-C-001 to TC-C-011)
 **TC-C-001 — Tavily response parsing ignores unknown fields**

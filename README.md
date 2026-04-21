@@ -50,16 +50,16 @@ Think of it as your AI research analyst for product ideas — run it locally wit
 
 ## Key Features
 
-| Feature | Description |
-|---------|-------------|
+| 🪄 **Premium UI** | Score interpolations, staggered reveals, and glassmorphic aesthetics |
+| ⚡ **Real-time SSE** | Live engine telemetry with status pulses and progress bars |
+| ⌨️ **Cmd+K Palette** | Pro-tier keyboard navigation for rapid system access |
+| 📄 **HTML Export** | Self-contained HTML reports with embedded animation engines |
 | 🔒 **Privacy modes** | `local-only`, `hybrid`, `cloud-enabled` — you control data egress |
 | 🤖 **LLM providers** | Ollama (local), OpenAI-compatible, Anthropic, Mistral |
 | 🔍 **Search providers** | Built-in (free), Tavily (AI search), Exa (semantic search) |
-| 📊 **0–100 scoring** | Demand, competition, risk with `high/medium/low` bands |
+| 📊 **0–100 scoring** | Demand, competition, risk with score-counting animations |
 | 📈 **Benchmarks** | Compare scores against 12 reference SaaS products |
-| 📄 **HTML + PDF reports** | Print-optimized shareable reports with one click |
-| 🎯 **Idea templates** | Quick-start templates for common SaaS categories |
-| 🖥️ **Web dashboard** | Server-rendered UI with status badges, polling, and onboarding |
+| 🖥️ **Web dashboard** | Server-rendered UI with status badges and kinetic pulses |
 | ⚙️ **Config wizard** | `aideator config init` for interactive setup |
 
 ## Quick Start
@@ -210,7 +210,8 @@ Local-only mode blocks all outbound HTTP by run-mode guardrails. See [`docs/secu
 
 | Version | Phase |
 |---------|-------|
-| `1.0.0` | V1 — Full validation engine |
+| `1.1.0` | V1.1 — UI Polish & Command Palette |
+| `1.0.0` | V1.0 — Full validation engine |
 | `0.4.0` | PH-D — Plugin & eval |
 | `0.3.0` | PH-C — Runtime & migration |
 | `0.2.0` | PH-B — Web UI |

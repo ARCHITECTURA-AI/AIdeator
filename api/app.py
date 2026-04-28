@@ -11,15 +11,24 @@ from pathlib import Path
 from threading import Lock
 from uuid import UUID
 
-from fastapi import BackgroundTasks, FastAPI, HTTPException
+import sentry_sdk
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from adapters.reddit import parse_reddit_response
 from adapters.tavily import parse_tavily_response
+from api.auth import get_current_user
+from api.auth import router as auth_router
 from api.config import settings
 from api.logging import RequestLoggingMiddleware, setup_logging
+from api.templates import router as templates_router
 from api.web import router as web_router
+from api.webhooks import router as webhooks_router
+from api.workspaces import router as workspace_router
 from config.model_routing import (
     RoutingConfig,
     load_prompt_registry,
@@ -75,8 +84,12 @@ from models.run import Run
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     from infra.watchdog import cleanup_stale_runs
+
     cleanup_stale_runs()
-    
+    from db.base import initialize_db
+
+    initialize_db()
+
     settings.app_docs_dir.mkdir(parents=True, exist_ok=True)
     LOGGER.info(
         "Application startup",
@@ -95,7 +108,18 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     yield
     LOGGER.info("Application shutdown", extra={"event": "app_shutdown"})
 
+
+# Hardening: Sentry & Rate Limiting
+if settings.sentry_dsn:
+    sentry_sdk.init(dsn=settings.sentry_dsn, traces_sample_rate=1.0)
+
+limiter = Limiter(
+    key_func=get_remote_address, default_limits=[f"{settings.rate_limit_requests}/minute"]
+)
 app = FastAPI(title="AIdeator", version="0.1.0", lifespan=lifespan)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
+
 _CONCURRENCY_GUARD = Lock()
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 _DEFAULT_BIND_HOST = settings.app_host
@@ -103,6 +127,11 @@ LOGGER = logging.getLogger("api.app")
 
 setup_logging()
 app.add_middleware(RequestLoggingMiddleware)
+
+app.include_router(auth_router)
+app.include_router(templates_router)
+app.include_router(workspace_router)
+app.include_router(webhooks_router)
 
 
 def _mode_disclosure(mode: str) -> str:
@@ -144,22 +173,27 @@ def _is_within_docs(path_value: str) -> bool:
     return docs_root in candidate.parents or candidate == docs_root
 
 
-
-
 @app.post("/ideas", status_code=201)
-def post_ideas(payload: dict[str, str]) -> dict[str, str]:
+def post_ideas(
+    payload: dict[str, str], current_user: object = Depends(get_current_user)
+) -> dict[str, str]:
     idea = Idea(
         title=payload["title"],
         description=payload["description"],
         target_user=payload["target_user"],
         context=payload["context"],
+        workspace_id=UUID(payload["workspace_id"]) if payload.get("workspace_id") else None,
     )
-    save_idea(idea)
+    save_idea(idea, user_id=current_user.user_id)  # type: ignore
     return {"idea_id": str(idea.idea_id)}
 
 
 @app.post("/runs", status_code=202)
-def post_runs(payload: dict[str, str], background_tasks: BackgroundTasks) -> dict[str, str | bool]:
+def post_runs(
+    payload: dict[str, str],
+    background_tasks: BackgroundTasks,
+    current_user: object = Depends(get_current_user),
+) -> dict[str, str | bool]:
     idea_id = UUID(payload["idea_id"])
     tier = payload["tier"]
     mode = payload["mode"]
@@ -218,7 +252,7 @@ def post_runs(payload: dict[str, str], background_tasks: BackgroundTasks) -> dic
 
 
 @app.get("/runs/{run_id}/status", response_model=None)
-def get_run_status(run_id: str) -> object:
+def get_run_status(run_id: str, current_user: object = Depends(get_current_user)) -> object:
     try:
         parsed_run_id = UUID(run_id)
     except ValueError:
@@ -399,6 +433,7 @@ def test_hook_phb_idempotency() -> dict[str, object]:
         "idempotency_key": "phb-idempotency-key",
     }
     from fastapi import BackgroundTasks
+
     bg = BackgroundTasks()
     first = post_runs(payload, background_tasks=bg)
     second = post_runs(payload, background_tasks=bg)
@@ -533,7 +568,7 @@ def test_hook_phb_security_path_traversal() -> dict[str, object]:
 
 @app.post("/internal/test-hooks/phb/security-concurrency-isolation")
 def test_hook_phb_security_concurrency_isolation(
-    background_tasks: BackgroundTasks
+    background_tasks: BackgroundTasks,
 ) -> dict[str, object]:
     idea_ids: list[str] = []
     run_ids: list[str] = []
@@ -764,10 +799,13 @@ def test_hook_phc_security_log_secret_scan() -> dict[str, object]:
         "client_secret": "client-secret-123",
     }
     sanitized = sanitize_log_event(raw_event)
-    leaked = any(
-        str(sanitized.get(key, "")).lower().find("secret") >= 0
-        for key in ("api_key", "client_secret")
-    ) or sanitized.get("idea_description") != "[REDACTED]"
+    leaked = (
+        any(
+            str(sanitized.get(key, "")).lower().find("secret") >= 0
+            for key in ("api_key", "client_secret")
+        )
+        or sanitized.get("idea_description") != "[REDACTED]"
+    )
     return {"ok": not leaked, "leaked": leaked}
 
 
@@ -1031,4 +1069,6 @@ def healthz() -> dict[str, object]:
 
 
 app.mount("/static", StaticFiles(directory=_PROJECT_ROOT / "static"), name="static")
+app.include_router(auth_router)
+app.include_router(workspace_router)
 app.include_router(web_router)

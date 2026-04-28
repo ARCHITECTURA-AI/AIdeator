@@ -120,7 +120,6 @@ class BuiltinSearchProvider(SearchProvider):
             response = await client.get(url)
             response.raise_for_status()
 
-
             raw_html = response.text
 
             # Limit content length

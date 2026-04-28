@@ -13,6 +13,7 @@ class TestSearXNGProvider:
 
     def _make_provider(self, url: str = "http://localhost:8888"):
         from aideator.search.searxng import SearXNGSearchProvider
+
         return SearXNGSearchProvider(instance_url=url)
 
     # ------------------------------------------------------------------ #
@@ -53,6 +54,7 @@ class TestSearXNGProvider:
     def test_search_maps_json_api_response(self) -> None:
         """Verify SearXNG JSON API results are correctly mapped."""
         import httpx
+
         provider = self._make_provider()
 
         fake_response_data = {
@@ -98,6 +100,7 @@ class TestSearXNGProvider:
     def test_search_respects_limit(self) -> None:
         """Verify results are truncated to limit."""
         import httpx
+
         provider = self._make_provider()
 
         fake_data = {
@@ -126,6 +129,7 @@ class TestSearXNGProvider:
     def test_search_connect_error_returns_empty(self) -> None:
         """Verify ConnectError returns [] instead of raising."""
         import httpx
+
         provider = self._make_provider()
 
         async def mock_get(url, **kwargs):
@@ -146,6 +150,7 @@ class TestSearXNGProvider:
 
     def test_healthcheck_ok(self) -> None:
         import httpx
+
         provider = self._make_provider()
 
         mock_response = MagicMock(spec=httpx.Response)
@@ -165,6 +170,7 @@ class TestSearXNGProvider:
 
     def test_healthcheck_unavailable_on_connect_error(self) -> None:
         import httpx
+
         provider = self._make_provider()
 
         async def mock_get(url, **kwargs):
@@ -181,6 +187,7 @@ class TestSearXNGProvider:
 
     def test_healthcheck_timeout(self) -> None:
         import httpx
+
         provider = self._make_provider()
 
         async def mock_get(url, **kwargs):
@@ -211,7 +218,9 @@ class TestSearXNGRegistryIntegration:
         from aideator.search.registry import get_search_provider
         from aideator.search.searxng import SearXNGSearchProvider
 
-        provider = get_search_provider({"search_provider": "searxng", "searxng_instance_url": "http://localhost:8080"})
+        provider = get_search_provider(
+            {"search_provider": "searxng", "searxng_instance_url": "http://localhost:8080"}
+        )
         assert isinstance(provider, SearXNGSearchProvider)
         assert provider.name == "searxng"
 
@@ -222,7 +231,7 @@ class TestSearXNGRegistryIntegration:
 
         with patch.dict(os.environ, {"SEARXNG_URL": "http://custom:9999"}):
             provider = get_search_provider({"search_provider": "searxng"})
-        assert provider._instance_url == "http://custom:9999"
+        assert getattr(provider, "_instance_url") == "http://custom:9999"
 
     def test_registry_lists_searxng(self) -> None:
         from aideator.search.registry import list_available_search_providers

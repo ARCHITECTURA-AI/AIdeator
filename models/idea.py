@@ -17,3 +17,4 @@ class Idea:
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     tier: str = "Bronze"
     brand_hex: str = "#888888"
+    workspace_id: UUID | None = None

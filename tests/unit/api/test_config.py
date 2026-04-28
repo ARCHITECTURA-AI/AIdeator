@@ -86,12 +86,14 @@ class TestLoadSettings:
 
         nonexistent_config = tmp_path / "nope.toml"
         base_env = preserve_home_env()
-        base_env.update({
-            "APP_ENV": "prod",
-            "APP_DEFAULT_MODE": "hybrid",
-            "LLM_PROVIDER": "openai-compatible",
-            "SEARCH_PROVIDER": "tavily",
-        })
+        base_env.update(
+            {
+                "APP_ENV": "prod",
+                "APP_DEFAULT_MODE": "hybrid",
+                "LLM_PROVIDER": "openai-compatible",
+                "SEARCH_PROVIDER": "tavily",
+            }
+        )
         with mock.patch("aideator.paths.get_default_config_path", return_value=nonexistent_config):
             with mock.patch.dict(os.environ, base_env, clear=True):
                 settings = load_settings(load_env=False)
@@ -106,10 +108,12 @@ class TestLoadSettings:
 
         nonexistent_config = tmp_path / "nope.toml"
         base_env = preserve_home_env()
-        base_env.update({
-            "APP_DB_URL": "sqlite:///env.db",
-            "APP_DOCS_DIR": "/env/docs",
-        })
+        base_env.update(
+            {
+                "APP_DB_URL": "sqlite:///env.db",
+                "APP_DOCS_DIR": "/env/docs",
+            }
+        )
         with mock.patch("aideator.paths.get_default_config_path", return_value=nonexistent_config):
             with mock.patch.dict(os.environ, base_env, clear=True):
                 with mock.patch("pathlib.Path.mkdir"):
@@ -177,8 +181,7 @@ model = "mistral:7b"
             with mock.patch.dict(os.environ, base_env, clear=True):
                 with mock.patch("pathlib.Path.mkdir"):
                     settings = load_settings(
-                        cli_db_url="sqlite:///~/.aideator/test.db",
-                        load_env=False
+                        cli_db_url="sqlite:///~/.aideator/test.db", load_env=False
                     )
                     home = str(Path.home())
                     assert home in settings.app_db_url
@@ -264,12 +267,14 @@ class TestSettings:
 
         nonexistent_config = tmp_path / "nope.toml"
         base_env = preserve_home_env()
-        base_env.update({
-            "APP_ENV": "dev",
-            "APP_HOST": "localhost",
-            "APP_PORT": "9000",
-            "APP_DEFAULT_MODE": "hybrid",
-        })
+        base_env.update(
+            {
+                "APP_ENV": "dev",
+                "APP_HOST": "localhost",
+                "APP_PORT": "9000",
+                "APP_DEFAULT_MODE": "hybrid",
+            }
+        )
         with mock.patch("aideator.paths.get_default_config_path", return_value=nonexistent_config):
             with mock.patch.dict(os.environ, base_env, clear=True):
                 settings = load_settings(load_env=False)
@@ -299,10 +304,12 @@ class TestSettings:
 
         nonexistent_config = tmp_path / "nope.toml"
         base_env = preserve_home_env()
-        base_env.update({
-            "LLM_API_KEY": "sk-1234567890abcdef",
-            "SEARCH_API_KEY": "search-key-123",
-        })
+        base_env.update(
+            {
+                "LLM_API_KEY": "sk-1234567890abcdef",
+                "SEARCH_API_KEY": "search-key-123",
+            }
+        )
         with mock.patch("aideator.paths.get_default_config_path", return_value=nonexistent_config):
             with mock.patch.dict(os.environ, base_env, clear=True):
                 settings = load_settings(load_env=False)
@@ -342,6 +349,7 @@ class TestResolveDbUrl:
         import os
 
         from api.config import _resolve_db_url
+
         original_cwd = os.getcwd()
         try:
             os.chdir(tmp_path)
@@ -380,10 +388,12 @@ class TestSearchApiKeyResolution:
 
         nonexistent_config = tmp_path / "nope.toml"
         base_env = preserve_home_env()
-        base_env.update({
-            "SEARCH_PROVIDER": "tavily",
-            "TAVILY_API_KEY": "tvly-test123",
-        })
+        base_env.update(
+            {
+                "SEARCH_PROVIDER": "tavily",
+                "TAVILY_API_KEY": "tvly-test123",
+            }
+        )
         with mock.patch("aideator.paths.get_default_config_path", return_value=nonexistent_config):
             with mock.patch.dict(os.environ, base_env, clear=True):
                 settings = load_settings(load_env=False)
@@ -395,10 +405,12 @@ class TestSearchApiKeyResolution:
 
         nonexistent_config = tmp_path / "nope.toml"
         base_env = preserve_home_env()
-        base_env.update({
-            "SEARCH_PROVIDER": "exa",
-            "EXA_API_KEY": "exa-test123",
-        })
+        base_env.update(
+            {
+                "SEARCH_PROVIDER": "exa",
+                "EXA_API_KEY": "exa-test123",
+            }
+        )
         with mock.patch("aideator.paths.get_default_config_path", return_value=nonexistent_config):
             with mock.patch.dict(os.environ, base_env, clear=True):
                 settings = load_settings(load_env=False)

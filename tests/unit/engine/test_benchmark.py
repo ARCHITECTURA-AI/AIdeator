@@ -113,14 +113,14 @@ class TestFormatComparisonSummary:
         assert format_comparison_summary({}) == ""
 
     def test_includes_corpus_size(self) -> None:
-        comparison = {
+        comparison: dict[str, dict[str, int | str]] = {
             "demand": {"score": 72, "percentile": 58, "corpus_size": 12},
         }
         summary = format_comparison_summary(comparison)
         assert "12" in summary
 
     def test_includes_percentile(self) -> None:
-        comparison = {
+        comparison: dict[str, dict[str, int | str]] = {
             "demand": {"score": 72, "percentile": 58, "corpus_size": 12},
         }
         summary = format_comparison_summary(comparison)

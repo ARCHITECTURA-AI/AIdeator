@@ -103,7 +103,8 @@ class TestListAvailableProviders:
     def test_cloud_providers_require_key(self) -> None:
         providers = list_available_providers()
         cloud = [
-            p for p in providers
+            p
+            for p in providers
             if p["name"] in ("openai-compatible", "anthropic-compatible", "mistral-compatible")
         ]
         for p in cloud:
@@ -115,35 +116,41 @@ class TestGetProvider:
 
     def test_ollama_instance(self) -> None:
         """Ollama provider should instantiate without API key."""
-        provider = get_provider({
-            "llm_provider": "ollama",
-            "llm_model": "mistral:7b",
-            "llm_api_base": "http://localhost:11434",
-            "llm_api_key": "",
-        })
+        provider = get_provider(
+            {
+                "llm_provider": "ollama",
+                "llm_model": "mistral:7b",
+                "llm_api_base": "http://localhost:11434",
+                "llm_api_key": "",
+            }
+        )
         assert provider.name == "ollama"
         assert provider.is_local is True
         assert provider.requires_api_key is False
 
     def test_openai_compatible_instance(self) -> None:
         """OpenAI-compatible should instantiate with key."""
-        provider = get_provider({
-            "llm_provider": "openai-compatible",
-            "llm_model": "gpt-4o",
-            "llm_api_base": "https://api.openai.com/v1",
-            "llm_api_key": "sk-test-key",
-        })
+        provider = get_provider(
+            {
+                "llm_provider": "openai-compatible",
+                "llm_model": "gpt-4o",
+                "llm_api_base": "https://api.openai.com/v1",
+                "llm_api_key": "sk-test-key",
+            }
+        )
         assert provider.name == "openai-compatible"
         assert provider.is_local is False
         assert provider.requires_api_key is True
 
     def test_metadata_returns_dict(self) -> None:
-        provider = get_provider({
-            "llm_provider": "ollama",
-            "llm_model": "test",
-            "llm_api_base": "http://localhost:11434",
-            "llm_api_key": "",
-        })
+        provider = get_provider(
+            {
+                "llm_provider": "ollama",
+                "llm_model": "test",
+                "llm_api_base": "http://localhost:11434",
+                "llm_api_key": "",
+            }
+        )
         meta = provider.metadata()
         assert isinstance(meta, dict)
         assert "name" in meta

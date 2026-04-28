@@ -88,7 +88,7 @@ class TavilySearchProvider(SearchProvider):
             if response.status_code == 429:
                 LOGGER.warning("Tavily rate limit hit", extra={"event": "tavily_rate_limit"})
                 return []
-                
+
             response.raise_for_status()
             data = response.json()
 
@@ -160,9 +160,7 @@ class TavilySearchProvider(SearchProvider):
                 "max_results": 1,
                 "search_depth": "basic",
             }
-            response = await client.post(
-                f"{TAVILY_API_URL}/search", json=payload, timeout=10.0
-            )
+            response = await client.post(f"{TAVILY_API_URL}/search", json=payload, timeout=10.0)
             if response.status_code == 200:
                 return ProviderStatus.OK
             if response.status_code == 429:

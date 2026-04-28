@@ -94,9 +94,7 @@ async def collect_search_signals(
         # Check if provider supports web search
         caps = provider.capabilities()
         if "web_search" not in caps:
-            LOGGER.debug(
-                "Provider %s does not support web_search, skipping", provider.name
-            )
+            LOGGER.debug("Provider %s does not support web_search, skipping", provider.name)
             return []
 
         results = await provider.search(query, limit=limit, mode="general")
@@ -118,7 +116,7 @@ async def collect_search_signals(
                 fallback_settings = {"search_provider": "duckduckgo"}
                 fallback_provider = get_search_provider(fallback_settings)
                 results = await fallback_provider.search(query, limit=limit, mode="general")
-                
+
                 LOGGER.info(
                     "Search failover successful",
                     extra={

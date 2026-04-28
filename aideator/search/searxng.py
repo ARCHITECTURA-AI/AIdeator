@@ -112,9 +112,7 @@ class SearXNGSearchProvider(SearchProvider):
             params["categories"] = "science,it"
 
         try:
-            response = await client.get(
-                f"{self._instance_url}/search", params=params
-            )
+            response = await client.get(f"{self._instance_url}/search", params=params)
             response.raise_for_status()
             data = response.json()
 

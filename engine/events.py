@@ -10,6 +10,7 @@ from uuid import UUID
 
 LOGGER = logging.getLogger("engine.events")
 
+
 class EventBus:
     def __init__(self) -> None:
         # Map run_id -> List of queues (one per subscriber)
@@ -27,11 +28,11 @@ class EventBus:
             "run_id": str(run_id),
             "data": data or {},
         }
-        
+
         # Broadcast to all active queues for this run
         for queue in self._subscribers[run_id]:
             await queue.put(payload)
-            
+
         LOGGER.debug(f"Published event {event_type} for run {run_id}")
 
     async def subscribe(self, run_id: UUID) -> AsyncIterator[dict[str, Any]]:
@@ -39,9 +40,9 @@ class EventBus:
         queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
         if run_id not in self._subscribers:
             self._subscribers[run_id] = []
-        
+
         self._subscribers[run_id].append(queue)
-        
+
         try:
             while True:
                 yield await queue.get()
@@ -52,11 +53,14 @@ class EventBus:
                 if not self._subscribers[run_id]:
                     del self._subscribers[run_id]
 
+
 # Global instance for app-wide use
 bus = EventBus()
 
+
 async def publish_event(run_id: UUID, event_type: str, data: dict[str, Any] | None = None) -> None:
     await bus.publish(run_id, event_type, data)
+
 
 async def subscribe_run(run_id: UUID) -> AsyncIterator[dict[str, Any]]:
     async for event in bus.subscribe(run_id):

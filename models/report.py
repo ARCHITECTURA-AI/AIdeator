@@ -24,3 +24,4 @@ class Report(BaseModel):
     cards: list[Card]
     artifact_path: str
     citations: list[dict[str, Any]] = Field(default_factory=list)
+    battle_results: dict[str, Any] | None = None

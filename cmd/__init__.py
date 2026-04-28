@@ -33,10 +33,10 @@ _stdlib_cmd = _load_stdlib_cmd_module()
 if _stdlib_cmd is not None and hasattr(_stdlib_cmd, "Cmd"):
     Cmd = _stdlib_cmd.Cmd
 else:
+
     class _FallbackCmd:  # pragma: no cover - fallback for unusual runtimes
         """Minimal fallback for environments without a loadable stdlib cmd."""
 
         prompt = ""
 
     Cmd = _FallbackCmd
-

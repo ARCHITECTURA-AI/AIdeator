@@ -27,7 +27,7 @@ def _request_json(
     data = json.dumps(payload).encode("utf-8") if payload is not None else None
     req = Request(url=url, method=method, data=data, headers={"Content-Type": "application/json"})
     try:
-        with urlopen(req, timeout=30) as resp: # Longer timeout for LLM/Search
+        with urlopen(req, timeout=30) as resp:  # Longer timeout for LLM/Search
             body = resp.read().decode("utf-8")
             return json.loads(body) if body else {}
     except HTTPError as exc:
@@ -50,7 +50,7 @@ def main() -> None:
     print(f"Starting E2E Smoke Test at {base_url}...")
 
     # 1. Create Idea
-    idea_payload = {
+    idea_payload: dict[str, object] = {
         "title": "Hybrid-Ready AI Tool",
         "description": "A proof-of-concept for hybrid search and LLM synthesis.",
         "target_user": "AI Researchers",
@@ -74,7 +74,7 @@ def main() -> None:
     # 3. Poll for Success
     print("Polling status (this may take 20-60s)...")
     status = "pending"
-    deadline = time.time() + 120.0 # 2 minute timeout
+    deadline = time.time() + 120.0  # 2 minute timeout
     while time.time() < deadline:
         status_payload = _request_json("GET", f"{base_url}/runs/{run_id}/status")
         status = str(status_payload.get("status", "pending"))
@@ -87,7 +87,7 @@ def main() -> None:
         print("\n[SUCCESS] Pipeline completed.")
         # Rebuild docs to be sure
         _request_json("POST", f"{base_url}/internal/rebuild-docs", {})
-        
+
         # Verify markdown file
         docs_dir = os.getenv("APP_DOCS_DIR", "./docs")
         report_path = project_root / docs_dir / f"idea-{idea_id}.md"

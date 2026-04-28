@@ -61,10 +61,7 @@ def get_provider(settings: Settings | dict[str, str]) -> LLMProvider:
     provider_class = PROVIDER_REGISTRY.get(provider_name)
     if provider_class is None:
         available = ", ".join(PROVIDER_REGISTRY.keys())
-        raise ValueError(
-            f"Unknown LLM provider: {provider_name}. "
-            f"Available providers: {available}"
-        )
+        raise ValueError(f"Unknown LLM provider: {provider_name}. Available providers: {available}")
 
     config = ProviderConfig(
         provider=provider_name,
@@ -94,12 +91,14 @@ def list_available_providers() -> list[dict[str, str | bool]]:
         )
         instance = provider_class(dummy_config)
         metadata = instance.metadata()
-        providers.append({
-            "name": name,
-            "local_only_ok": metadata["local_only_ok"],
-            "requires_api_key": metadata["requires_api_key"],
-            "default_base": metadata["api_base"],
-        })
+        providers.append(
+            {
+                "name": name,
+                "local_only_ok": metadata["local_only_ok"],
+                "requires_api_key": metadata["requires_api_key"],
+                "default_base": metadata["api_base"],
+            }
+        )
     return providers
 
 

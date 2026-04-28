@@ -8,6 +8,7 @@ from uuid import UUID
 
 _STORAGE_PATH = Path("data/shares.json")
 
+
 def _get_shares() -> dict[str, dict]:
     if not _STORAGE_PATH.exists():
         return {}
@@ -16,40 +17,40 @@ def _get_shares() -> dict[str, dict]:
     except (json.JSONDecodeError, OSError):
         return {}
 
+
 def _save_shares(shares: dict[str, dict]):
     _STORAGE_PATH.parent.mkdir(parents=True, exist_ok=True)
     _STORAGE_PATH.write_text(json.dumps(shares, indent=2), encoding="utf-8")
+
 
 def generate_share_link(idea_id: UUID, expiry_days: int = 7) -> str:
     """Generate a share hash and store it with an expiry date."""
     salt = "NEXUS_SALT_2026"
     hash_obj = hashlib.sha256(f"{idea_id}{salt}{datetime.now()}".encode())
     share_hash = hash_obj.hexdigest()[:16]  # Short hash
-    
+
     expiry = datetime.now(timezone.utc) + timedelta(days=expiry_days)
-    
+
     shares = _get_shares()
-    shares[share_hash] = {
-        "idea_id": str(idea_id),
-        "expiry": expiry.isoformat()
-    }
+    shares[share_hash] = {"idea_id": str(idea_id), "expiry": expiry.isoformat()}
     _save_shares(shares)
-    
+
     return share_hash
+
 
 def validate_share_hash(share_hash: str) -> UUID | None:
     """Validate hash and return idea_id if still valid."""
     shares = _get_shares()
     share_data = shares.get(share_hash)
-    
+
     if not share_data:
         return None
-        
+
     expiry = datetime.fromisoformat(share_data["expiry"])
     if datetime.now(timezone.utc) > expiry:
         # Clean up expired hash
         del shares[share_hash]
         _save_shares(shares)
         return None
-        
+
     return UUID(share_data["idea_id"])

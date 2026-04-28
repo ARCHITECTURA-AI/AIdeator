@@ -61,8 +61,6 @@ class TestNormalizeScore:
         assert normalize_score(-10) == 0
 
 
-
-
 class TestValidateCardsV1:
     """Tests for V1 card validation with scores and bands."""
 
@@ -89,20 +87,39 @@ class TestValidateCardsV1:
     def test_invalid_band_raises(self) -> None:
         cards = [
             Card(
-                type="demand", title="T", summary="s", score=50,
-                meta={"band": "extreme", "citation_urls": ["u"]}
+                type="demand",
+                title="T",
+                summary="s",
+                score=50,
+                meta={"band": "extreme", "citation_urls": ["u"]},
             ),
             Card(
-                type="competition", title="T", summary="s", score=50,
-                meta={"band": "medium", "citation_urls": ["u"]}
+                type="competition",
+                title="T",
+                summary="s",
+                score=50,
+                meta={"band": "medium", "citation_urls": ["u"]},
             ),
             Card(
-                type="viability", title="T", summary="s", score=50,
-                meta={"band": "medium", "citation_urls": ["u"]}
+                type="viability",
+                title="T",
+                summary="s",
+                score=50,
+                meta={"band": "medium", "citation_urls": ["u"]},
             ),
             Card(
-                type="next_steps", title="T", summary="s", score=50,
-                meta={"band": "medium", "citation_urls": []}
+                type="market",
+                title="T",
+                summary="s",
+                score=50,
+                meta={"band": "medium", "citation_urls": ["u"]},
+            ),
+            Card(
+                type="next_steps",
+                title="T",
+                summary="s",
+                score=50,
+                meta={"band": "medium", "citation_urls": []},
             ),
         ]
         with pytest.raises(ValueError, match="Invalid band"):
@@ -111,20 +128,39 @@ class TestValidateCardsV1:
     def test_mismatched_band_raises(self) -> None:
         cards = [
             Card(
-                type="demand", title="T", summary="s", score=80,
-                meta={"band": "low", "citation_urls": ["u"]}
+                type="demand",
+                title="T",
+                summary="s",
+                score=80,
+                meta={"band": "low", "citation_urls": ["u"]},
             ),
             Card(
-                type="competition", title="T", summary="s", score=50,
-                meta={"band": "medium", "citation_urls": ["u"]}
+                type="competition",
+                title="T",
+                summary="s",
+                score=50,
+                meta={"band": "medium", "citation_urls": ["u"]},
             ),
             Card(
-                type="viability", title="T", summary="s", score=50,
-                meta={"band": "medium", "citation_urls": ["u"]}
+                type="viability",
+                title="T",
+                summary="s",
+                score=50,
+                meta={"band": "medium", "citation_urls": ["u"]},
             ),
             Card(
-                type="next_steps", title="T", summary="s", score=50,
-                meta={"band": "medium", "citation_urls": []}
+                type="market",
+                title="T",
+                summary="s",
+                score=50,
+                meta={"band": "medium", "citation_urls": ["u"]},
+            ),
+            Card(
+                type="next_steps",
+                title="T",
+                summary="s",
+                score=50,
+                meta={"band": "medium", "citation_urls": []},
             ),
         ]
         with pytest.raises(ValueError, match="Band mismatch"):
@@ -137,7 +173,7 @@ class TestSynthesizeDefaultCards:
     def test_all_required_types_present(self) -> None:
         cards = synthesize_default_cards()
         types = {str(c.type) for c in cards}
-        assert types == {"demand", "competition", "viability", "next_steps"}
+        assert types == {"demand", "competition", "viability", "market", "next_steps"}
 
     def test_all_cards_have_scores(self) -> None:
         cards = synthesize_default_cards()

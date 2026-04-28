@@ -102,8 +102,13 @@ class TestGetAllPaths:
     def test_returns_all_keys(self) -> None:
         paths = get_all_paths()
         expected_keys = {
-            "user_data_dir", "db_path", "docs_dir", "config_path",
-            "migrations_dir", "logs_dir", "cache_dir"
+            "user_data_dir",
+            "db_path",
+            "docs_dir",
+            "config_path",
+            "migrations_dir",
+            "logs_dir",
+            "cache_dir",
         }
         assert expected_keys == set(paths.keys())
 

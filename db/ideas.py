@@ -1,104 +1,119 @@
-"""In-memory ideas repository (S-01 persistence skeleton)."""
+"""SQLite-backed ideas repository."""
 
 from __future__ import annotations
 
 import logging
-from datetime import datetime
-from pathlib import Path
-from typing import Final
 from uuid import UUID
 
-from db.base import BaseJsonStorage
+from db.base import db_session, initialize_db
+from db.schema import IdeaModel, WorkspaceMemberModel
 from models.idea import Idea
 
-_STORAGE_PATH: Final[Path] = Path("data/ideas.json")
-_IDEAS: Final[dict[UUID, Idea]] = {}
-_STORAGE: BaseJsonStorage[dict[str, object]] = BaseJsonStorage(_STORAGE_PATH, "db.ideas")
 LOGGER = logging.getLogger("db.ideas")
 
 
-def _flush():
-    """Flush ideas to disk."""
-    _STORAGE.flush(export_ideas_snapshot)
-
-
 def initialize():
-    """Load ideas from disk."""
-    _STORAGE.load(import_ideas_snapshot)
+    """Ensure DB is ready."""
+    initialize_db()
 
 
-def _generate_brand_hex(text: str) -> str:
-    """Generate a premium-looking brand color from text."""
-    # Curated palette of premium/neon/tech colors
-    PALETTE = [
-        "#A7A5FF",  # Primary Indigo
-        "#00F2FE",  # Cyan Tech
-        "#4FACFE",  # Blue Sky
-        "#7028FF",  # Deep Purple
-        "#FF0080",  # Cyber Pink
-        "#00FF41",  # Matrix Green
-        "#F9D423",  # Sun Warning
-    ]
-    import hashlib
-    h = int(hashlib.md5(text.encode()).hexdigest(), 16)
-    return PALETTE[h % len(PALETTE)]
+def _to_model(idea: Idea) -> IdeaModel:
+    return IdeaModel(
+        idea_id=str(idea.idea_id),
+        title=idea.title,
+        description=idea.description,
+        target_user=idea.target_user,
+        context=idea.context,
+        created_at=idea.created_at,
+        tier=idea.tier,
+        brand_hex=idea.brand_hex,
+        workspace_id=str(idea.workspace_id) if idea.workspace_id else None,
+    )
 
 
-def save_idea(idea: Idea) -> Idea:
-    if idea.brand_hex == "#888888":
-        idea.brand_hex = _generate_brand_hex(f"{idea.title}{idea.description}")
-    
-    _IDEAS[idea.idea_id] = idea
-    _flush()
+def _from_model(model: IdeaModel) -> Idea:
+    idea = Idea(
+        title=model.title,
+        description=model.description,
+        target_user=model.target_user,
+        context=model.context,
+        tier=model.tier or "Bronze",
+        brand_hex=model.brand_hex or "#888888",
+        workspace_id=UUID(model.workspace_id) if model.workspace_id else None,
+    )
+    idea.idea_id = UUID(model.idea_id)
+    idea.created_at = model.created_at
     return idea
 
 
+def save_idea(idea: Idea, user_id: UUID | None = None) -> Idea:
+    session = db_session()
+    try:
+        model = session.query(IdeaModel).filter_by(idea_id=str(idea.idea_id)).first()
+        if model:
+            model.title = idea.title
+            model.description = idea.description
+            model.target_user = idea.target_user
+            model.context = idea.context
+            model.tier = idea.tier
+            model.brand_hex = idea.brand_hex
+            if idea.workspace_id:
+                model.workspace_id = str(idea.workspace_id)
+            if user_id:
+                model.user_id = str(user_id)
+        else:
+            model = _to_model(idea)
+            if user_id:
+                model.user_id = str(user_id)
+            session.add(model)
+        session.commit()
+        return idea
+    except Exception as e:
+        session.rollback()
+        LOGGER.error(f"Failed to save idea: {e}")
+        raise e
+    finally:
+        db_session.remove()
+
+
 def get_idea(idea_id: UUID) -> Idea | None:
-    return _IDEAS.get(idea_id)
+    session = db_session()
+    try:
+        model = session.query(IdeaModel).filter_by(idea_id=str(idea_id)).first()
+        return _from_model(model) if model else None
+    finally:
+        db_session.remove()
 
 
-def list_ideas() -> list[Idea]:
-    return list(_IDEAS.values())
+def list_ideas(user_id: UUID | None = None) -> list[Idea]:
+    session = db_session()
+    try:
+        query = session.query(IdeaModel)
+        if user_id:
+            # Shared ideas: user is owner OR user is member of the workspace
+            from sqlalchemy import or_
 
-
-def export_ideas_snapshot() -> list[dict[str, str]]:
-    return [
-        {
-            "idea_id": str(idea.idea_id),
-            "title": idea.title,
-            "description": idea.description,
-            "target_user": idea.target_user,
-            "context": idea.context,
-            "created_at": idea.created_at.isoformat(),
-            "tier": idea.tier,
-            "brand_hex": idea.brand_hex,
-        }
-        for idea in _IDEAS.values()
-    ]
-
-
-def import_ideas_snapshot(rows: object) -> None:
-    if not isinstance(rows, list):
-        return
-    _IDEAS.clear()
-    for row in rows:
-        if not isinstance(row, dict):
-            continue
-        try:
-            idea = Idea(
-                title=row["title"],
-                description=row["description"],
-                target_user=row["target_user"],
-                context=row["context"],
-                tier=row.get("tier", "Bronze"),
-                brand_hex=row.get("brand_hex", "#888888"),
+            workspace_ids = [
+                m.workspace_id
+                for m in session.query(WorkspaceMemberModel).filter_by(user_id=str(user_id)).all()
+            ]
+            query = query.filter(
+                or_(IdeaModel.user_id == str(user_id), IdeaModel.workspace_id.in_(workspace_ids))
             )
-            idea.idea_id = UUID(row["idea_id"])
-            idea.created_at = datetime.fromisoformat(row["created_at"])
-            _IDEAS[idea.idea_id] = idea
-        except (KeyError, ValueError) as e:
-            LOGGER.error(f"Failed to import idea row: {e}")
+        models = query.order_by(IdeaModel.created_at.desc()).all()
+        return [_from_model(m) for m in models]
+    finally:
+        db_session.remove()
 
 
-# Auto-initialize on import
+# Legacy snapshot functions for compatibility (empty for now)
+def export_ideas_snapshot():
+    return []
+
+
+def import_ideas_snapshot(rows):
+    pass
+
+
+# Initialize on import
 initialize()

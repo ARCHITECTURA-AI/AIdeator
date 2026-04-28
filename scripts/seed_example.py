@@ -49,13 +49,11 @@ def main() -> None:
 
     docs_dir = os.getenv("APP_DOCS_DIR", "./docs")
     docs_path = (
-        (project_root / docs_dir).resolve()
-        if not Path(docs_dir).is_absolute()
-        else Path(docs_dir)
+        (project_root / docs_dir).resolve() if not Path(docs_dir).is_absolute() else Path(docs_dir)
     )
     docs_path.mkdir(parents=True, exist_ok=True)
 
-    idea_payload = {
+    idea_payload: dict[str, object] = {
         "title": "Example: AIdeator Demo Idea",
         "description": "Demo idea created by scripts/seed_example.py for local onboarding.",
         "target_user": "new-contributor",

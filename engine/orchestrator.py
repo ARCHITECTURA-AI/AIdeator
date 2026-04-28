@@ -15,6 +15,7 @@ from engine.events import publish_event
 from engine.signal_collector import collect_search_signals
 from engine.synthesizer import build_markdown_artifact, synthesize_intelligence
 from models.report import Report
+from services.webhooks import dispatch_webhooks
 
 LOGGER = logging.getLogger("engine.orchestrator")
 
@@ -37,7 +38,7 @@ async def execute_run(run_id: UUID) -> None:
     try:
         transition_run(run_id, "running")
         await publish_event(run_id, "started", {"status": "running"})
-        
+
         # Collect search signals based on mode
         idea = get_idea(run.idea_id)
         search_results = []
@@ -49,9 +50,7 @@ async def execute_run(run_id: UUID) -> None:
                 limit=5,
             )
             await publish_event(
-                run_id, 
-                "collecting_signals", 
-                {"results_count": len(search_results)}
+                run_id, "collecting_signals", {"results_count": len(search_results)}
             )
 
         citations = [
@@ -62,24 +61,39 @@ async def execute_run(run_id: UUID) -> None:
             }
             for i, res in enumerate(search_results, 1)
         ]
-        
+
         await publish_event(run_id, "analyzing", {"label": "Dimensional sifting"})
         analysis = await analyze_dimensions(
             title=idea.title if idea else "Unknown",
             description=idea.description if idea else "",
-            citations=citations
+            citations=citations,
         )
-        
+
         await publish_event(run_id, "synthesizing", {"label": "Intelligence synthesis"})
         cards = await synthesize_intelligence(
             title=idea.title if idea else "Unknown",
             description=idea.description if idea else "",
             citations=citations,
-            analysis=analysis
+            analysis=analysis,
         )
-        
+
+        # Battle Mode (Adversarial Validation) - Node 4
+        from engine.battle import BattleOrchestrator
+
+        battle_results = None
+        if run.tier in ("medium", "high"):  # Battle mode for higher tiers
+            await publish_event(run_id, "battle", {"label": "Bull vs Bear agents"})
+            battle_engine = BattleOrchestrator(
+                title=idea.title if idea else "Unknown",
+                description=idea.description if idea else "",
+                signals=citations,
+            )
+            battle_results = await battle_engine.run_battle()
+
         # Build and write markdown artifact
-        report_text = build_markdown_artifact(idea_id=str(run.idea_id), cards=cards)
+        report_text = build_markdown_artifact(
+            idea_id=str(run.idea_id), cards=cards, battle_results=battle_results
+        )
         artifact_name = f"idea-{run.idea_id}.md"
         artifact_path = settings.app_docs_dir / artifact_name
         artifact_path.parent.mkdir(parents=True, exist_ok=True)
@@ -91,6 +105,7 @@ async def execute_run(run_id: UUID) -> None:
                 cards=cards,
                 artifact_path=str(artifact_path),
                 citations=citations,
+                battle_results=battle_results,
             )
         )
         duration_ms = int((time.perf_counter() - started_at) * 1000)
@@ -99,6 +114,20 @@ async def execute_run(run_id: UUID) -> None:
         await publish_event(
             run_id, "completed", {"status": "succeeded", "duration_ms": duration_ms}
         )
+
+        # Dispatch webhooks
+        await dispatch_webhooks(
+            event_type="run.succeeded",
+            payload={
+                "run_id": str(run_id),
+                "idea_id": str(run.idea_id),
+                "status": "succeeded",
+                "duration_ms": duration_ms,
+                "artifact_path": str(artifact_path),
+            },
+            workspace_id=str(idea.workspace_id) if idea and idea.workspace_id else None,
+        )
+
         LOGGER.info(
             "Run succeeded",
             extra={

@@ -160,6 +160,10 @@ class Settings:
     log_level: str
     log_json: bool
 
+    # Hardening settings
+    sentry_dsn: str | None = None
+    rate_limit_requests: int = 100  # Per minute
+
     # Config source tracking
     _config_source: str = field(default="env", repr=False)
 
@@ -318,9 +322,7 @@ def load_settings(
     elif os.getenv("APP_DOCS_DIR"):
         docs_raw = Path(os.getenv("APP_DOCS_DIR", "./docs"))
         app_docs_dir = (
-            (project_root / docs_raw).resolve()
-            if not docs_raw.is_absolute()
-            else docs_raw
+            (project_root / docs_raw).resolve() if not docs_raw.is_absolute() else docs_raw
         )
     elif storage_config.get("docs_dir"):
         docs_config = storage_config["docs_dir"]
@@ -342,22 +344,18 @@ def load_settings(
     app_default_mode = _default_mode_from_env(default_mode_raw)
 
     # LLM settings
-    llm_provider = os.getenv(
-        "LLM_PROVIDER", llm_config.get("provider", "ollama")
-    ).strip().lower()
+    llm_provider = os.getenv("LLM_PROVIDER", llm_config.get("provider", "ollama")).strip().lower()
     llm_model = os.getenv("LLM_MODEL", llm_config.get("model", "mistral:7b"))
-    llm_api_base = os.getenv(
-        "LLM_API_BASE", llm_config.get("api_base", "http://localhost:11434")
-    )
+    llm_api_base = os.getenv("LLM_API_BASE", llm_config.get("api_base", "http://localhost:11434"))
 
     # Get LLM API key (check env var from config first, then direct env)
     llm_api_key_env = llm_config.get("api_key_env", "LLM_API_KEY")
     llm_api_key = os.getenv(llm_api_key_env, os.getenv("LLM_API_KEY", ""))
 
     # Search settings
-    search_provider = os.getenv(
-        "SEARCH_PROVIDER", search_config.get("provider", "duckduckgo")
-    ).strip().lower()
+    search_provider = (
+        os.getenv("SEARCH_PROVIDER", search_config.get("provider", "duckduckgo")).strip().lower()
+    )
     search_api_key = os.getenv("SEARCH_API_KEY", "")
 
     tavily_api_key_env = search_config.get("tavily_api_key_env", "TAVILY_API_KEY")
@@ -390,6 +388,8 @@ def load_settings(
         searxng_instance_url=searxng_instance_url,
         log_level=os.getenv("LOG_LEVEL", "info").lower(),
         log_json=_parse_bool(os.getenv("LOG_JSON"), default=False),
+        sentry_dsn=os.getenv("SENTRY_DSN"),
+        rate_limit_requests=int(os.getenv("RATE_LIMIT_REQUESTS", "100")),
         _config_source=str(config_path) if config_path.exists() else "env",
     )
 

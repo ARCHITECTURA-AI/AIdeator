@@ -53,10 +53,10 @@ def get_search_provider(settings: Settings | dict[str, str]) -> SearchProvider:
         instance_url = None
         if hasattr(settings, "searxng_instance_url"):
             instance_url = settings.searxng_instance_url
-        
+
         if not instance_url:
             instance_url = os.getenv("SEARXNG_URL")
-            
+
         if not instance_url and isinstance(settings, dict):
             instance_url = settings.get("searxng_instance_url")
 
@@ -109,8 +109,7 @@ def get_search_provider(settings: Settings | dict[str, str]) -> SearchProvider:
     else:
         available = "builtin, duckduckgo, searxng, tavily, exa"
         raise ValueError(
-            f"Unknown search provider: '{provider_name}'. "
-            f"Available providers: {available}"
+            f"Unknown search provider: '{provider_name}'. Available providers: {available}"
         )
 
 

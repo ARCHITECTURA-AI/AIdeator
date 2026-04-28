@@ -11,12 +11,23 @@ from pathlib import Path
 from typing import Any, TypeVar
 from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, Body, Form, HTTPException, Query, Request, Response
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Body,
+    Depends,
+    Form,
+    HTTPException,
+    Query,
+    Request,
+    Response,
+)
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
 from aideator.paths import get_report_path_for_idea
+from api.auth import get_current_user
 from api.config import settings
 from api.settings_manager import (
     get_settings as get_persistent_settings,
@@ -27,7 +38,7 @@ from api.settings_manager import (
 from api.sharing import generate_share_link, validate_share_hash
 from db.comments import Comment, add_comment, list_comments_for_idea
 from db.ideas import get_idea, list_ideas, save_idea
-from db.reports import get_report, list_reports
+from db.reports import get_report, list_reports, save_report
 from db.runs import get_run, list_runs, list_runs_for_idea, save_run
 from engine.events import subscribe_run
 from engine.exporter import ReportExporter
@@ -43,8 +54,6 @@ _ROOT = Path(__file__).resolve().parents[1]
 templates = Jinja2Templates(directory=str(_ROOT / "templates"))
 _DOCS_DIR = settings.app_docs_dir
 LOGGER = logging.getLogger(__name__)
-
-
 
 
 class ForgeRequest(BaseModel):
@@ -101,23 +110,21 @@ def _paginate(items: list[T], page: int, per_page: int) -> tuple[list[T], Pagina
     )
 
 
-
-
-
 def _render_markdown(markdown_text: str) -> str:
     import markdown  # type: ignore[import-untyped]
+
     # Use standard extensions for better formatting
     return markdown.markdown(markdown_text, extensions=["extra", "nl2br", "sane_lists"])
 
 
-def _idea_rows() -> list[dict[str, object]]:
-    runs = list_runs()
+def _idea_rows(user_id: UUID | None = None) -> list[dict[str, object]]:
+    runs = list_runs(user_id=user_id)
     runs_by_idea: dict[UUID, list[Run]] = {}
     for run in runs:
         runs_by_idea.setdefault(run.idea_id, []).append(run)
 
     rows: list[dict[str, object]] = []
-    for idea in list_ideas():
+    for idea in list_ideas(user_id=user_id):
         idea_runs = runs_by_idea.get(idea.idea_id, [])
         last_run = max(idea_runs, key=lambda item: item.created_at, default=None)
         rows.append(
@@ -136,9 +143,11 @@ def _idea_rows() -> list[dict[str, object]]:
     return rows
 
 
-def _run_rows(*, idea_filter: UUID | None = None) -> list[dict[str, object]]:
-    idea_title_map = {idea.idea_id: idea.title for idea in list_ideas()}
-    source = list_runs_for_idea(idea_filter) if idea_filter else list_runs()
+def _run_rows(
+    *, idea_filter: UUID | None = None, user_id: UUID | None = None
+) -> list[dict[str, object]]:
+    idea_title_map = {idea.idea_id: idea.title for idea in list_ideas(user_id=user_id)}
+    source = list_runs_for_idea(idea_filter) if idea_filter else list_runs(user_id=user_id)
     rows: list[dict[str, object]] = []
     for run in source:
         duration_str = "—"
@@ -147,7 +156,7 @@ def _run_rows(*, idea_filter: UUID | None = None) -> list[dict[str, object]]:
                 duration_str = f"{run.duration_ms}ms"
             else:
                 duration_str = f"{run.duration_ms / 1000:.1f}s"
-        
+
         rows.append(
             {
                 "id": str(run.run_id),
@@ -202,13 +211,61 @@ def get_diagnostics() -> dict[str, object]:
     }
 
 
+@router.get("/demo")
+async def demo_mode(request: Request):
+    """Seed demo data and redirect to report."""
+    demo_path = _ROOT / "data" / "demo_data.json"
+    if not demo_path.exists():
+        raise HTTPException(status_code=404, detail="Demo data not found")
+
+    with open(demo_path) as f:
+        demo_data = json.load(f)
+
+    # 1. Create Idea
+    idea_data = demo_data["idea"]
+    idea = Idea(
+        title=idea_data["title"],
+        description=idea_data["description"],
+        target_user=idea_data["target_user"],
+        context=idea_data["context"],
+        tier=idea_data["tier"],
+        brand_hex="#00FF41",  # Eco green
+    )
+    save_idea(idea)
+
+    # 2. Create dummy Run
+
+
+    run = Run(
+        idea_id=idea.idea_id,
+        tier="medium",
+        mode="cloud-enabled",
+        status="succeeded",
+    )
+    save_run(run)
+
+    # 3. Create Report
+    from models.report import Report
+
+    report = Report(
+        run_id=run.run_id,
+        cards=demo_data["report"]["cards"],
+        artifact_path=f"data/reports/{run.run_id}.json",
+        citations=[],
+    )
+    save_report(report)
+
+    return RedirectResponse(url=f"/app/runs/{run.run_id}", status_code=303)
+
+
 @router.get("/ideas")
 def get_ideas(
     q: str = Query(default=""),
     page: int = Query(default=1, ge=1),
     per_page: int = Query(default=20, ge=1, le=100),
+    current_user: Any = Depends(get_current_user),
 ) -> dict[str, object]:
-    rows = _idea_rows()
+    rows = _idea_rows(user_id=current_user.user_id)
     if q:
         q_lower = q.lower()
         rows = [item for item in rows if q_lower in str(item["title"]).lower()]
@@ -242,8 +299,9 @@ def get_runs(
     mode: str = Query(default=""),
     page: int = Query(default=1, ge=1),
     per_page: int = Query(default=20, ge=1, le=100),
+    current_user: Any = Depends(get_current_user),
 ) -> dict[str, object]:
-    rows = _run_rows()
+    rows = _run_rows(user_id=current_user.user_id)
     if status:
         rows = [item for item in rows if item["status"] == status]
     if mode:
@@ -342,7 +400,7 @@ def _base_context(request: Request, page_title: str) -> dict[str, object]:
     """Shared template context for all server-rendered pages."""
     # Basic health check for context (Mocked for now, but ready for expansion)
     health = {"ollama": True, "duckduckgo": True, "tavily": False}
-    
+
     return {
         "request": request,
         "page_title": page_title,
@@ -356,8 +414,15 @@ def _base_context(request: Request, page_title: str) -> dict[str, object]:
 def dashboard_page(request: Request) -> HTMLResponse:
     now = datetime.now(timezone.utc)
     day_ago = now - timedelta(hours=24)
-    
-    runs_last_24h = [r for r in list_runs() if r.created_at > day_ago]
+
+    runs_last_24h = [
+        r for r in list_runs()
+        if (
+            r.created_at.replace(tzinfo=timezone.utc)
+            if r.created_at.tzinfo is None
+            else r.created_at
+        ) > day_ago
+    ]
     failed_last_24h = [r for r in runs_last_24h if r.status == "failed"]
 
     idea_rows = _idea_rows()
@@ -477,7 +542,7 @@ def run_detail_page(request: Request, run_id: UUID) -> HTMLResponse:
     cards = report.cards if report else []
     findings = cards
     citations = report.citations if report else []
-    
+
     # Confidence / Intensity calculation
     confidence_score = 0
     if run.status == "succeeded" and report:
@@ -512,8 +577,7 @@ def run_detail_page(request: Request, run_id: UUID) -> HTMLResponse:
                 "duration": duration_str,
                 "error_code": run.error_code,
                 "error_message": (
-                    "Internal processing error or provider timeout." 
-                    if run.error_code else ""
+                    "Internal processing error or provider timeout." if run.error_code else ""
                 ),
                 "confidence_score": confidence_score,
             },
@@ -530,24 +594,20 @@ def run_detail_page(request: Request, run_id: UUID) -> HTMLResponse:
 @router.get("/app/compare", response_class=HTMLResponse)
 def compare_page(request: Request, ids: str = Query("")) -> HTMLResponse:
     idea_ids = [UUID(i.strip()) for i in ids.split(",") if i.strip()]
-    
+
     comparisons = []
     for idea_id in idea_ids:
         idea = get_idea(idea_id)
         if not idea:
             continue
-            
+
         runs = list_runs_for_idea(idea_id)
         success_runs = [r for r in runs if r.status == "succeeded"]
         latest_run = max(success_runs, key=lambda r: r.updated_at, default=None)
-        
+
         report = get_report(latest_run.run_id) if latest_run else None
-        
-        comparisons.append({
-            "idea": idea,
-            "report": report,
-            "success": report is not None
-        })
+
+        comparisons.append({"idea": idea, "report": report, "success": report is not None})
 
     context = _base_context(request, "Compare Ideas")
     context.update({"comparisons": comparisons})
@@ -559,7 +619,7 @@ def reports_page(request: Request, q: str = Query(default="")) -> HTMLResponse:
     report_rows = list_report_docs()["items"]
     if not isinstance(report_rows, list):
         report_rows = []
-    
+
     if q:
         q_lower = q.lower()
         report_rows = [row for row in report_rows if q_lower in row["idea_title"].lower()]
@@ -567,7 +627,7 @@ def reports_page(request: Request, q: str = Query(default="")) -> HTMLResponse:
     # Enrich report rows for the template
     for row in report_rows:
         row["source"] = "NEXUS_CORE"  # Default source for UI consistency
-    
+
     selected_idea_id = report_rows[0]["idea_id"] if report_rows else None
     selected_doc = ""
     if selected_idea_id is not None:
@@ -590,37 +650,37 @@ async def export_report_html(idea_id: UUID):
         report_doc = get_report_doc(idea_id)
         if not report_doc:
             raise HTTPException(status_code=404, detail="Report not found")
-        
+
         idea = get_idea(idea_id)
         title = idea.title if idea else "AIdeator Intelligence Report"
-        
+
         # Load assets for inlining
         css_path = _ROOT / "static" / "css" / "app.css"
         js_path = _ROOT / "static" / "js" / "polish.js"
-        
+
         css_content = css_path.read_text(encoding="utf-8") if css_path.exists() else ""
         js_content = js_path.read_text(encoding="utf-8") if js_path.exists() else ""
-        
+
         # Render markdown to HTML
         html_content = _render_markdown(report_doc["markdown"])
-        
+
         # Prepare context for the export template
         context = {
             "title": title,
             "css": css_content,
             "js": js_content,
             "content": html_content,
-            "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
-        
+
         # Generate the standalone HTML
         rendered_html = templates.get_template("export_report.html").render(context)
-        
+
         filename = f"AIdeator_Report_{idea_id.hex[:8]}.html"
         return Response(
             content=rendered_html,
             media_type="text/html",
-            headers={"Content-Disposition": f"attachment; filename={filename}"}
+            headers={"Content-Disposition": f"attachment; filename={filename}"},
         )
     except Exception as e:
         LOGGER.error(f"Export failed: {e}", exc_info=True)
@@ -631,12 +691,12 @@ async def export_report_html(idea_id: UUID):
 def reports_for_idea_page(request: Request, idea_id: UUID) -> HTMLResponse:
     idea = get_idea(idea_id)
     doc_payload = get_report_doc(idea_id)
-    
+
     # Find latest successful run to extract stats
     runs = list_runs_for_idea(idea_id)
     success_runs = [r for r in runs if r.status == "succeeded"]
     latest_run = max(success_runs, key=lambda r: r.updated_at, default=None)
-    
+
     launcher_data = {
         "title": idea.title if idea else "Unknown Concept",
         "description": idea.description if idea else "",
@@ -645,7 +705,7 @@ def reports_for_idea_page(request: Request, idea_id: UUID) -> HTMLResponse:
         "brand_hex": idea.brand_hex if idea else "#888888",
         "tier": idea.tier if idea else "Bronze",
     }
-    
+
     if latest_run:
         report = get_report(latest_run.run_id)
         if report:
@@ -660,12 +720,11 @@ def reports_for_idea_page(request: Request, idea_id: UUID) -> HTMLResponse:
         "title": idea.title if idea else "Unknown Idea",
         "created_at": _fmt_ts(latest_run.updated_at) if latest_run else "RECENT_SYNC",
         "summary": (
-            "Intelligence synthesis complete. Nexus engine provides "
-            "high-confidence analysis."
+            "Intelligence synthesis complete. Nexus engine provides high-confidence analysis."
         ),
-        "content": _render_markdown(doc_payload["markdown"])
+        "content": _render_markdown(doc_payload["markdown"]),
     }
-    
+
     context = _base_context(request, "Report Detail")
     context.update(
         {
@@ -682,15 +741,15 @@ def export_report_pdf(idea_id: UUID) -> Response:
     idea = get_idea(idea_id)
     if idea is None:
         raise HTTPException(status_code=404, detail="Idea not found")
-    
+
     # Find latest successful run
     runs = list_runs_for_idea(idea_id)
     success_runs = [r for r in runs if r.status == "succeeded"]
     latest_run = max(success_runs, key=lambda r: r.updated_at, default=None)
-    
+
     if not latest_run:
         raise HTTPException(status_code=400, detail="No successful runs found for this idea.")
-    
+
     report = get_report(latest_run.run_id)
     if not report:
         raise HTTPException(status_code=404, detail="Report data not found")
@@ -698,25 +757,25 @@ def export_report_pdf(idea_id: UUID) -> Response:
     # Read markdown from artifact path
     artifact_path = get_report_path_for_idea(idea_id)
     content = (
-        artifact_path.read_text(encoding="utf-8") 
-        if artifact_path.exists() 
+        artifact_path.read_text(encoding="utf-8")
+        if artifact_path.exists()
         else "No synthesized content available."
     )
-    
+
     exporter = ReportExporter()
     pdf_bytes = exporter.generate_pdf(
         idea_title=idea.title,
         idea_description=idea.description,
         report_content=content,
         cards=report.cards,
-        citations=report.citations
+        citations=report.citations,
     )
-    
+
     filename = f"AIdeator_Report_{idea.title.replace(' ', '_')}.pdf"
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
 
 
@@ -725,11 +784,11 @@ def get_report_og_image(idea_id: UUID) -> Response:
     idea = get_idea(idea_id)
     if not idea:
         raise HTTPException(status_code=404, detail="Idea not found")
-    
+
     runs = list_runs_for_idea(idea_id)
     success_runs = [r for r in runs if r.status == "succeeded"]
     latest_run = max(success_runs, key=lambda r: r.updated_at, default=None)
-    
+
     scores = {}
     if latest_run:
         report = get_report(latest_run.run_id)
@@ -748,9 +807,7 @@ def get_report_og_image(idea_id: UUID) -> Response:
 
 @router.post("/app/reports/{idea_id}/comments")
 def post_comment(
-    idea_id: UUID, 
-    content: str = Form(...), 
-    author: str = Form("System_User")
+    idea_id: UUID, content: str = Form(...), author: str = Form("System_User")
 ) -> RedirectResponse:
     add_comment(Comment(idea_id=idea_id, author=author, content=content))
     return RedirectResponse(f"/app/reports/{idea_id}", status_code=303)
@@ -767,7 +824,7 @@ def create_share(idea_id: UUID) -> dict[str, str]:
 def forge_local(idea_id: UUID | None = None, body: dict = Body(None)) -> dict[str, Any]:
     # Extract idea_id from path or body
     raw_id = idea_id or (body.get("idea_id") if body else None)
-    
+
     if not raw_id:
         raise HTTPException(status_code=422, detail="Missing idea_id")
 
@@ -780,15 +837,15 @@ def forge_local(idea_id: UUID | None = None, body: dict = Body(None)) -> dict[st
     idea = get_idea(effective_id)
     if idea is None:
         raise HTTPException(status_code=404, detail="Idea not found")
-    
+
     # Find latest successful run
     runs = list_runs_for_idea(effective_id)
     success_runs = [r for r in runs if r.status == "succeeded"]
     latest_run = max(success_runs, key=lambda r: r.updated_at, default=None)
-    
+
     if not latest_run:
         raise HTTPException(status_code=400, detail="No successful runs found for this idea.")
-    
+
     report = get_report(latest_run.run_id)
     if not report:
         raise HTTPException(status_code=404, detail="Report data not found")
@@ -796,11 +853,11 @@ def forge_local(idea_id: UUID | None = None, body: dict = Body(None)) -> dict[st
     # Read markdown from artifact path
     artifact_path = get_report_path_for_idea(effective_id)
     content = (
-        artifact_path.read_text(encoding="utf-8") 
-        if artifact_path.exists() 
+        artifact_path.read_text(encoding="utf-8")
+        if artifact_path.exists()
         else "No synthesized content available."
     )
-    
+
     demand_score = "N/A"
     demand_summary = "Ready for initial development."
     for card in report.cards:
@@ -813,14 +870,14 @@ def forge_local(idea_id: UUID | None = None, body: dict = Body(None)) -> dict[st
         demand_score=demand_score,
         demand_summary=demand_summary,
         report_content=content,
-        root_dir="."
+        root_dir=".",
     )
-    
+
     return {
-        "status": "success", 
+        "status": "success",
         "success": True,
         "file": str(abs_path),
-        "message": "concept.md generated successfully"
+        "message": "concept.md generated successfully",
     }
 
 
@@ -829,26 +886,30 @@ def view_shared_report(request: Request, share_hash: str) -> HTMLResponse:
     idea_id = validate_share_hash(share_hash)
     if not idea_id:
         raise HTTPException(status_code=404, detail="Shared link expired or invalid.")
-    
+
     idea = get_idea(idea_id)
     doc_payload = get_report_doc(idea_id)
-    
+
     report_ui = {
         "id": str(idea_id),
         "title": idea.title if idea else "Shared Intelligence",
         "created_at": "SYNCHRONIZED_VAULT",
         "summary": "This is a read-only shared view of an AIdeator intelligence report.",
-        "content": _render_markdown(doc_payload["markdown"])
+        "content": _render_markdown(doc_payload["markdown"]),
     }
-    
+
     context = _base_context(request, f"Shared Report: {report_ui['title']}")
-    context.update({
-        "report": report_ui,
-        "is_shared_view": True,
-        "launcher_data": {"brand_hex": idea.brand_hex, "tier": idea.tier} if idea else {}
-    })
+    context.update(
+        {
+            "report": report_ui,
+            "is_shared_view": True,
+            "launcher_data": {"brand_hex": idea.brand_hex, "tier": idea.tier} if idea else {},
+        }
+    )
     # We use the same template but with a 'shared' flag to hide interactions
     return templates.TemplateResponse(request=request, name="report_detail.html", context=context)
+
+
 @router.get("/app/settings", response_class=HTMLResponse)
 def settings_page(request: Request) -> HTMLResponse:
     context = _base_context(request, "Settings")
@@ -862,11 +923,13 @@ def update_settings_from_form(
     allow_cloud: str = Form("false"),
     telemetry_enabled: str = Form("false"),
 ) -> RedirectResponse:
-    update_persistent_settings({
-        "default_mode": default_mode,
-        "allow_cloud": allow_cloud == "true",
-        "telemetry_enabled": telemetry_enabled == "true",
-    })
+    update_persistent_settings(
+        {
+            "default_mode": default_mode,
+            "allow_cloud": allow_cloud == "true",
+            "telemetry_enabled": telemetry_enabled == "true",
+        }
+    )
     return RedirectResponse("/app/settings", status_code=303)
 
 

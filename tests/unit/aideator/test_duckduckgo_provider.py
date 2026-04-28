@@ -13,6 +13,7 @@ class TestDuckDuckGoProvider:
 
     def _make_provider(self):
         from aideator.search.duckduckgo import DuckDuckGoSearchProvider
+
         return DuckDuckGoSearchProvider()
 
     # ------------------------------------------------------------------ #
@@ -64,9 +65,7 @@ class TestDuckDuckGoProvider:
             },
         ]
 
-        with patch.object(
-            provider, "_search_sync", return_value=fake_ddgs_results
-        ):
+        with patch.object(provider, "_search_sync", return_value=fake_ddgs_results):
             results = asyncio.run(provider.search("test query", limit=5))
 
         assert len(results) == 2
@@ -96,9 +95,7 @@ class TestDuckDuckGoProvider:
         """Verify that exceptions in _search_sync return [] not raise."""
         provider = self._make_provider()
 
-        with patch.object(
-            provider, "_search_sync", side_effect=RuntimeError("network fail")
-        ):
+        with patch.object(provider, "_search_sync", side_effect=RuntimeError("network fail")):
             results = asyncio.run(provider.search("test"))
 
         assert results == []
@@ -156,6 +153,7 @@ class TestDuckDuckGoProvider:
     def test_fetch_extracts_text(self) -> None:
         """Verify fetch() returns Document with extracted text."""
         import httpx
+
         provider = self._make_provider()
 
         mock_response = MagicMock(spec=httpx.Response)
@@ -186,9 +184,7 @@ class TestDuckDuckGoProvider:
         """Verify healthcheck returns OK when search works."""
         provider = self._make_provider()
 
-        with patch.object(
-            provider, "_search_sync", return_value=[{"title": "t"}]
-        ):
+        with patch.object(provider, "_search_sync", return_value=[{"title": "t"}]):
             status = asyncio.run(provider.healthcheck())
 
         assert status == ProviderStatus.OK
@@ -206,9 +202,7 @@ class TestDuckDuckGoProvider:
         """Verify healthcheck returns ERROR on exception."""
         provider = self._make_provider()
 
-        with patch.object(
-            provider, "_search_sync", side_effect=RuntimeError("fail")
-        ):
+        with patch.object(provider, "_search_sync", side_effect=RuntimeError("fail")):
             status = asyncio.run(provider.healthcheck())
 
         assert status == ProviderStatus.ERROR

@@ -18,6 +18,7 @@ import httpx
 
 try:
     from ddgs import DDGS
+
     HAS_DDGS = True
 except ImportError:
     HAS_DDGS = False
@@ -100,9 +101,7 @@ class DuckDuckGoSearchProvider(SearchProvider):
         effective_limit = min(limit, 20)
 
         try:
-            raw_results = await asyncio.to_thread(
-                self._search_sync, query, effective_limit
-            )
+            raw_results = await asyncio.to_thread(self._search_sync, query, effective_limit)
         except Exception:
             LOGGER.warning(
                 "DuckDuckGo search failed",
@@ -159,7 +158,7 @@ class DuckDuckGoSearchProvider(SearchProvider):
                 )
                 # Re-raise to let healthcheck know specifically
                 raise ValueError("RATELIMIT") from exc
-            
+
             LOGGER.warning(
                 "DuckDuckGo search error: %s: %s",
                 type(exc).__name__,

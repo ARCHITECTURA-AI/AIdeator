@@ -4,6 +4,13 @@
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>AIDEATOR_OS // {{ page_title|upper }}</title>
+    
+    <!-- OpenGraph Virality Tags -->
+    <meta property="og:title" content="{{ og_title or 'AIdeator Intelligence Report' }}" />
+    <meta property="og:description" content="{{ og_description or 'High-fidelity concept validation powered by neural synthesis.' }}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="{{ og_image or '/static/og-card.png' }}" />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" type="image/svg+xml" href="/static/logo.svg">
     
     <!-- Core Assets -->
@@ -204,18 +211,22 @@
 <body class="nexus-grid min-h-screen relative" x-data="{ focusMode: false }">
     <div class="neural-mesh"></div>
 
+    {% if not is_shared_view %}
     <!-- SideNavBar -->
     <div :class="focusMode ? '-translate-x-full opacity-0' : 'translate-x-0 opacity-100'" class="sidebar-transition">
         {% include "partials/sidebar.html" %}
     </div>
+    {% endif %}
 
+    {% if not is_shared_view %}
     <!-- TopNavBar -->
     <div :class="focusMode ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'" class="sidebar-transition">
         {% include "partials/topbar.html" %}
     </div>
+    {% endif %}
 
     <!-- Main Canvas -->
-    <main :class="focusMode ? 'ml-0 pt-8' : 'ml-64 pt-24'" class="p-8 min-h-screen sidebar-transition">
+    <main :class="focusMode || {{ 'true' if is_shared_view else 'false' }} ? 'ml-0 pt-8' : 'ml-64 pt-24'" class="p-8 min-h-screen sidebar-transition">
         <div class="max-w-7xl mx-auto">
             {% block content %}{% endblock %}
         </div>

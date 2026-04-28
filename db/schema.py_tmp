@@ -1,0 +1,15 @@
+import uuid
+from datetime import datetime, timezone
+
+from sqlalchemy import JSON, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy.orm import DeclarativeBase
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+class IdeaModel(Base):
+    __tablename__ = "ideas"
+    idea_id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    title = Column(String(255), nullable=False)

@@ -57,15 +57,11 @@ class TestCollectSearchSignals:
     """Tests for async search signal collection."""
 
     def test_local_only_returns_empty(self) -> None:
-        results = asyncio.run(
-            collect_search_signals(mode="local-only", title="T", description="D")
-        )
+        results = asyncio.run(collect_search_signals(mode="local-only", title="T", description="D"))
         assert results == []
 
     def test_empty_query_returns_empty(self) -> None:
-        results = asyncio.run(
-            collect_search_signals(mode="local-only", title="", description="")
-        )
+        results = asyncio.run(collect_search_signals(mode="local-only", title="", description=""))
         assert results == []
 
 
@@ -73,9 +69,7 @@ class TestCollectSearchSignalsSync:
     """Tests for sync wrapper."""
 
     def test_local_only_sync(self) -> None:
-        results = collect_search_signals_sync(
-            mode="local-only", title="T", description="D"
-        )
+        results = collect_search_signals_sync(mode="local-only", title="T", description="D")
         assert results == []
 
     def test_hybrid_with_builtin_provider_returns_empty(self) -> None:

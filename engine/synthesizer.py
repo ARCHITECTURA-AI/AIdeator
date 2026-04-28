@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+from typing import Any
 
 from aideator.llm.registry import get_provider
 from api.config import settings
@@ -9,8 +10,8 @@ from models.report import Card
 
 LOGGER = logging.getLogger("engine.synthesizer")
 
-REQUIRED_CARD_TYPES = {"demand", "competition", "viability", "next_steps"}
-REQUIRES_CITATIONS = {"demand", "competition", "viability"}
+REQUIRED_CARD_TYPES = {"demand", "market", "competition", "viability", "next_steps"}
+REQUIRES_CITATIONS = {"demand", "market", "competition", "viability"}
 
 # Band thresholds for 0–100 scoring (V1)
 BAND_HIGH_THRESHOLD = 70
@@ -72,16 +73,13 @@ def validate_cards_v1(cards: list[Card]) -> None:
         score = card.score
         normalized = normalize_score(score)
         if not (0 <= normalized <= 100):
-            raise ValueError(
-                f"Score out of range for {card.type}: {score}"
-            )
+            raise ValueError(f"Score out of range for {card.type}: {score}")
 
         band = card.meta.get("band")
         if band is not None:
             if band not in ("high", "medium", "low"):
                 raise ValueError(
-                    f"Invalid band for {card.type}: {band}. "
-                    "Must be 'high', 'medium', or 'low'."
+                    f"Invalid band for {card.type}: {band}. Must be 'high', 'medium', or 'low'."
                 )
             expected_band = score_to_band(normalized)
             if band != expected_band:
@@ -99,28 +97,35 @@ def synthesize_default_cards() -> list[Card]:
             title="Market Demand",
             summary="Early demand is plausible but needs focused validation.",
             score=62,
-            meta={"band": "medium", "citation_urls": ["https://example.com/demand"]}
+            meta={"band": "medium", "citation_urls": ["https://example.com/demand"]},
         ),
         Card(
             type="competition",
             title="Competitive Landscape",
             summary="Market has competitors with room for differentiated execution.",
             score=54,
-            meta={"band": "medium", "citation_urls": ["https://example.com/competition"]}
+            meta={"band": "medium", "citation_urls": ["https://example.com/competition"]},
+        ),
+        Card(
+            type="market",
+            title="Market Sizing (TAM/SAM/SOM)",
+            summary="Targeting a $2.4B global market with a $150M serviceable addressable segment.",
+            score=78,
+            meta={"band": "high", "citation_urls": ["https://example.com/market"]},
         ),
         Card(
             type="viability",
             title="Technical Viability",
             summary="Execution risk is moderate due to acquisition and retention uncertainty.",
             score=48,
-            meta={"band": "medium", "citation_urls": ["https://example.com/risk"]}
+            meta={"band": "medium", "citation_urls": ["https://example.com/risk"]},
         ),
         Card(
             type="next_steps",
             title="Strategic Roadmap",
             summary="Run user interviews and ship a constrained pilot in two weeks.",
             score=66,
-            meta={"band": "medium", "citation_urls": ["https://example.com/next-steps"]}
+            meta={"band": "medium", "citation_urls": ["https://example.com/next-steps"]},
         ),
     ]
     validate_cards_v1(cards)
@@ -150,13 +155,13 @@ async def synthesize_intelligence(
     """
     try:
         provider = get_provider(settings)
-        
+
         signals_text = "\n".join(
             [f"- [{c['source_id']}] {c['content']} (URL: {c['url']})" for c in citations]
         )
-        
+
         analysis_json = json.dumps(analysis, indent=2) if analysis else "{}"
-        
+
         prompt = f"""You are a Lead Business Intelligence Architect. 
 Your goal is to synthesize the final validation report for the idea: "{title}".
 
@@ -169,8 +174,10 @@ SIGNALS:
 DIMENSIONAL ANALYSIS (Context from the Analyst Node):
 {analysis_json}
 
-Using the Analyst's findings and the raw signals, produce the final 4-card synthesis.
+Using the Analyst's findings and the raw signals, produce the final 5-card synthesis.
 Each card must balance quantitative scoring with deep qualitative context.
+Specifically for the "market" card, include estimates for TAM (Total Addressable Market),
+SAM (Serviceable Addressable Market), and SOM (Serviceable Obtainable Market) if signals allow.
 
 Return ONLY a JSON object with this exact structure:
 {{
@@ -200,6 +207,16 @@ Return ONLY a JSON object with this exact structure:
       "citation_urls": [<list of URLs actually referenced>]
     }},
     {{
+      "type": "market",
+      "score": <int 0-100>,
+      "summary": "<1-2 sentence executive summary>",
+      "detailed_context": "<A detailed analysis of market size and segments.>",
+      "tam": "<string estimate>",
+      "sam": "<string estimate>",
+      "som": "<string estimate>",
+      "citation_urls": [<list of URLs actually referenced>]
+    }},
+    {{
       "type": "next_steps",
       "score": <int 0-100>,
       "summary": "<1-2 sentence executive summary>",
@@ -211,44 +228,51 @@ Return ONLY a JSON object with this exact structure:
 """
         messages = [{"role": "user", "content": prompt}]
         response = await provider.generate(messages, temperature=0.7)
-        
+
         # Extract JSON from response
         content = response.content.strip()
         if "```json" in content:
             content = content.split("```json")[1].split("```")[0].strip()
         elif "```" in content:
-             content = content.split("```")[1].split("```")[0].strip()
-        
+            content = content.split("```")[1].split("```")[0].strip()
+
         data = json.loads(content)
         raw_cards = data.get("cards", [])
-        
+
         cards: list[Card] = []
         for rc in raw_cards:
             score = normalize_score(rc.get("score", 0))
             band = score_to_band(score)
-            
-            cards.append(Card(
-                type=rc.get("type", "unknown"),
-                title=rc.get("title", rc.get("type", "").replace("_", " ").title()),
-                summary=rc.get("summary", ""),
-                score=score,
-                details=rc.get("details", [rc.get("detailed_context", "")]),
-                meta={
-                    "citation_urls": rc.get("citation_urls", []),
-                    "band": band,
-                    "level": rc.get("level")
-                }
-            ))
-        
+
+            cards.append(
+                Card(
+                    type=rc.get("type", "unknown"),
+                    title=rc.get("title", rc.get("type", "").replace("_", " ").title()),
+                    summary=rc.get("summary", ""),
+                    score=score,
+                    details=rc.get("details", [rc.get("detailed_context", "")]),
+                    meta={
+                        "band": band,
+                        "citation_urls": rc.get("citation_urls", []),
+                        "tam": rc.get("tam"),
+                        "sam": rc.get("sam"),
+                        "som": rc.get("som"),
+                        "level": rc.get("level"),
+                    },
+                )
+            )
+
         validate_cards(cards)
         return cards
-        
+
     except Exception as e:
         LOGGER.error(f"LLM synthesis failed, falling back to defaults: {e}", exc_info=True)
         return synthesize_default_cards()
 
 
-def render_markdown_report(*, idea_id: str, cards: list[Card]) -> str:
+def render_markdown_report(
+    *, idea_id: str, cards: list[Card], battle_results: dict[str, Any] | None = None
+) -> str:
     lines: list[str] = [f"# Idea Report {idea_id}", ""]
 
     for card in cards:
@@ -260,11 +284,10 @@ def render_markdown_report(*, idea_id: str, cards: list[Card]) -> str:
             normalized = normalize_score(score)
             # Add animation hooks for the "Wow" moment
             score_span = (
-                f'<span class="score-display animate-score" '
-                f'data-target="{normalized}">0</span>'
+                f'<span class="score-display animate-score" data-target="{normalized}">0</span>'
             )
             header += f" — {score_span}/100"
-        
+
         # Add reveal wrapper start
         lines.append('<div class="reveal">')
         lines.append(header)
@@ -272,7 +295,7 @@ def render_markdown_report(*, idea_id: str, cards: list[Card]) -> str:
         # Brief summary for quick scanning
         lines.append(f"**Executive Summary:** {card.summary}")
         lines.append("")
-        
+
         # Detailed context for depth
         if card.details:
             lines.append("### Deep_Dive_Context")
@@ -286,7 +309,19 @@ def render_markdown_report(*, idea_id: str, cards: list[Card]) -> str:
             lines.append("Citations:")
             for url in citations:
                 lines.append(f"- {url}")
-        
+
+        # Market Sizing table for 'market' card
+        if card.type == "market" and any(card.meta.get(k) for k in ("tam", "sam", "som")):
+            lines.append("")
+            lines.append("| Dimension | Estimated Size |")
+            lines.append("| :--- | :--- |")
+            lines.append(f"| **TAM** | {card.meta.get('tam', 'N/A')} |")
+            lines.append(f"| **SAM** | {card.meta.get('sam', 'N/A')} |")
+            lines.append(f"| **SOM** | {card.meta.get('som', 'N/A')} |")
+            lines.append("")
+
+        lines.append(f"> {card.summary}")
+
         # Add reveal wrapper end
         lines.append("</div> <!-- end reveal -->")
         lines.append("")
@@ -294,15 +329,32 @@ def render_markdown_report(*, idea_id: str, cards: list[Card]) -> str:
     # Benchmark comparison section
     _append_benchmark_section(lines, cards)
 
+    # Battle Mode section
+    if battle_results:
+        lines.append("## Battle Mode: Bull vs Bear")
+        lines.append('<div class="battle-container">')
+        lines.append('  <div class="bull-case">')
+        lines.append("    <h3>🐂 The Bull Case</h3>")
+        lines.append(f"    <p>{battle_results.get('bull_case', '')}</p>")
+        lines.append("  </div>")
+        lines.append('  <div class="bear-case">')
+        lines.append("    <h3>🐻 The Bear Case</h3>")
+        lines.append(f"    <p>{battle_results.get('bear_case', '')}</p>")
+        lines.append("  </div>")
+        lines.append('  <div class="the-hinge">')
+        lines.append("    <h3>⚖️ The Strategic Hinge</h3>")
+        lines.append(f"    <p><strong>{battle_results.get('the_hinge', '')}</strong></p>")
+        lines.append("  </div>")
+        lines.append("</div>")
+        lines.append("")
+
     lines.append("## Cursor/Claude Code Usage Notes")
     lines.append("Artifact rendered from validated cards.")
     lines.append("")
     return "\n".join(lines)
 
 
-def _append_benchmark_section(
-    lines: list[str], cards: list[Card]
-) -> None:
+def _append_benchmark_section(lines: list[str], cards: list[Card]) -> None:
     """Add benchmark comparison section to report lines."""
     try:
         from engine.benchmark import compare_scores, format_comparison_summary
@@ -325,6 +377,8 @@ def _append_benchmark_section(
         pass
 
 
-def build_markdown_artifact(*, idea_id: str, cards: list[Card]) -> str:
+def build_markdown_artifact(
+    *, idea_id: str, cards: list[Card], battle_results: dict[str, Any] | None = None
+) -> str:
     validate_cards(cards)
-    return render_markdown_report(idea_id=idea_id, cards=cards)
+    return render_markdown_report(idea_id=idea_id, cards=cards, battle_results=battle_results)

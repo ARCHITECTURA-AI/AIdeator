@@ -15,3 +15,16 @@ if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
 os.environ["IDEATOR_TEST_BYPASS"] = "true"
+os.environ["APP_DB_URL"] = "sqlite:///./test_aideator_global.db"
+
+import pytest  # noqa: E402
+
+from db.base import reset_db_connection  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def db_init():
+    """Ensure database is initialized for every test."""
+    reset_db_connection()
+    yield
+    # Cleanup after all tests if needed

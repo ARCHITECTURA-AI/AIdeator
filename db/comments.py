@@ -75,4 +75,4 @@ def import_comments_snapshot(rows):
     pass
 
 
-initialize()
+# initialize() - REMOVED

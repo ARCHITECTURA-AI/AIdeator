@@ -1,0 +1,53 @@
+{
+  "idea": {
+    "title": "EcoCharge: Solar-Powered Smartphone Case",
+    "description": "A rugged smartphone case with integrated high-efficiency solar cells and a secondary battery to extend phone life by 50% in outdoor conditions.",
+    "target_user": "Outdoor enthusiasts, hikers, and off-grid travelers",
+    "context": "Seeking sustainable power solutions for remote exploration",
+    "tier": "Gold"
+  },
+  "report": {
+    "cards": [
+      {
+        "type": "demand",
+        "title": "Market Demand",
+        "score": 85,
+        "summary": "Strong interest from hiking communities and sustainable tech early adopters.",
+        "details": ["Surveys indicate 70% of frequent hikers would pay a premium for integrated solar charging."],
+        "meta": {"band": "high"}
+      },
+      {
+        "type": "market",
+        "title": "Market Sizing (TAM/SAM/SOM)",
+        "score": 72,
+        "summary": "Targeting a $4.2B global outdoor accessory market with a $280M niche.",
+        "details": ["TAM: $12B (Smartphone accessories)", "SAM: $4.2B (Outdoor/Rugged accessories)", "SOM: $280M (Premium solar-integrated segment)"],
+        "meta": {"band": "high"}
+      },
+      {
+        "type": "competition",
+        "title": "Competitive Landscape",
+        "score": 42,
+        "summary": "Existing power banks are cheap and reliable.",
+        "details": ["Big players like Anker already dominate the portable power market with high-capacity alternatives."],
+        "meta": {"band": "medium"}
+      },
+      {
+        "type": "viability",
+        "title": "Technical Viability",
+        "score": 62,
+        "summary": "Form factor is a challenge for high-efficiency charging.",
+        "details": ["Current solar tech requires roughly 4 hours of direct sunlight for a 20% charge."],
+        "meta": {"band": "medium"}
+      },
+      {
+        "type": "next_steps",
+        "title": "Strategic Roadmap",
+        "score": 80,
+        "summary": "Prototype the solar hinge and launch a Kickstarter campaign.",
+        "details": ["Develop Gen 1 prototype in 4 weeks.", "Initiate early-bird list for outdoor influencers."],
+        "meta": {"band": "high"}
+      }
+    ]
+  }
+}

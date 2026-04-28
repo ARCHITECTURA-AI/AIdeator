@@ -151,4 +151,4 @@ def import_runs_snapshot(snapshot):
     pass
 
 
-initialize()
+# initialize() - REMOVED

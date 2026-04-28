@@ -74,4 +74,4 @@ def get_user(user_id: UUID) -> User | None:
 
 
 # Initialize on import
-initialize()
+# initialize() - REMOVED

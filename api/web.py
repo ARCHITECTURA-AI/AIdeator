@@ -214,7 +214,7 @@ def get_diagnostics() -> dict[str, object]:
 @router.get("/demo")
 async def demo_mode(request: Request):
     """Seed demo data and redirect to report."""
-    demo_path = _ROOT / "data" / "demo_data.json"
+    demo_path = Path(__file__).parent / "demo_data.json"
     if not demo_path.exists():
         raise HTTPException(status_code=404, detail="Demo data not found")
 

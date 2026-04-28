@@ -97,4 +97,4 @@ def import_reports_snapshot(rows):
     pass
 
 
-initialize()
+# initialize() - REMOVED

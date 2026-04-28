@@ -115,5 +115,5 @@ def import_ideas_snapshot(rows):
     pass
 
 
-# Initialize on import
-initialize()
+# Initialize on import - REMOVED to prevent race conditions in tests.
+# The app or CLI should call initialize_db() explicitly.

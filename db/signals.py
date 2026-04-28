@@ -47,4 +47,4 @@ def import_signals_snapshot(snapshot):
     pass
 
 
-initialize()
+# initialize() - REMOVED

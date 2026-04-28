@@ -2,7 +2,11 @@ import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column  # type: ignore[attr-defined]
+from sqlalchemy.orm import (  # type: ignore[attr-defined, unused-ignore]
+    DeclarativeBase,
+    Mapped,
+    mapped_column,
+)
 
 
 class Base(DeclarativeBase):

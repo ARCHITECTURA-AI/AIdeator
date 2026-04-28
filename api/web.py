@@ -111,7 +111,7 @@ def _paginate(items: list[T], page: int, per_page: int) -> tuple[list[T], Pagina
 
 
 def _render_markdown(markdown_text: str) -> str:
-    import markdown  # type: ignore[import-untyped]
+    import markdown  # type: ignore[import-untyped, unused-ignore]
 
     # Use standard extensions for better formatting
     return markdown.markdown(markdown_text, extensions=["extra", "nl2br", "sane_lists"])

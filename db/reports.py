@@ -55,12 +55,10 @@ def get_report(run_id: UUID) -> Report | None:
         model = session.query(ReportModel).filter_by(run_id=str(run_id)).first()
         if not model:
             return None
+        raw_cards = cast(list[dict[str, Any]], model.cards if isinstance(model.cards, list) else [])
         return Report(
             run_id=UUID(model.run_id),
-            cards=[
-                Card(**cast(dict[str, Any], c))
-                for c in (model.cards if isinstance(model.cards, list) else [])
-            ],
+            cards=[Card(**c) for c in raw_cards],
             artifact_path=model.artifact_path,
             citations=model.citations,
             battle_results=model.battle_results,
@@ -73,19 +71,19 @@ def list_reports() -> list[Report]:
     session = db_session()
     try:
         models = session.query(ReportModel).all()
-        return [
-            Report(
-                run_id=UUID(m.run_id),
-                cards=[
-                    Card(**cast(dict[str, Any], c))
-                    for c in (m.cards if isinstance(m.cards, list) else [])
-                ],
-                artifact_path=m.artifact_path,
-                citations=m.citations,
-                battle_results=m.battle_results,
+        reports = []
+        for m in models:
+            raw_cards = cast(list[dict[str, Any]], m.cards if isinstance(m.cards, list) else [])
+            reports.append(
+                Report(
+                    run_id=UUID(m.run_id),
+                    cards=[Card(**c) for c in raw_cards],
+                    artifact_path=m.artifact_path,
+                    citations=m.citations,
+                    battle_results=m.battle_results,
+                )
             )
-            for m in models
-        ]
+        return reports
     finally:
         db_session.remove()
 

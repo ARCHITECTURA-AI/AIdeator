@@ -12,18 +12,37 @@ from typing import Any
 
 import uvicorn
 
-from aideator.paths import (
+# Ensure the project root is in sys.path for module imports (api, db, engine, etc.)
+_ROOT = str(Path(__file__).resolve().parents[1])
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
+# Critical check: verify if 'api' is accessible
+try:
+    import api
+    # If api has no __path__, it's a module, not a package
+    if not hasattr(api, "__path__"):
+         # This is the conflict!
+         if (Path.cwd() / "api").exists():
+             sys.path.insert(0, str(Path.cwd()))
+             import importlib
+             importlib.reload(api)
+except ImportError:
+    if (Path.cwd() / "api").exists():
+        sys.path.insert(0, str(Path.cwd()))
+
+from aideator.paths import (  # noqa: E402
     ensure_dir,
     get_all_paths,
     get_default_config_path,
     resolve_path,
 )
-from aideator.rebuild_docs import rebuild_docs
-from aideator.search.registry import get_search_provider
-from api.config import load_settings, settings
-from db.ideas import Idea, save_idea
-from db.runs import Run, save_run
-from engine.orchestrator import execute_run
+from aideator.rebuild_docs import rebuild_docs  # noqa: E402
+from aideator.search.registry import get_search_provider  # noqa: E402
+from api.config import load_settings, settings  # noqa: E402
+from db.ideas import Idea, save_idea  # noqa: E402
+from db.runs import Run, save_run  # noqa: E402
+from engine.orchestrator import execute_run  # noqa: E402
 
 
 def run_server(

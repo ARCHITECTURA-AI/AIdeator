@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 from threading import Lock
+from typing import Any, cast
 from uuid import UUID
 
 import sentry_sdk
@@ -118,7 +119,7 @@ limiter = Limiter(
 )
 app = FastAPI(title="AIdeator", version="0.1.0", lifespan=lifespan)
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
+app.add_exception_handler(RateLimitExceeded, cast(Any, _rate_limit_exceeded_handler))
 
 _CONCURRENCY_GUARD = Lock()
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]

@@ -7,7 +7,7 @@ from uuid import UUID
 
 from db.base import db_session, initialize_db
 from db.schema import ReportModel
-from models.report import Report
+from models.report import Card, Report
 
 LOGGER = logging.getLogger("db.reports")
 
@@ -31,7 +31,7 @@ def save_report(report: Report) -> Report:
     try:
         model = session.query(ReportModel).filter_by(run_id=str(report.run_id)).first()
         if model:
-            model.cards = [card.model_dump() for card in report.cards]
+            setattr(model, "cards", [card.model_dump() for card in report.cards])
             model.artifact_path = report.artifact_path
             model.citations = report.citations
             model.battle_results = report.battle_results
@@ -56,7 +56,7 @@ def get_report(run_id: UUID) -> Report | None:
             return None
         return Report(
             run_id=UUID(model.run_id),
-            cards=model.cards,
+            cards=[Card(**c) for c in (model.cards if isinstance(model.cards, list) else [])],
             artifact_path=model.artifact_path,
             citations=model.citations,
             battle_results=model.battle_results,
@@ -72,7 +72,7 @@ def list_reports() -> list[Report]:
         return [
             Report(
                 run_id=UUID(m.run_id),
-                cards=m.cards,
+                cards=[Card(**c) for c in (m.cards if isinstance(m.cards, list) else [])],
                 artifact_path=m.artifact_path,
                 citations=m.citations,
                 battle_results=m.battle_results,

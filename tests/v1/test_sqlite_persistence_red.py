@@ -10,41 +10,45 @@ from models.idea import Idea
 
 
 @pytest.fixture(autouse=True)
-def setup_teardown():
-    # Clear env to force default path
-    if "APP_DB_URL" in os.environ:
-        del os.environ["APP_DB_URL"]
+def setup_teardown(monkeypatch):
+    """Isolate persistence tests using a unique file in a temp directory."""
+    import tempfile
+    import uuid
 
-    from db.base import engine, reset_db_connection
-
+    from db import base
+    
+    # Create a temp directory for this test
+    temp_dir = Path(tempfile.mkdtemp())
+    test_file = f"aideator_test_{uuid.uuid4().hex}.db"
+    test_path = (temp_dir / test_file).absolute()
+    
+    # Monkeypatch the DB_DIR and DB_PATH in db.base
+    monkeypatch.setattr(base, "DB_DIR", temp_dir)
+    monkeypatch.setattr(base, "DB_PATH", test_path)
+    
+    # Ensure APP_DB_URL is NOT set so it uses the default logic we just patched
+    monkeypatch.delenv("APP_DB_URL", raising=False)
+    
+    from db.base import reset_db_connection
     reset_db_connection()
 
-    # Cleanup before
-    db_path = Path("data/aideator.db").absolute()
-    if db_path.exists():
-        try:
-            os.remove(db_path)
-        except PermissionError:
-            pass
+    yield test_path
 
-    yield
-
-    # Cleanup after
-    from db.base import db_session
-
+    # Cleanup
+    from db.base import db_session, engine
     db_session.remove()
     engine.dispose()
 
-    if db_path.exists():
+    if test_path.exists():
         try:
-            os.remove(db_path)
-        except PermissionError:
+            os.remove(test_path)
+        except Exception:
             pass
 
 
-def test_sqlite_db_file_created():
+def test_sqlite_db_file_created(setup_teardown):
     """Verify that a SQLite database file is created in data/ directory."""
-    # This should fail if the system is still using JSON files
+    test_path = setup_teardown
     initialize()
     idea = Idea(
         title="Test Idea",
@@ -54,8 +58,7 @@ def test_sqlite_db_file_created():
     )
     save_idea(idea)
 
-    db_path = Path("data/aideator.db").absolute()
-    assert db_path.exists(), f"SQLite database file should be created at {db_path}"
+    assert test_path.exists(), f"SQLite database file should be created at {test_path}"
 
 
 def test_idea_persistence_integrity():

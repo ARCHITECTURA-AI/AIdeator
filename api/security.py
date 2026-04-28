@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import Any, cast
 
 import jwt
 from passlib.context import CryptContext
@@ -37,7 +37,9 @@ def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = 
 
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    if isinstance(encoded_jwt, bytes):
+        return encoded_jwt.decode("utf-8")
+    return cast(str, encoded_jwt)  # type: ignore[redundant-cast]
 
 
 def decode_access_token(token: str) -> dict[str, Any] | None:

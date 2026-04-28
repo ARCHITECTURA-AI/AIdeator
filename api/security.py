@@ -39,7 +39,7 @@ def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = 
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     if isinstance(encoded_jwt, bytes):
         return encoded_jwt.decode("utf-8")
-    return cast(str, encoded_jwt)  # type: ignore[redundant-cast]
+    return cast(str, encoded_jwt)  # type: ignore[redundant-cast, unused-ignore]
 
 
 def decode_access_token(token: str) -> dict[str, Any] | None:

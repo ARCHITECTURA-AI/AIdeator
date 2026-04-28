@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any, cast
 from uuid import UUID
 
 from db.base import db_session, initialize_db
@@ -56,7 +57,10 @@ def get_report(run_id: UUID) -> Report | None:
             return None
         return Report(
             run_id=UUID(model.run_id),
-            cards=[Card(**c) for c in (model.cards if isinstance(model.cards, list) else [])],
+            cards=[
+                Card(**cast(dict[str, Any], c))
+                for c in (model.cards if isinstance(model.cards, list) else [])
+            ],
             artifact_path=model.artifact_path,
             citations=model.citations,
             battle_results=model.battle_results,
@@ -72,7 +76,10 @@ def list_reports() -> list[Report]:
         return [
             Report(
                 run_id=UUID(m.run_id),
-                cards=[Card(**c) for c in (m.cards if isinstance(m.cards, list) else [])],
+                cards=[
+                    Card(**cast(dict[str, Any], c))
+                    for c in (m.cards if isinstance(m.cards, list) else [])
+                ],
                 artifact_path=m.artifact_path,
                 citations=m.citations,
                 battle_results=m.battle_results,

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo.png" alt="AIdeator logo" width="200" />
+  <img src="https://raw.githubusercontent.com/ARCHITECTURA-AI/AIdeator/main/logo.png" alt="AIdeator logo" width="200" />
 </p>
 
 <p align="center">
@@ -9,11 +9,11 @@
 <h1 align="center">AIdeator</h1>
 
 <p align="center">
-  <b>AI-powered idea validation engine with pluggable LLM and search providers</b>
+  <b>AIdeator: From raw idea to build decision.</b>
 </p>
 
 <p align="center">
-  <i>Validate product ideas with configurable privacy modes, search-backed signals, and benchmark scoring — all from a single local-first FastAPI service.</i>
+  <i>AIdeator is a complete idea validation system that takes you from raw idea to build decision — with scored desk research, structured user interviews, and behavioral experiments. Stop overthinking. Start validating.</i>
 </p>
 
 <br/>
@@ -210,8 +210,8 @@ Local-only mode blocks all outbound HTTP by run-mode guardrails. See [`docs/secu
 
 | Version | Phase |
 |---------|-------|
-| `1.1.0` | V1.1 — UI Polish & Command Palette |
-| `1.0.0` | V1.0 — Full validation engine |
+| `0.9.9` | Production Readiness — Type Safety, Stabilization & Full Workflow |
+| `0.9.8` | Stability, Security & CLI Hardening |
 | `0.4.0` | PH-D — Plugin & eval |
 | `0.3.0` | PH-C — Runtime & migration |
 | `0.2.0` | PH-B — Web UI |

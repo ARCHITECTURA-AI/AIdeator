@@ -183,4 +183,43 @@
     .report-content strong { @apply text-white font-normal; }
     .report-content blockquote { @apply border-l-2 border-secondary/30 pl-8 italic text-secondary/60 my-10; }
 </style>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Inject Copy Buttons into Toolkit Sections
+    const headers = document.querySelectorAll('.report-content h3, .report-content h2');
+    headers.forEach(header => {
+        const text = header.innerText.toLowerCase();
+        if (text.includes('script') || text.includes('template') || text.includes('copy') || text.includes('outreach') || text.includes('blueprint')) {
+            const btn = document.createElement('button');
+            btn.innerHTML = '<span class="material-symbols-outlined text-sm">content_copy</span>';
+            btn.className = 'ml-4 p-2 glass-panel hover:bg-primary/20 hover:text-primary transition-all text-white/20 inline-flex items-center justify-center rounded-md';
+            btn.title = 'Copy Section Content';
+            
+            btn.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                let content = '';
+                let next = header.nextElementSibling;
+                while (next && !['H1', 'H2', 'H3'].includes(next.tagName)) {
+                    content += next.innerText + '\n\n';
+                    next = next.nextElementSibling;
+                }
+                
+                navigator.clipboard.writeText(content.trim()).then(() => {
+                    const icon = btn.querySelector('.material-symbols-outlined');
+                    icon.innerText = 'check';
+                    btn.classList.add('text-secondary');
+                    setTimeout(() => {
+                        icon.innerText = 'content_copy';
+                        btn.classList.remove('text-secondary');
+                    }, 2000);
+                });
+            };
+            
+            header.appendChild(btn);
+            header.classList.add('flex', 'items-center', 'justify-between', 'group');
+        }
+    });
+});
+</script>
 {% endblock %}

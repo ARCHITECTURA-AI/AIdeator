@@ -7,13 +7,24 @@ to the configured search provider based on the run mode.
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from aideator.search.providers import SearchResult
 
+from aideator.llm.registry import get_provider
+from aideator.search.providers import SearchResult, SignalType
+
 LOGGER = logging.getLogger("engine.signal_collector")
+
+COMPLAINT_TEMPLATES = {
+    "reddit_pain": 'site:reddit.com "{topic}" (sucks | hate | problem | annoying | difficult)',
+    "review_mining": '"{topic}" (1 star | 2 stars | "bad review" | "honest review" | complaint)',
+    "troubleshooting": '"{topic}" "how do I" "doesn\'t work" "error" "issue"',
+    "competitor_pain": '"{topic}" alternatives "switching from" "better than"',
+}
 
 
 def build_hybrid_query(text: str) -> str:
@@ -23,21 +34,24 @@ def build_hybrid_query(text: str) -> str:
 
 
 def build_external_payload(*, mode: str, title: str, description: str) -> dict[str, str]:
-    """Build the search query payload for the given mode.
-
-    Args:
-        mode: Run mode ('local-only', 'hybrid', 'cloud-enabled')
-        title: Idea title
-        description: Idea description
-
-    Returns:
-        Dict with 'query' key (empty for local-only)
-    """
+    """Build the search query payload for the given mode."""
     if mode == "hybrid":
         return {"query": build_hybrid_query(f"{title} {description}")}
     if mode == "cloud-enabled":
         return {"query": f"{title} {description}"}
     return {"query": ""}
+
+
+def build_complaint_queries(title: str, description: str) -> list[str]:
+    """Generate a set of targeted complaint mining queries."""
+    # Use the title and first 3 words of description as the core topic
+    core_words = [word for word in description.split() if word.strip()]
+    topic = f"{title} {' '.join(core_words[:3])}"
+    
+    return [
+        template.format(topic=topic)
+        for template in COMPLAINT_TEMPLATES.values()
+    ]
 
 
 async def collect_search_signals(
@@ -46,6 +60,7 @@ async def collect_search_signals(
     title: str,
     description: str,
     limit: int = 5,
+    deep_search: bool = False,
 ) -> list[SearchResult]:
     """Collect search signals from the configured provider.
 
@@ -98,6 +113,30 @@ async def collect_search_signals(
             return []
 
         results = await provider.search(query, limit=limit, mode="general")
+
+        # --- COMPLAINT MINING (Deep Search) ---
+        if deep_search and mode != "local-only":
+            LOGGER.info("Starting deep complaint mining passes")
+            mining_queries = build_complaint_queries(title, description)
+            
+            # Run mining queries in parallel
+            tasks = [
+                provider.search(q, limit=3, mode="general") 
+                for q in mining_queries
+            ]
+            mining_results_batches = await asyncio.gather(*tasks, return_exceptions=True)
+            
+            seen_urls = {r.url for r in results}
+            for batch in mining_results_batches:
+                if isinstance(batch, list):
+                    for res in batch:
+                        if res.url not in seen_urls:
+                            results.append(res)
+                            seen_urls.add(res.url)
+            
+            # Sort results? Maybe keep general results first, then mining results.
+            # For now, we just append and let the classifier handle them.
+            results = results[:limit * 2] # Allow a bit more for deep search
 
         # --- CIRCUIT BREAKER / FAILOVER LOGIC ---
         if not results and provider.name != "duckduckgo" and provider.name != "builtin":
@@ -159,6 +198,7 @@ def collect_search_signals_sync(
     title: str,
     description: str,
     limit: int = 5,
+    deep_search: bool = False,
 ) -> list[SearchResult]:
     """Synchronous wrapper for collect_search_signals.
 
@@ -182,5 +222,101 @@ def collect_search_signals_sync(
             title=title,
             description=description,
             limit=limit,
+            deep_search=deep_search,
         )
     )
+
+
+async def classify_signals(signals: list[SearchResult]) -> list[SearchResult]:
+    """Classify a batch of signals using an LLM.
+
+    Args:
+        signals: List of raw search results.
+
+    Returns:
+        List of classified SearchResult objects.
+    """
+    if not signals:
+        return []
+
+    try:
+        from api.config import settings
+        provider = get_provider(settings)
+
+        # Prepare batch prompt
+        signals_payload = [
+            {"id": i, "title": s.title, "snippet": s.snippet}
+            for i, s in enumerate(signals)
+        ]
+
+        prompt = f"""You are a Signal Classification Engine.
+Your task is to categorize the following evidence signals for a business validation run.
+
+CATEGORIES:
+- PAIN_COMPLAINT: Direct evidence of a problem, frustration, or "this sucks" rant.
+- FEATURE_REQUEST: "I wish X existed" or "How do I do Y?" questions.
+- COMPETITOR_WEAKNESS: Negative reviews or complaints about existing solutions.
+- MARKET_DATA: Quantitative facts, growth stats, or industry reports.
+- ANECDOTAL_POSITIVE: Generic positive mentions or vague support.
+- SEO_FILLER: Sponsored content, affiliate links, or generic blog fluff.
+
+SIGNALS:
+{json.dumps(signals_payload, indent=2)}
+
+Return a JSON object with a 'classifications' list.
+Each item MUST have 'id', 'type' (one of the CATEGORIES above), and 'confidence' (0.0 to 1.0).
+
+Example:
+{{
+  "classifications": [
+    {{ "id": 0, "type": "PAIN_COMPLAINT", "confidence": 0.95 }}
+  ]
+}}
+"""
+        messages = [{"role": "user", "content": prompt}]
+        response = await provider.generate(messages, temperature=0.1)
+        
+        content = response.content.strip()
+        if "```json" in content:
+            content = content.split("```json")[1].split("```")[0].strip()
+        elif "```" in content:
+            content = content.split("```")[1].split("```")[0].strip()
+
+        data = json.loads(content)
+        classifications = {c["id"]: c for c in data.get("classifications", [])}
+
+        results = []
+        for i, s in enumerate(signals):
+            c = classifications.get(i, {})
+            # Map string type back to Enum
+            raw_type = c.get("type", "UNSPECIFIED").upper()
+            try:
+                sig_type = SignalType[raw_type]
+            except KeyError:
+                sig_type = SignalType.ANECDOTAL_POSITIVE
+
+            results.append(SearchResult(
+                title=s.title,
+                url=s.url,
+                snippet=s.snippet,
+                source=s.source,
+                score=s.score,
+                signal_type=sig_type,
+                confidence=c.get("confidence", 0.5)
+            ))
+        
+        return results
+
+    except Exception as e:
+        LOGGER.warning(f"Signal classification failed, falling back to defaults: {e}")
+        return [
+            SearchResult(
+                title=s.title,
+                url=s.url,
+                snippet=s.snippet,
+                source=s.source,
+                score=s.score,
+                signal_type=SignalType.ANECDOTAL_POSITIVE,
+                confidence=0.5
+            ) for s in signals
+        ]

@@ -3,6 +3,7 @@
 {% block content %}
 <div class="space-y-12">
     <!-- Header HUD -->
+    <!-- Header HUD -->
     <header class="flex justify-between items-end border-b border-white/5 pb-10">
         <div class="space-y-2">
             <div class="flex items-center gap-3">
@@ -25,6 +26,82 @@
             </div>
         </div>
     </header>
+
+    <!-- Validation Roadmap HUD -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+        {% set status = idea.status %}
+        
+        <!-- Graduation Alert -->
+        {% if status == 'INTERVIEW_READY' %}
+        <div class="col-span-full glass-panel p-6 border-l-4 border-secondary bg-secondary/10 flex items-center justify-between animate-in fade-in slide-in-from-top duration-1000">
+            <div class="flex items-center gap-6">
+                <div class="w-12 h-12 rounded-full bg-secondary/20 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-secondary animate-bounce">celebration</span>
+                </div>
+                <div>
+                    <h4 class="text-secondary font-bold tracking-widest uppercase text-xs">Research Complete // Phase 02 Unlocked</h4>
+                    <p class="text-white/60 text-[10px] uppercase font-mono mt-1">Idea has high market signal. Proceed to User Interviews below.</p>
+                </div>
+            </div>
+            <button class="glass-panel px-6 py-2 text-secondary text-[9px] font-mono uppercase tracking-widest hover:bg-secondary/20">View_Interview_Kit</button>
+        </div>
+        {% elif status == 'EXPERIMENT_READY' %}
+        <div class="col-span-full glass-panel p-6 border-l-4 border-orange-400 bg-orange-400/10 flex items-center justify-between animate-in fade-in slide-in-from-top duration-1000">
+            <div class="flex items-center gap-6">
+                <div class="w-12 h-12 rounded-full bg-orange-400/20 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-orange-400 animate-bounce">rocket_launch</span>
+                </div>
+                <div>
+                    <h4 class="text-orange-400 font-bold tracking-widest uppercase text-xs">Strong Validation // Phase 03 Unlocked</h4>
+                    <p class="text-white/60 text-[10px] uppercase font-mono mt-1">High confidence detected. Launching Behavioral Experiment is recommended.</p>
+                </div>
+            </div>
+            <button class="glass-panel px-6 py-2 text-orange-400 text-[9px] font-mono uppercase tracking-widest hover:bg-orange-400/20">Setup_Smoke_Test</button>
+        </div>
+        {% endif %}
+        
+        <!-- Step 1: Desk Research -->
+        <div class="glass-panel p-6 border-l-2 {% if status in ['DESK_RESEARCH', 'INTERVIEW_READY', 'EXPERIMENT_READY', 'VALIDATED', 'PIVOT_RECOMMENDED'] %}border-primary bg-primary/5{% else %}border-white/10 opacity-40{% endif %} transition-all duration-700">
+            <div class="flex justify-between items-start mb-4">
+                <span class="font-mono text-[9px] tracking-widest uppercase {% if status in ['DESK_RESEARCH', 'INTERVIEW_READY', 'EXPERIMENT_READY', 'VALIDATED', 'PIVOT_RECOMMENDED'] %}text-primary{% else %}text-white/20{% endif %}">Step_01 // Discovery</span>
+                {% if status in ['INTERVIEW_READY', 'EXPERIMENT_READY', 'VALIDATED', 'PIVOT_RECOMMENDED'] %}
+                <span class="material-symbols-outlined text-secondary text-sm">check_circle</span>
+                {% elif status == 'DESK_RESEARCH' %}
+                <span class="w-2 h-2 bg-primary rounded-full animate-pulse shadow-[0_0_10px_#a7a5ff]"></span>
+                {% endif %}
+            </div>
+            <h3 class="text-xl font-light tracking-tight text-white mb-2">Desk Research</h3>
+            <p class="text-[10px] font-mono text-white/30 uppercase leading-relaxed">Automated signal collection & battle-testing.</p>
+        </div>
+
+        <!-- Step 2: User Interviews -->
+        <div class="glass-panel p-6 border-l-2 {% if status in ['INTERVIEW_READY', 'EXPERIMENT_READY', 'VALIDATED', 'PIVOT_RECOMMENDED'] %}border-secondary bg-secondary/5{% else %}border-white/10 opacity-40{% endif %} transition-all duration-700">
+            <div class="flex justify-between items-start mb-4">
+                <span class="font-mono text-[9px] tracking-widest uppercase {% if status in ['INTERVIEW_READY', 'EXPERIMENT_READY', 'VALIDATED', 'PIVOT_RECOMMENDED'] %}text-secondary{% else %}text-white/20{% endif %}">Step_02 // Human_Signal</span>
+                {% if status in ['EXPERIMENT_READY', 'VALIDATED', 'PIVOT_RECOMMENDED'] %}
+                <span class="material-symbols-outlined text-secondary text-sm">check_circle</span>
+                {% elif status == 'INTERVIEW_READY' %}
+                <span class="w-2 h-2 bg-secondary rounded-full animate-pulse shadow-[0_0_10px_#69f6b8]"></span>
+                {% endif %}
+            </div>
+            <h3 class="text-xl font-light tracking-tight text-white mb-2">User Interviews</h3>
+            <p class="text-[10px] font-mono text-white/30 uppercase leading-relaxed">Qualitative validation & problem-market fit.</p>
+        </div>
+
+        <!-- Step 3: Behavioral Test -->
+        <div class="glass-panel p-6 border-l-2 {% if status in ['EXPERIMENT_READY', 'VALIDATED', 'PIVOT_RECOMMENDED'] %}border-orange-400 bg-orange-400/5{% else %}border-white/10 opacity-40{% endif %} transition-all duration-700">
+            <div class="flex justify-between items-start mb-4">
+                <span class="font-mono text-[9px] tracking-widest uppercase {% if status in ['EXPERIMENT_READY', 'VALIDATED', 'PIVOT_RECOMMENDED'] %}text-orange-400{% else %}text-white/20{% endif %}">Step_03 // High_Fidelity</span>
+                {% if status in ['VALIDATED', 'PIVOT_RECOMMENDED'] %}
+                <span class="material-symbols-outlined text-secondary text-sm">check_circle</span>
+                {% elif status == 'EXPERIMENT_READY' %}
+                <span class="w-2 h-2 bg-orange-400 rounded-full animate-pulse shadow-[0_0_10px_#fb923c]"></span>
+                {% endif %}
+            </div>
+            <h3 class="text-xl font-light tracking-tight text-white mb-2">Behavioral Test</h3>
+            <p class="text-[10px] font-mono text-white/30 uppercase leading-relaxed">Smoke tests & commitment verification.</p>
+        </div>
+    </section>
 
     <div class="grid grid-cols-12 gap-10">
         <!-- Main Logic Column -->
@@ -161,6 +238,7 @@ Ready for initialization.</pre>
                 
                 <form action="/app/runs/create" method="POST" class="space-y-10">
                     <input type="hidden" name="idea_id" value="{{ idea.id }}">
+                    <input type="hidden" name="mode" value="{{ default_mode }}">
                     
                     <div class="space-y-6">
                         <label class="font-mono text-[9px] text-white/30 tracking-[0.3em] uppercase">Verification_Level</label>
@@ -185,7 +263,15 @@ Ready for initialization.</pre>
                     </div>
 
                     <button type="submit" class="w-full bg-primary text-on-primary py-6 text-xs font-bold tracking-[0.6em] relative overflow-hidden group shadow-[0_0_50px_rgba(167,165,255,0.3)] transition-all hover:scale-[1.02] active:scale-95 uppercase">
-                        IGNITE_ENGINE
+                        {% if idea.status == 'DESK_RESEARCH' %}
+                            IGNITE_RESEARCH
+                        {% elif idea.status == 'INTERVIEW_READY' %}
+                            IGNITE_INTERVIEWS
+                        {% elif idea.status == 'EXPERIMENT_READY' %}
+                            IGNITE_EXPERIMENT
+                        {% else %}
+                            RE_IGNITE_ENGINE
+                        {% endif %}
                         <div class="absolute inset-0 bg-white/20 translate-x-full group-hover:translate-x-0 transition-transform duration-700 ease-in-out"></div>
                     </button>
                 </form>

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+from typing import Any
 
 from aideator.llm.registry import get_provider
 from api.config import settings
@@ -13,7 +14,7 @@ async def analyze_dimensions(
     *,
     title: str,
     description: str,
-    citations: list[dict[str, str]],
+    citations: list[dict[str, Any]],
 ) -> dict[str, object]:
     """Analyze collected signals across dimensions.
 
@@ -32,7 +33,13 @@ async def analyze_dimensions(
         provider = get_provider(settings)
 
         signals_text = "\n".join(
-            [f"- [{c['source_id']}] {c['content']} (URL: {c['url']})" for c in citations]
+            [
+                f"- [{c['source_id']}] "
+                f"[Type: {c.get('type', 'unknown')}, "
+                f"Confidence: {c.get('confidence', 0.5)}] "
+                f"{c['content']} (URL: {c['url']})"
+                for c in citations
+            ]
         )
 
         prompt = f"""You are a High-Precision Market Analyst. 
@@ -50,6 +57,13 @@ Your task is to organize these signals into three structured dimensional analyse
 3. VIABILITY: Are there clear technical, regulatory, or economic hurdles?
 4. MARKET_SIZING: Based on signals, estimate the TAM (Total Addressable Market),
    SAM (Serviceable Addressable Market), and SOM (Serviceable Obtainable Market) in USD.
+
+WEIGHTING RULES:
+- PRIORITIZE signals with type 'pain_complaint', 'feature_request', or 'competitor_weakness'.
+  These are high-intent signals.
+- TREAT signals with type 'seo_filler' or low confidence (< 0.4) as noise.
+  Do not let them drive major score changes.
+- HIGH CONFIDENCE 'pain_complaint' is your strongest evidence for Demand.
 
 For each of the first three dimensions, provide:
 - "strengths": Signals clearly supporting the case.

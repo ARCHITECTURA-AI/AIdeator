@@ -87,12 +87,31 @@
                         <p class="text-sm text-white/40 line-clamp-2 leading-relaxed">{{ idea.description }}</p>
                     </div>
                     
-                    <div class="mt-auto pt-6 flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <span class="material-symbols-outlined text-primary text-sm">play_circle</span>
-                            <span class="font-mono text-xs text-primary font-bold uppercase">Run_Count: {{ idea.runs_count }}</span>
+                    <div class="mt-auto pt-6 border-t border-white/5 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            {% if idea.validation_status == 'DESK_RESEARCH' %}
+                                <span class="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></span>
+                                <span class="font-mono text-[10px] text-primary tracking-widest uppercase">Phase 01: Research</span>
+                            {% elif idea.validation_status == 'INTERVIEW_READY' %}
+                                <span class="w-1.5 h-1.5 bg-secondary rounded-full animate-pulse"></span>
+                                <span class="font-mono text-[10px] text-secondary tracking-widest uppercase">Phase 02: Interviews</span>
+                            {% elif idea.validation_status == 'EXPERIMENT_READY' %}
+                                <span class="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
+                                <span class="font-mono text-[10px] text-orange-400 tracking-widest uppercase">Phase 03: Experiment</span>
+                            {% elif idea.validation_status == 'VALIDATED' %}
+                                <span class="material-symbols-outlined text-secondary text-sm">verified</span>
+                                <span class="font-mono text-[10px] text-secondary tracking-widest uppercase">Validated</span>
+                            {% elif idea.validation_status == 'PIVOT_RECOMMENDED' %}
+                                <span class="material-symbols-outlined text-error text-sm">warning</span>
+                                <span class="font-mono text-[10px] text-error tracking-widest uppercase">Pivot Advised</span>
+                            {% else %}
+                                <span class="font-mono text-[10px] text-white/20 tracking-widest uppercase">Initialized</span>
+                            {% endif %}
                         </div>
-                        <span class="material-symbols-outlined text-white/20 group-hover:text-white transition-colors">arrow_forward</span>
+                        <div class="flex items-center gap-2 text-white/30">
+                            <span class="font-mono text-[10px]">{{ idea.runs_count }} Runs</span>
+                            <span class="material-symbols-outlined text-sm group-hover:text-white transition-colors">arrow_forward</span>
+                        </div>
                     </div>
                 </div>
             </a>

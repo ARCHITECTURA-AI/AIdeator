@@ -7,7 +7,7 @@ from uuid import UUID
 
 from db.base import db_session, initialize_db
 from db.schema import IdeaModel, WorkspaceMemberModel
-from models.idea import Idea
+from models.idea import Idea, ValidationStatus
 
 LOGGER = logging.getLogger("db.ideas")
 
@@ -27,6 +27,7 @@ def _to_model(idea: Idea) -> IdeaModel:
         created_at=idea.created_at,
         tier=idea.tier,
         brand_hex=idea.brand_hex,
+        validation_status=idea.status.value if hasattr(idea.status, "value") else str(idea.status),
         workspace_id=str(idea.workspace_id) if idea.workspace_id else None,
     )
 
@@ -39,6 +40,7 @@ def _from_model(model: IdeaModel) -> Idea:
         context=model.context,
         tier=model.tier or "Bronze",
         brand_hex=model.brand_hex or "#888888",
+        status=ValidationStatus(model.validation_status or "desk_research"),
         workspace_id=UUID(model.workspace_id) if model.workspace_id else None,
     )
     idea.idea_id = UUID(model.idea_id)
@@ -57,6 +59,10 @@ def save_idea(idea: Idea, user_id: UUID | None = None) -> Idea:
             model.context = idea.context
             model.tier = idea.tier
             model.brand_hex = idea.brand_hex
+            model.validation_status = (
+                idea.status.value if hasattr(idea.status, "value")
+                else str(idea.status)
+            )
             if idea.workspace_id:
                 model.workspace_id = str(idea.workspace_id)
             if user_id:

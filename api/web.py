@@ -137,6 +137,10 @@ def _idea_rows(user_id: UUID | None = None) -> list[dict[str, object]]:
                 "created_at": _fmt_ts(idea.created_at),
                 "runs_count": len(idea_runs),
                 "last_run_status": last_run.status if last_run else "pending",
+                "validation_status": (
+                    idea.status.value if hasattr(idea.status, "value") 
+                    else str(idea.status)
+                ),
             }
         )
     rows.sort(key=lambda item: str(item["created_at"]), reverse=True)
@@ -489,6 +493,10 @@ def idea_detail_page(request: Request, idea_id: UUID) -> HTMLResponse:
                 "target_user": idea.target_user,
                 "context": idea.context,
                 "created_at": _fmt_ts(idea.created_at),
+                "status": (
+                    idea.status.value if hasattr(idea.status, "value")
+                    else str(idea.status)
+                ),
             },
             "runs": _run_rows(idea_filter=idea_id),
             "available_modes": ["local-only", "hybrid", "cloud-enabled"],

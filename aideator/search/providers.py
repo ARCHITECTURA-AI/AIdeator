@@ -12,6 +12,18 @@ from enum import Enum
 from typing import Any
 
 
+class SignalType(str, Enum):
+    """Categories for signal evidence quality and type."""
+
+    PAIN_COMPLAINT = "pain_complaint"
+    FEATURE_REQUEST = "feature_request"
+    COMPETITOR_WEAKNESS = "competitor_weakness"
+    MARKET_DATA = "market_data"
+    ANECDOTAL_POSITIVE = "anecdotal_positive"
+    SEO_FILLER = "seo_filler"
+    UNSPECIFIED = "unspecified"
+
+
 class ProviderStatus(Enum):
     """Health check status for search providers."""
 
@@ -33,6 +45,8 @@ class SearchResult:
         snippet: Text excerpt / summary
         source: Provider that returned this result (e.g. 'tavily', 'builtin')
         score: Relevance score (0.0 to 1.0, provider-dependent)
+        signal_type: Categorized type of signal (e.g. 'pain_complaint')
+        confidence: Confidence score in the classification (0.0 to 1.0)
     """
 
     title: str
@@ -40,6 +54,8 @@ class SearchResult:
     snippet: str
     source: str = ""
     score: float = 0.0
+    signal_type: SignalType = SignalType.UNSPECIFIED
+    confidence: float = 0.0
 
 
 @dataclass(frozen=True)

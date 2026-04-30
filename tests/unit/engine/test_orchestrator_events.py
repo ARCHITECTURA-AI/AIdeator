@@ -8,6 +8,7 @@ from uuid import uuid4
 import pytest
 
 from engine.orchestrator import execute_run
+from models.report import Card
 
 
 @pytest.mark.asyncio
@@ -27,16 +28,21 @@ async def test_execute_run_broadcasts_events() -> None:
             new_callable=AsyncMock,
             return_value=[],
         ),
-        patch("engine.orchestrator.analyze_dimensions", new_callable=AsyncMock),
+        patch(
+            "engine.orchestrator.analyze_dimensions",
+            new_callable=AsyncMock,
+            return_value={"demand": {}, "competition": {}, "viability": {}},
+        ),
         patch(
             "engine.orchestrator.synthesize_intelligence",
             new_callable=AsyncMock,
-            return_value=[],
+            return_value=[Card(score=80, type="demand", title="T", summary="S")],
         ),
         patch("engine.orchestrator.save_report"),
         patch("engine.orchestrator.settings"),
         patch("pathlib.Path.write_text"),
         patch("engine.orchestrator.build_markdown_artifact"),
+        patch("engine.orchestrator.save_idea"),
         patch("engine.orchestrator.publish_event", new_callable=AsyncMock) as mock_publish,
     ):
         await execute_run(run_id)

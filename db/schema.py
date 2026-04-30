@@ -27,6 +27,7 @@ class IdeaModel(Base):
     )
     tier: Mapped[str | None] = mapped_column(String(50), default="Bronze")
     brand_hex: Mapped[str | None] = mapped_column(String(7), default="#888888")
+    validation_status: Mapped[str] = mapped_column(String(50), default="desk_research")
     user_id: Mapped[str | None] = mapped_column(
         String(36), ForeignKey("users.user_id"), nullable=True
     )

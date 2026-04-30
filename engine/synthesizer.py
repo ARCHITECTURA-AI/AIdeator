@@ -6,7 +6,8 @@ from typing import Any
 
 from aideator.llm.registry import get_provider
 from api.config import settings
-from models.report import Card
+from models.idea import ValidationStatus
+from models.report import Card, ExperimentKit, InterviewKit
 
 LOGGER = logging.getLogger("engine.synthesizer")
 
@@ -136,7 +137,7 @@ async def synthesize_intelligence(
     *,
     title: str,
     description: str,
-    citations: list[dict[str, str]],
+    citations: list[dict[str, Any]],
     analysis: dict[str, object] | None = None,
 ) -> list[Card]:
     """Synthesize intelligence cards using LLM.
@@ -157,7 +158,12 @@ async def synthesize_intelligence(
         provider = get_provider(settings)
 
         signals_text = "\n".join(
-            [f"- [{c['source_id']}] {c['content']} (URL: {c['url']})" for c in citations]
+            [
+                f"- [{c['source_id']}] Type: {c.get('type', 'unknown')}, "
+                f"Confidence: {c.get('confidence', 0.5)}] "
+                f"{c['content']} (URL: {c['url']})"
+                for c in citations
+            ]
         )
 
         analysis_json = json.dumps(analysis, indent=2) if analysis else "{}"
@@ -271,9 +277,41 @@ Return ONLY a JSON object with this exact structure:
 
 
 def render_markdown_report(
-    *, idea_id: str, cards: list[Card], battle_results: dict[str, Any] | None = None
+    *,
+    idea_id: str,
+    cards: list[Card],
+    battle_results: dict[str, Any] | None = None,
+    interview_kit: InterviewKit | None = None,
+    experiment_kit: ExperimentKit | None = None,
+    status: ValidationStatus = ValidationStatus.DESK_RESEARCH,
 ) -> str:
     lines: list[str] = [f"# Idea Report {idea_id}", ""]
+
+    # Phase Banner
+    status_label = status.value.replace("_", " ").title()
+    lines.append("## 🏆 Current Validation Phase")
+    lines.append(f"**Stage:** `{status_label}`")
+    
+    if status == ValidationStatus.PIVOT_RECOMMENDED:
+        lines.append("> [!CAUTION]")
+        lines.append(
+            "> **Pivot Recommended:** High adversarial signal detected. "
+            "Review the Bear Case below before proceeding."
+        )
+    elif status == ValidationStatus.EXPERIMENT_READY:
+        lines.append("> [!TIP]")
+        lines.append(
+            "> **Green Light:** High confidence signals. "
+            "Skip to Phase 3 and launch your smoke test."
+        )
+    elif status == ValidationStatus.INTERVIEW_READY:
+        lines.append("> [!NOTE]")
+        lines.append(
+            "> **Proceed with Caution:** Evidence is moderate. "
+            "Run 5-10 user interviews (Phase 2) to confirm pain points."
+        )
+    
+    lines.append("")
 
     for card in cards:
         score = card.score
@@ -348,6 +386,68 @@ def render_markdown_report(
         lines.append("</div>")
         lines.append("")
 
+    # User Interview Toolkit section
+    if interview_kit:
+        lines.append("## 🎤 User Interview Toolkit")
+        lines.append("> [!TIP]")
+        lines.append("> These questions are designed based on 'The Mom Test'.")
+        lines.append("> Focus on past behavior, not future opinions.")
+        lines.append("")
+        
+        lines.append("### 📝 Interview Script")
+        for i, item in enumerate(interview_kit.script, 1):
+            lines.append(f"{i}. **{item.get('question')}**")
+            lines.append(f"   - *Rationale:* {item.get('rationale')}")
+        lines.append("")
+
+        lines.append("### 📧 Outreach Templates")
+        for platform, template in interview_kit.outreach_templates.items():
+            lines.append(f"#### {platform.title()}")
+            lines.append("```text")
+            lines.append(template)
+            lines.append("```")
+        lines.append("")
+
+        lines.append("### 📊 Response Tracker Schema")
+        lines.append("Use these columns in your spreadsheet to track findings:")
+        lines.append(f"| {' | '.join(interview_kit.response_tracker)} |")
+        lines.append(f"| {' | '.join(['---'] * len(interview_kit.response_tracker))} |")
+        lines.append("")
+        
+    # Phase 3: Behavioral Experiment Kit
+    if experiment_kit:
+        lines.append("## 🧪 Behavioral Experiment (Smoke Test)")
+        lines.append("> [!IMPORTANT]")
+        lines.append("> Moving from intent to behavior.")
+        lines.append("> This experiment measures actual commitment.")
+        lines.append("")
+        
+        lines.append("### 🔬 Hypothesis")
+        lines.append(f"_{experiment_kit.hypothesis}_")
+        lines.append("")
+        
+        lines.append("### 📄 Landing Page Blueprint (PAS Framework)")
+        copy = experiment_kit.landing_page_copy
+        lines.append(f"**Headline:** {copy.get('headline')}")
+        lines.append(f"**Subheadline:** {copy.get('subheadline')}")
+        lines.append("")
+        lines.append("**The Pain (Agitation):**")
+        lines.append(copy.get('pain_points', ''))
+        lines.append("")
+        lines.append(f"**The Solution:** {copy.get('solution')}")
+        lines.append("")
+        lines.append(f"**Primary CTA:** `{copy.get('cta')}`")
+        lines.append("")
+
+        lines.append("### 📈 Success Metrics")
+        lines.append(f"**Target:** {experiment_kit.success_metric}")
+        lines.append("")
+
+        lines.append("### 🛠️ Recommended Tool Stack")
+        for tool in experiment_kit.tool_stack:
+            lines.append(f"- {tool}")
+        lines.append("")
+
     lines.append("## Cursor/Claude Code Usage Notes")
     lines.append("Artifact rendered from validated cards.")
     lines.append("")
@@ -378,7 +478,20 @@ def _append_benchmark_section(lines: list[str], cards: list[Card]) -> None:
 
 
 def build_markdown_artifact(
-    *, idea_id: str, cards: list[Card], battle_results: dict[str, Any] | None = None
+    *,
+    idea_id: str,
+    cards: list[Card],
+    battle_results: dict[str, Any] | None = None,
+    interview_kit: InterviewKit | None = None,
+    experiment_kit: ExperimentKit | None = None,
+    status: ValidationStatus = ValidationStatus.DESK_RESEARCH,
 ) -> str:
     validate_cards(cards)
-    return render_markdown_report(idea_id=idea_id, cards=cards, battle_results=battle_results)
+    return render_markdown_report(
+        idea_id=idea_id,
+        cards=cards,
+        battle_results=battle_results,
+        interview_kit=interview_kit,
+        experiment_kit=experiment_kit,
+        status=status,
+    )

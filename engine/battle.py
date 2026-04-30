@@ -15,7 +15,7 @@ LOGGER = logging.getLogger("engine.battle")
 class BattleOrchestrator:
     """Orchestrates Bull and Bear agents for adversarial analysis."""
 
-    def __init__(self, title: str, description: str, signals: list[dict[str, str]]):
+    def __init__(self, title: str, description: str, signals: list[dict[str, Any]]):
         self.title = title
         self.description = description
         self.signals = signals

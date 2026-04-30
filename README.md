@@ -50,6 +50,8 @@ Think of it as your AI research analyst for product ideas — run it locally wit
 
 ## Key Features
 
+| Feature | Description |
+| :--- | :--- |
 | 🪄 **Premium UI** | Score interpolations, staggered reveals, and glassmorphic aesthetics |
 | ⚡ **Real-time SSE** | Live engine telemetry with status pulses and progress bars |
 | ⌨️ **Cmd+K Palette** | Pro-tier keyboard navigation for rapid system access |
@@ -61,6 +63,9 @@ Think of it as your AI research analyst for product ideas — run it locally wit
 | 📈 **Benchmarks** | Compare scores against 12 reference SaaS products |
 | 🖥️ **Web dashboard** | Server-rendered UI with status badges and kinetic pulses |
 | ⚙️ **Config wizard** | `aideator config init` for interactive setup |
+| 📚 **Desk Research** | Deep analysis of market signals with citations and source mapping |
+| 🎤 **User Interviews** | Automated generation of structured interview kits and recruitment plans |
+| 🧪 **Experiments** | Practical behavioral validation blueprints and success metrics |
 
 ## Quick Start
 

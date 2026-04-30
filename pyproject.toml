@@ -4,9 +4,9 @@ build-backend = "hatchling.build"
 
 [project]
 name = "aideator"
-version = "0.9.9"
+version = "0.9.9.2"
 authors = [
-  { name = "Richard Abishai", email = "richard@richardabish.ai" }
+  { name = "Richard Abishai", email = "richardabishai2112@gmail.com" }
 ]
 description = "Local-first FastAPI service for idea validation and markdown reports"
 readme = "README.md"
@@ -34,6 +34,7 @@ dependencies = [
 ]
 
 [project.urls]
+Website = "https://aideator.richardabish.ai"
 Homepage = "https://github.com/ARCHITECTURA-AI/AIdeator"
 Source = "https://github.com/ARCHITECTURA-AI/AIdeator"
 Issues = "https://github.com/ARCHITECTURA-AI/AIdeator/issues"

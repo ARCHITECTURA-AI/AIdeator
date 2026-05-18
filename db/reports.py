@@ -8,7 +8,7 @@ from uuid import UUID
 
 from db.base import db_session, initialize_db
 from db.schema import ReportModel
-from models.report import Card, Report
+from models.report import Card, ExperimentKit, InterviewKit, Report
 
 LOGGER = logging.getLogger("db.reports")
 
@@ -24,6 +24,8 @@ def _to_model(report: Report) -> ReportModel:
         artifact_path=report.artifact_path,
         citations=report.citations,
         battle_results=report.battle_results,
+        interview_kit=report.interview_kit.model_dump() if report.interview_kit else None,
+        experiment_kit=report.experiment_kit.model_dump() if report.experiment_kit else None,
     )
 
 
@@ -36,6 +38,12 @@ def save_report(report: Report) -> Report:
             model.artifact_path = report.artifact_path
             model.citations = report.citations
             model.battle_results = report.battle_results
+            model.interview_kit = (
+                report.interview_kit.model_dump() if report.interview_kit else None
+            )
+            model.experiment_kit = (
+                report.experiment_kit.model_dump() if report.experiment_kit else None
+            )
         else:
             model = _to_model(report)
             session.add(model)
@@ -62,6 +70,8 @@ def get_report(run_id: UUID) -> Report | None:
             artifact_path=model.artifact_path,
             citations=model.citations,
             battle_results=model.battle_results,
+            interview_kit=InterviewKit(**model.interview_kit) if model.interview_kit else None,
+            experiment_kit=ExperimentKit(**model.experiment_kit) if model.experiment_kit else None,
         )
     finally:
         db_session.remove()
@@ -81,6 +91,8 @@ def list_reports() -> list[Report]:
                     artifact_path=m.artifact_path,
                     citations=m.citations,
                     battle_results=m.battle_results,
+                    interview_kit=InterviewKit(**m.interview_kit) if m.interview_kit else None,
+                    experiment_kit=ExperimentKit(**m.experiment_kit) if m.experiment_kit else None,
                 )
             )
         return reports

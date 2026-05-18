@@ -6,10 +6,12 @@ from typing import Any
 
 from aideator.llm.registry import get_provider
 from api.config import settings
+from engine.retry import resilient_call
 
 LOGGER = logging.getLogger("engine.analyst")
 
 
+@resilient_call(retries=3, base_delay=2.0)
 async def analyze_dimensions(
     *,
     title: str,
@@ -29,20 +31,19 @@ async def analyze_dimensions(
     Returns:
         Dictionary containing dimensional analysis
     """
-    try:
-        provider = get_provider(settings)
+    provider = get_provider(settings)
 
-        signals_text = "\n".join(
-            [
-                f"- [{c['source_id']}] "
-                f"[Type: {c.get('type', 'unknown')}, "
-                f"Confidence: {c.get('confidence', 0.5)}] "
-                f"{c['content']} (URL: {c['url']})"
-                for c in citations
-            ]
-        )
+    signals_text = "\n".join(
+        [
+            f"- [{c['source_id']}] "
+            f"[Type: {c.get('type', 'unknown')}, "
+            f"Confidence: {c.get('confidence', 0.5)}] "
+            f"{c['content']} (URL: {c['url']})"
+            for c in citations
+        ]
+    )
 
-        prompt = f"""You are a High-Precision Market Analyst. 
+    prompt = f"""You are a High-Precision Market Analyst. 
 Analyze the provided signals for the business idea: "{title}".
 
 DESCRIPTION:
@@ -83,35 +84,13 @@ Return ONLY a JSON object with this structure:
   "market_sizing": {{ "tam": "", "sam": "", "som": "" }}
 }}
 """
-        messages = [{"role": "user", "content": prompt}]
-        response = await provider.generate(messages, temperature=0.3)
+    messages = [{"role": "user", "content": prompt}]
+    response = await provider.generate(messages, temperature=0.3)
 
-        content = response.content.strip()
-        if "```json" in content:
-            content = content.split("```json")[1].split("```")[0].strip()
-        elif "```" in content:
-            content = content.split("```")[1].split("```")[0].strip()
+    content = response.content.strip()
+    if "```json" in content:
+        content = content.split("```json")[1].split("```")[0].strip()
+    elif "```" in content:
+        content = content.split("```")[1].split("```")[0].strip()
 
-        return json.loads(content)
-
-    except Exception as e:
-        LOGGER.error(f"Dimensional analysis failed: {e}", exc_info=True)
-        # Fallback to empty structure
-        return {
-            "demand": {
-                "strengths": [],
-                "weaknesses": [],
-                "synthesis_preamble": "Analysis failed, defaulting to synthetic synthesis.",
-            },
-            "competition": {
-                "strengths": [],
-                "weaknesses": [],
-                "synthesis_preamble": "Analysis failed.",
-            },
-            "viability": {
-                "strengths": [],
-                "weaknesses": [],
-                "synthesis_preamble": "Analysis failed.",
-            },
-            "market_sizing": {"tam": "N/A", "sam": "N/A", "som": "N/A"},
-        }
+    return json.loads(content)

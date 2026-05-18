@@ -47,8 +47,6 @@ async def test_webhook_dispatch_red():
         idea_id = idea_res.json()["idea_id"]
 
         # Trigger Run
-        # Note: In a real test we'd wait for background task,
-        # here we'll call orchestrator directly or assume it runs
         from uuid import UUID
 
         from db.runs import save_run
@@ -62,6 +60,19 @@ async def test_webhook_dispatch_red():
 
         # 3. Assert Webhook was called
         assert mock_post.called
-        args, kwargs = mock_post.call_args
+        
+        # Find the call that has the webhook URL
+        webhook_call = None
+        for call in mock_post.call_args_list:
+            args, kwargs = call
+            if args and "example.com/webhook" in str(args[0]):
+                webhook_call = call
+                break
+        
+        assert webhook_call is not None, (
+            f"Webhook call not found. Calls: {mock_post.call_args_list}"
+        )
+        args, kwargs = webhook_call
+        assert "json" in kwargs, f"json key missing in kwargs: {kwargs.keys()}"
         assert kwargs["json"]["event"] == "run.succeeded"
         assert kwargs["json"]["payload"]["idea_id"] == idea_id

@@ -76,6 +76,8 @@ class ReportModel(Base):
     artifact_path: Mapped[str] = mapped_column(String, nullable=False)
     citations: Mapped[list] = mapped_column(JSON, nullable=False, default=[])
     battle_results: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    interview_kit: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    experiment_kit: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
 
 class SignalModel(Base):

@@ -8,6 +8,7 @@ from typing import Any
 
 from aideator.llm.registry import get_provider
 from api.config import settings
+from engine.retry import resilient_call
 
 LOGGER = logging.getLogger("engine.battle")
 
@@ -21,6 +22,8 @@ class BattleOrchestrator:
         self.signals = signals
         self.provider = get_provider(settings)
 
+
+    @resilient_call(retries=3, base_delay=2.0)
     async def run_battle(self) -> dict[str, Any]:
         """Run Bull vs Bear analysis."""
         signals_text = "\n".join([f"- {s['content']} (Source: {s['url']})" for s in self.signals])
@@ -71,7 +74,7 @@ Return a concise paragraph of 3-4 sentences.
 
         # 3. Synthesis (The Counter-Point)
         synthesis_prompt = f"""You are a Strategic Arbitrator.
-Synthesize the conflict between the following two perspectives into a 'Counter-Point' section.
+Analyze the conflict between the following two perspectives for the idea: "{self.title}".
 
 BULL PERSPECTIVE:
 {bull_text}
@@ -80,28 +83,57 @@ BEAR PERSPECTIVE:
 {bear_text}
 
 Task:
-Create a 'Battle Report' that highlights the core tension.
-What is the one thing this idea's success hinges on?
-Return a JSON object:
+Identify the 'Strategic Hinge'—the one critical dependency or unknown
+that determines if this idea succeeds or fails.
+Return ONLY a JSON object with this structure:
 {{
-  "bull_case": "{bull_text}",
-  "bear_case": "{bear_text}",
   "the_hinge": "1-2 sentences on the critical dependency"
 }}
 """
         synth_res = await self.provider.generate([{"role": "user", "content": synthesis_prompt}])
+        content = synth_res.content.strip()
+        if "```json" in content:
+            content = content.split("```json")[1].split("```")[0].strip()
+        elif "```" in content:
+            content = content.split("```")[1].split("```")[0].strip()
+
         try:
-            content = synth_res.content.strip()
-            if "```json" in content:
-                content = content.split("```json")[1].split("```")[0].strip()
-            return json.loads(content)
-        except Exception as e:
-            LOGGER.error(f"Battle synthesis failed: {e}")
+            data = json.loads(content)
             return {
-                "bull_case": bull_text,
-                "bear_case": bear_text,
-                "the_hinge": (
-                    "Success hinges on balancing aggressive growth with "
-                    "operational risk mitigation."
+                "bull_case": self.sanitize_output(bull_text),
+                "bear_case": self.sanitize_output(bear_text),
+                "the_hinge": self.sanitize_output(
+                    data.get("the_hinge", "Strategic dependency unresolved.")
                 ),
             }
+        except Exception:
+            # Construct manual result if parsing fails (after construction)
+            return {
+                "bull_case": self.sanitize_output(bull_text),
+                "bear_case": self.sanitize_output(bear_text),
+                "the_hinge": "Success hinges on operational risk mitigation and market timing."
+            }
+
+    @staticmethod
+    def sanitize_output(text: str) -> str:
+        """Sanitize LLM output by removing common conversational filler and prompt leakage."""
+        if not text:
+            return ""
+        # Remove common "Sure! Here's..." prefixes
+        prefixes = [
+            "Sure, here is", "Here is the", "Certainly,", "As a", "I've analyzed",
+            "Based on the", "The Bull perspective:", "The Bear perspective:",
+            "Strategic Hinge:", "Result:"
+        ]
+        cleaned = text
+        for p in prefixes:
+            if cleaned.lower().startswith(p.lower()):
+                cleaned = cleaned[len(p):].strip(": ").strip()
+        
+        # Remove any lingering "Return ONLY a JSON" or similar instructions if leaked
+        leakage_keywords = ["Return ONLY a JSON", "JSON structure:", "structure: {", "TASK:"]
+        for k in leakage_keywords:
+            if k in cleaned:
+                cleaned = cleaned.split(k)[0].strip()
+                
+        return cleaned.strip()

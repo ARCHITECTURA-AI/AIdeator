@@ -51,19 +51,17 @@ async def test_generate_interview_kit_basic() -> None:
     assert "Name" in kit.response_tracker
 
 @pytest.mark.asyncio
-async def test_generate_interview_kit_fallback() -> None:
-    """Test fallback logic when LLM fails."""
+async def test_generate_interview_kit_failure() -> None:
+    """Test that failure is raised when LLM is down after retries."""
     mock_provider = MagicMock()
     mock_provider.generate = AsyncMock(side_effect=Exception("LLM down"))
     
     with patch("engine.interviewer.get_provider", return_value=mock_provider):
-        kit = await generate_interview_kit(
-            title="X Tool",
-            description="A tool for X",
-            analysis={},
-            signals=[]
-        )
-        
-    assert isinstance(kit, InterviewKit)
-    assert len(kit.script) > 0
-    assert "email" in kit.outreach_templates
+        # We expect an exception because we removed the silent fallback
+        with pytest.raises(Exception):
+            await generate_interview_kit(
+                title="X Tool",
+                description="A tool for X",
+                analysis={},
+                signals=[]
+            )

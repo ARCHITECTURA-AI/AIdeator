@@ -11,6 +11,7 @@ from db.ideas import get_idea, save_idea
 from db.reports import save_report
 from db.runs import get_run, transition_run
 from engine.analyst import analyze_dimensions
+from engine.battle import BattleOrchestrator
 from engine.events import publish_event
 from engine.experiments import generate_experiment_kit
 from engine.interviewer import generate_interview_kit
@@ -97,38 +98,38 @@ async def execute_run(run_id: UUID) -> None:
             analysis=analysis,
         )
 
-        # Battle Mode (Adversarial Validation) - Node 4
-        from engine.battle import BattleOrchestrator
-
+        # Nodes 4, 5, 6: Parallel intelligence enrichment (Medium/High Tiers)
         battle_results = None
-        if run.tier in ("medium", "high"):  # Battle mode for higher tiers
-            await publish_event(run_id, "battle", {"label": "Bull vs Bear agents"})
+        interview_kit = None
+        experiment_kit = None
+
+        if run.tier in ("medium", "high"):
+            import asyncio
+            await publish_event(run_id, "enriching", {"label": "Running parallel validations"})
+            
             battle_engine = BattleOrchestrator(
                 title=idea.title if idea else "Unknown",
                 description=idea.description if idea else "",
                 signals=citations,
             )
-            battle_results = await battle_engine.run_battle()
-
-        # Interview Kit (Node 5)
-        interview_kit = None
-        if run.tier in ("medium", "high"):
-            await publish_event(run_id, "interviewing", {"label": "Drafting interview kit"})
-            interview_kit = await generate_interview_kit(
+            
+            # Execute parallel enrichment tasks
+            battle_task = battle_engine.run_battle()
+            interview_task = generate_interview_kit(
                 title=idea.title if idea else "Unknown",
                 description=idea.description if idea else "",
                 analysis=analysis,
                 signals=citations,
             )
-
-        # Experiment Kit (Node 6)
-        experiment_kit = None
-        if run.tier in ("medium", "high"):
-            await publish_event(run_id, "experimenting", {"label": "Designing experiment kit"})
-            experiment_kit = await generate_experiment_kit(
+            experiment_task = generate_experiment_kit(
                 title=idea.title if idea else "Unknown",
                 description=idea.description if idea else "",
                 analysis_results=analysis,
+            )
+            
+            # Gather results
+            battle_results, interview_kit, experiment_kit = await asyncio.gather(
+                battle_task, interview_task, experiment_task
             )
 
         # Build and write markdown artifact

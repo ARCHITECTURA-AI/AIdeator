@@ -6,6 +6,7 @@ from typing import Any
 
 from aideator.llm.registry import get_provider
 from api.config import settings
+from engine.retry import resilient_call
 from models.idea import ValidationStatus
 from models.report import Card, ExperimentKit, InterviewKit
 
@@ -133,6 +134,7 @@ def synthesize_default_cards() -> list[Card]:
     return cards
 
 
+@resilient_call(retries=3, base_delay=2.0)
 async def synthesize_intelligence(
     *,
     title: str,
@@ -154,21 +156,20 @@ async def synthesize_intelligence(
     Returns:
         List of card dictionaries
     """
-    try:
-        provider = get_provider(settings)
+    provider = get_provider(settings)
 
-        signals_text = "\n".join(
-            [
-                f"- [{c['source_id']}] Type: {c.get('type', 'unknown')}, "
-                f"Confidence: {c.get('confidence', 0.5)}] "
-                f"{c['content']} (URL: {c['url']})"
-                for c in citations
-            ]
-        )
+    signals_text = "\n".join(
+        [
+            f"- [{c['source_id']}] Type: {c.get('type', 'unknown')}, "
+            f"Confidence: {c.get('confidence', 0.5)}] "
+            f"{c['content']} (URL: {c['url']})"
+            for c in citations
+        ]
+    )
 
-        analysis_json = json.dumps(analysis, indent=2) if analysis else "{}"
+    analysis_json = json.dumps(analysis, indent=2) if analysis else "{}"
 
-        prompt = f"""You are a Lead Business Intelligence Architect. 
+    prompt = f"""You are a Lead Business Intelligence Architect. 
 Your goal is to synthesize the final validation report for the idea: "{title}".
 
 DESCRIPTION:
@@ -199,81 +200,71 @@ Return ONLY a JSON object with this exact structure:
     {{
       "type": "competition",
       "score": <int 0-100>,
-      "level": "Low/Moderate/High/Critical",
       "summary": "<1-2 sentence executive summary>",
-      "detailed_context": "<A detailed 3-5 sentence analysis of the competitive landscape.>",
-      "citation_urls": [<list of URLs actually referenced>]
-    }},
-    {{
-      "type": "viability",
-      "score": <int 0-100>,
-      "summary": "<1-2 sentence executive summary>",
-      "detailed_context": "<A detailed 3-5 sentence analysis of "
-                          "technical/regulatory/market feasibility.>",
-      "citation_urls": [<list of URLs actually referenced>]
+      "detailed_context": "<A detailed 3-5 sentence analysis of the metric.>",
+      "citation_urls": []
     }},
     {{
       "type": "market",
       "score": <int 0-100>,
       "summary": "<1-2 sentence executive summary>",
-      "detailed_context": "<A detailed analysis of market size and segments.>",
-      "tam": "<string estimate>",
-      "sam": "<string estimate>",
-      "som": "<string estimate>",
-      "citation_urls": [<list of URLs actually referenced>]
+      "detailed_context": "<A detailed 3-5 sentence analysis of the metric. "
+                          "Include TAM/SAM/SOM logic.>",
+      "citation_urls": []
+    }},
+    {{
+      "type": "viability",
+      "score": <int 0-100>,
+      "summary": "<1-2 sentence executive summary>",
+      "detailed_context": "<A detailed 3-5 sentence analysis of the metric.>",
+      "citation_urls": []
     }},
     {{
       "type": "next_steps",
       "score": <int 0-100>,
       "summary": "<1-2 sentence executive summary>",
-      "detailed_context": "<A detailed 3-5 sentence actionable roadmap.>",
-      "citation_urls": [<list of URLs actually referenced>]
+      "detailed_context": "<A detailed 3-5 sentence analysis of the metric.>",
+      "citation_urls": []
     }}
   ]
 }}
 """
-        messages = [{"role": "user", "content": prompt}]
-        response = await provider.generate(messages, temperature=0.7)
+    messages = [{"role": "user", "content": prompt}]
+    response = await provider.generate(messages, temperature=0.3)
 
-        # Extract JSON from response
-        content = response.content.strip()
-        if "```json" in content:
-            content = content.split("```json")[1].split("```")[0].strip()
-        elif "```" in content:
-            content = content.split("```")[1].split("```")[0].strip()
+    content = response.content.strip()
+    if "```json" in content:
+        content = content.split("```json")[1].split("```")[0].strip()
+    elif "```" in content:
+        content = content.split("```")[1].split("```")[0].strip()
 
-        data = json.loads(content)
-        raw_cards = data.get("cards", [])
+    data = json.loads(content)
+    raw_cards = data.get("cards", [])
 
-        cards: list[Card] = []
-        for rc in raw_cards:
-            score = normalize_score(rc.get("score", 0))
-            band = score_to_band(score)
-
-            cards.append(
-                Card(
-                    type=rc.get("type", "unknown"),
-                    title=rc.get("title", rc.get("type", "").replace("_", " ").title()),
-                    summary=rc.get("summary", ""),
-                    score=score,
-                    details=rc.get("details", [rc.get("detailed_context", "")]),
-                    meta={
-                        "band": band,
-                        "citation_urls": rc.get("citation_urls", []),
-                        "tam": rc.get("tam"),
-                        "sam": rc.get("sam"),
-                        "som": rc.get("som"),
-                        "level": rc.get("level"),
-                    },
-                )
+    cards: list[Card] = []
+    for rc in raw_cards:
+        score = normalize_score(rc.get("score", 0))
+        band = score_to_band(score)
+        
+        cards.append(
+            Card(
+                type=rc.get("type", "unknown"),
+                title=rc.get("type", "").replace("_", " ").title(),
+                summary=rc.get("summary", ""),
+                score=score,
+                details=[rc.get("detailed_context", "")],
+                meta={
+                    "band": band,
+                    "citation_urls": rc.get("citation_urls", []),
+                    "tam": rc.get("tam"),
+                    "sam": rc.get("sam"),
+                    "som": rc.get("som"),
+                },
             )
+        )
 
-        validate_cards(cards)
-        return cards
-
-    except Exception as e:
-        LOGGER.error(f"LLM synthesis failed, falling back to defaults: {e}", exc_info=True)
-        return synthesize_default_cards()
+    validate_cards_v1(cards)
+    return cards
 
 
 def render_markdown_report(

@@ -42,14 +42,11 @@ async def test_generate_experiment_kit_success() -> None:
     assert "Carrd" in kit.tool_stack
 
 @pytest.mark.asyncio
-async def test_generate_experiment_kit_fallback() -> None:
-    """Test fallback logic when LLM fails."""
+async def test_generate_experiment_kit_failure() -> None:
+    """Test that failure is raised when LLM fails after retries."""
     mock_provider = AsyncMock()
     mock_provider.generate.side_effect = Exception("LLM Error")
     
     with patch("engine.experiments.get_provider", return_value=mock_provider):
-        kit = await generate_experiment_kit(title="My Idea", description="Descr")
-        
-    assert kit.method == "Smoke Test"
-    assert "My Idea" in kit.hypothesis
-    assert "Carrd" in kit.tool_stack
+        with pytest.raises(Exception):
+            await generate_experiment_kit(title="My Idea", description="Descr")

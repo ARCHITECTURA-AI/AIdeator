@@ -8,10 +8,12 @@ from typing import Any
 
 from aideator.llm.registry import get_provider
 from api.config import settings
+from engine.retry import resilient_call
 from models.report import InterviewKit
 
 LOGGER = logging.getLogger("engine.interviewer")
 
+@resilient_call(retries=3, base_delay=2.0)
 async def generate_interview_kit(
     *,
     title: str,
@@ -30,23 +32,20 @@ async def generate_interview_kit(
     Returns:
         InterviewKit object
     """
-    try:
-        provider = get_provider(settings)
+    provider = get_provider(settings)
 
-        # Identify the weakest dimension to focus the interview on
-        # Analysis structure: {"demand": {"strengths": [], "weaknesses": [], ...}, ...}
-        dimensions = ["demand", "competition", "viability"]
-        weakness_counts = {d: len(analysis.get(d, {}).get("weaknesses", [])) for d in dimensions}
-        # Sort by most weaknesses
-        primary_focus = max(weakness_counts, key=lambda k: weakness_counts[k])
-        
-        signals_summary = "\n".join([
-            f"- [{s.get('source_id')}] Type: {s.get('type')}, "
-            f"Content: {(s.get('content') or '')[:100]}..."
-            for s in signals[:5]
-        ])
+    # Identify the weakest dimension to focus the interview on
+    dimensions = ["demand", "competition", "viability"]
+    weakness_counts = {d: len(analysis.get(d, {}).get("weaknesses", [])) for d in dimensions}
+    primary_focus = max(weakness_counts, key=lambda k: weakness_counts[k])
+    
+    signals_summary = "\n".join([
+        f"- [{s.get('source_id')}] Type: {s.get('type')}, "
+        f"Content: {(s.get('content') or '')[:100]}..."
+        for s in signals[:5]
+    ])
 
-        prompt = f"""You are a Master User Researcher specialized in "The Mom Test" methodology.
+    prompt = f"""You are a Master User Researcher specialized in "The Mom Test" methodology.
 Your goal is to create a User Interview Toolkit for the business idea: "{title}".
 
 CONTEXT:
@@ -81,33 +80,19 @@ Return ONLY a JSON object with this structure:
   "response_tracker": ["Column 1", "Column 2", ...]
 }}
 """
-        messages = [{"role": "user", "content": prompt}]
-        response = await provider.generate(messages, temperature=0.5)
-        
-        content = response.content.strip()
-        if "```json" in content:
-            content = content.split("```json")[1].split("```")[0].strip()
-        elif "```" in content:
-            content = content.split("```")[1].split("```")[0].strip()
+    messages = [{"role": "user", "content": prompt}]
+    response = await provider.generate(messages, temperature=0.5)
+    
+    content = response.content.strip()
+    if "```json" in content:
+        content = content.split("```json")[1].split("```")[0].strip()
+    elif "```" in content:
+        content = content.split("```")[1].split("```")[0].strip()
 
-        data = json.loads(content)
-        
-        return InterviewKit(
-            script=data.get("script", []),
-            outreach_templates=data.get("outreach_templates", {}),
-            response_tracker=data.get("response_tracker", [])
-        )
-
-    except Exception as e:
-        LOGGER.error(f"Interview kit generation failed: {e}", exc_info=True)
-        # Fallback to a generic kit
-        return InterviewKit(
-            script=[{
-                "question": "Can you tell me about the last time you tried to solve [Problem]?",
-                "rationale": "Discovery"
-            }],
-            outreach_templates={
-                "email": "Hi, I'm researching [Problem] and would love to hear your story."
-            },
-            response_tracker=["Name", "Role", "Last Time Problem Occurred", "Current Workaround"]
-        )
+    data = json.loads(content)
+    
+    return InterviewKit(
+        script=data.get("script", []),
+        outreach_templates=data.get("outreach_templates", {}),
+        response_tracker=data.get("response_tracker", [])
+    )

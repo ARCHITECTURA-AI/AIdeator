@@ -7,11 +7,12 @@ import logging
 from typing import Any
 
 from aideator.llm.registry import get_provider
+from engine.retry import resilient_call
 from models.report import ExperimentKit
 
 LOGGER = logging.getLogger("engine.experiments")
 
-
+@resilient_call(retries=3, base_delay=2.0)
 async def generate_experiment_kit(
     *,
     title: str,
@@ -28,17 +29,16 @@ async def generate_experiment_kit(
     Returns:
         ExperimentKit object with copy, metrics, and tools.
     """
-    try:
-        from api.config import settings
-        provider = get_provider(settings)
+    from api.config import settings
+    provider = get_provider(settings)
 
-        # Context from analysis if available
-        if analysis_results and "details" in analysis_results:
-            context_text = analysis_results["details"][:200]
-        else:
-            context_text = "the core problem"
+    # Context from analysis if available
+    if analysis_results and "details" in analysis_results:
+        context_text = analysis_results["details"][:200]
+    else:
+        context_text = "the core problem"
 
-        prompt = f"""You are an Expert Growth Marketer and Experiment Designer.
+    prompt = f"""You are an Expert Growth Marketer and Experiment Designer.
 Your task is to design a "Smoke Test" experiment for a new business idea.
 
 IDEA:
@@ -76,42 +76,28 @@ Return a JSON object with:
   "tool_stack": ["...", "..."]
 }}
 """
-        messages = [{"role": "user", "content": prompt}]
-        response = await provider.generate(messages, temperature=0.3)
-        
-        content = response.content.strip()
-        if "```json" in content:
-            content = content.split("```json")[1].split("```")[0].strip()
-        elif "```" in content:
-            content = content.split("```")[1].split("```")[0].strip()
+    messages = [{"role": "user", "content": prompt}]
+    response = await provider.generate(messages, temperature=0.3)
+    
+    content = response.content.strip()
+    if "```json" in content:
+        content = content.split("```json")[1].split("```")[0].strip()
+    elif "```" in content:
+        content = content.split("```")[1].split("```")[0].strip()
 
-        data = json.loads(content)
+    data = json.loads(content)
+    
+    # Ensure landing_page_copy is flattened correctly if needed, 
+    # but our model expects a dict[str, str]. 
+    # Let's adjust the data to match dict[str, str] by joining pain points.
+    copy = data.get("landing_page_copy", {})
+    if isinstance(copy.get("pain_points"), list):
+        copy["pain_points"] = "\n".join(copy["pain_points"])
         
-        # Ensure landing_page_copy is flattened correctly if needed, 
-        # but our model expects a dict[str, str]. 
-        # Let's adjust the data to match dict[str, str] by joining pain points.
-        copy = data.get("landing_page_copy", {})
-        if isinstance(copy.get("pain_points"), list):
-            copy["pain_points"] = "\n".join(copy["pain_points"])
-            
-        return ExperimentKit(
-            hypothesis=data.get("hypothesis", "If I launch a landing page, people will sign up."),
-            method=data.get("method", "Smoke Test"),
-            landing_page_copy=copy,
-            success_metric=data.get("success_metric", "5% conversion rate"),
-            tool_stack=data.get("tool_stack", ["Carrd", "Tally"])
-        )
-
-    except Exception as e:
-        LOGGER.warning(f"Experiment generation failed: {e}")
-        return ExperimentKit(
-            hypothesis=f"If I build a landing page for {title}, people will express interest.",
-            method="Smoke Test",
-            landing_page_copy={
-                "headline": f"Stop struggling with {title}",
-                "subheadline": description[:100],
-                "cta": "Get Early Access"
-            },
-            success_metric="10 signups from 200 visits",
-            tool_stack=["Carrd", "Typeform"]
-        )
+    return ExperimentKit(
+        hypothesis=data.get("hypothesis", "If I launch a landing page, people will sign up."),
+        method=data.get("method", "Smoke Test"),
+        landing_page_copy=copy,
+        success_metric=data.get("success_metric", "5% conversion rate"),
+        tool_stack=data.get("tool_stack", ["Carrd", "Tally"])
+    )

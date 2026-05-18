@@ -55,6 +55,7 @@ dev = [
   "types-Markdown",
   "types-passlib",
   "types-PyJWT",
+  "types-toml",
 ]
 
 [tool.hatch.build.targets.wheel]
